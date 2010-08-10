@@ -49,7 +49,6 @@ static void probe_net_event(struct net_connection* con, int events, void *arg)
 #ifdef SSL_SUPPORT
 				if (probe->hub->config->tls_enable && probe->hub->config->tls_require)
 				{
-					LOG_TRACE("Not TLS connection - closing connection.");
 					if (*probe->hub->config->tls_require_redirect_addr)
 					{
 						char buf[512];
