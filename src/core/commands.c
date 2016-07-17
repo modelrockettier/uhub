@@ -357,6 +357,44 @@ static int command_kick(struct command_base* cbase, struct hub_user* user, struc
 	return command_status(cbase, user, cmd, buf);
 }
 
+static int command_mute(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
+{
+	struct cbuffer* buf;
+	struct hub_command_arg_data* arg = hub_command_arg_next(cmd, type_user);
+	struct hub_user* target = arg->data.user;
+
+	buf = cbuf_create(128);
+	if (target == user)
+	{
+		cbuf_append(buf, "Cannot mute yourself.");
+	}
+	else
+	{
+		cbuf_append_format(buf, "Muted user \"%s\".", target->id.nick);
+		user_flag_set(target, flag_muted);
+	}
+	return command_status(cbase, user, cmd, buf);
+}
+
+static int command_unmute(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
+{
+	struct cbuffer* buf;
+	struct hub_command_arg_data* arg = hub_command_arg_next(cmd, type_user);
+	struct hub_user* target = arg->data.user;
+
+	buf = cbuf_create(128);
+	if (target == user)
+	{
+		cbuf_append(buf, "Cannot unmute yourself.");
+	}
+	else
+	{
+		cbuf_append_format(buf, "Unmuted user \"%s\".", target->id.nick);
+		user_flag_unset(target, flag_muted);
+	}
+	return command_status(cbase, user, cmd, buf);
+}
+
 static int command_reload(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
 {
 	cbase->hub->status = hub_status_restart;
@@ -597,6 +635,8 @@ void commands_builtin_add(struct command_base* cbase)
 	ADD_COMMAND("getip",      5, "u", auth_cred_operator,  command_getip,    "Show IP address for a user"   );
 	ADD_COMMAND("help",       4, "?c",auth_cred_guest,     command_help,     "Show this help message."      );
 	ADD_COMMAND("kick",       4, "u", auth_cred_operator,  command_kick,     "Kick a user"                  );
+	ADD_COMMAND("mute",       4, "u", auth_cred_operator,  command_mute,     "Mute a user"                  );
+	ADD_COMMAND("unmute",     4, "u", auth_cred_operator,  command_unmute,   "Unmute a user"                );
 	ADD_COMMAND("log",        3, "?m",auth_cred_operator,  command_log,      "Display log"                  ); // fail
 	ADD_COMMAND("myip",       4, "",  auth_cred_guest,     command_myip,     "Show your own IP."            );
 	ADD_COMMAND("reload",     6, "",  auth_cred_admin,     command_reload,   "Reload configuration files."  );
