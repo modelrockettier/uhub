@@ -1202,6 +1202,11 @@ size_t hub_get_max_hubs_total(struct hub_info* hub)
 	return hub->config->limit_max_hubs;
 }
 
+size_t hub_get_min_hubs_total(struct hub_info* hub)
+{
+	return hub->config->limit_min_hubs;
+}
+
 size_t hub_get_max_hubs_user(struct hub_info* hub)
 {
 	return hub->config->limit_max_hubs_user;
