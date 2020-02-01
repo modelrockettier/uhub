@@ -1,7 +1,7 @@
- ##
+##
 ## Makefile for uhub
 ## Copyright (C) 2007-2013, Jan Vidar Krey <janvidar@extatic.org>
- #
+##
 
 cmake_minimum_required (VERSION 2.8.2)
 
@@ -40,7 +40,7 @@ if (BIGENDIAN)
 endif()
 
 if (NOT RELEASE)
-        add_definitions(-DDEBUG)
+	add_definitions(-DDEBUG)
 endif()
 
 if (SSL_SUPPORT)
@@ -55,12 +55,12 @@ if (SSL_SUPPORT)
 endif()
 
 if (NOT SQLITE3_FOUND)
-    message(FATAL_ERROR "SQLite3 is not found!")
+	message(FATAL_ERROR "SQLite3 is not found!")
 endif()
 
 if (SYSTEMD_SUPPORT)
-        INCLUDE(FindPkgConfig)
-        pkg_search_module(SD REQUIRED libsystemd)
+	INCLUDE(FindPkgConfig)
+	pkg_search_module(SD REQUIRED libsystemd)
 endif()
 
 if (MSVC)
@@ -111,43 +111,44 @@ add_executable(uhub ${PROJECT_SOURCE_DIR}/core/main.c ${uhub_SOURCES} )
 add_executable(autotest-bin ${CMAKE_SOURCE_DIR}/autotest/test.c ${uhub_SOURCES} )
 add_executable(uhub-passwd ${PROJECT_SOURCE_DIR}/tools/uhub-passwd.c)
 
-add_library(mod_example MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_example.c)
-add_library(mod_welcome MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_welcome.c)
-add_library(mod_logging MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_logging.c ${PROJECT_SOURCE_DIR}/adc/sid.c)
 add_library(mod_auth_simple MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_auth_simple.c )
+add_library(mod_auth_sqlite MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_auth_sqlite.c)
 add_library(mod_chat_history MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_chat_history.c )
 add_library(mod_chat_history_sqlite MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_chat_history_sqlite.c )
+#add_library(mod_chat_is_privileged MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_chat_is_privileged.c) # Broken
 add_library(mod_chat_only MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_chat_only.c)
-add_library(mod_topic MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_topic.c)
+add_library(mod_example MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_example.c)
+add_library(mod_logging MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_logging.c ${PROJECT_SOURCE_DIR}/adc/sid.c)
 add_library(mod_no_guest_downloads MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_no_guest_downloads.c)
-add_library(mod_auth_sqlite MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_auth_sqlite.c)
+add_library(mod_topic MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_topic.c)
+add_library(mod_welcome MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_welcome.c)
 
 set_target_properties(
-	mod_example
-	mod_welcome
-	mod_logging
 	mod_auth_simple
 	mod_auth_sqlite
 	mod_chat_history
 	mod_chat_history_sqlite
 	mod_chat_only
+	mod_example
+	mod_logging
 	mod_no_guest_downloads
 	mod_topic
+	mod_welcome
 	PROPERTIES PREFIX "")
 
 target_link_libraries(uhub ${CMAKE_DL_LIBS} adc network utils)
 target_link_libraries(uhub-passwd ${SQLITE3_LIBRARIES} utils)
 target_link_libraries(autotest-bin ${CMAKE_DL_LIBS} adc network utils)
-target_link_libraries(mod_example utils)
-target_link_libraries(mod_welcome network utils)
 target_link_libraries(mod_auth_simple utils)
 target_link_libraries(mod_auth_sqlite ${SQLITE3_LIBRARIES} utils)
 target_link_libraries(mod_chat_history utils)
 target_link_libraries(mod_chat_history_sqlite ${SQLITE3_LIBRARIES} utils)
-target_link_libraries(mod_no_guest_downloads utils)
 target_link_libraries(mod_chat_only utils)
+target_link_libraries(mod_example utils)
 target_link_libraries(mod_logging network utils)
+target_link_libraries(mod_no_guest_downloads utils)
 target_link_libraries(mod_topic utils)
+target_link_libraries(mod_welcome network utils)
 target_link_libraries(utils network)
 
 if(WIN32)
@@ -213,12 +214,12 @@ if(SSL_SUPPORT)
 endif()
 
 if (SYSTEMD_SUPPORT)
-        target_link_libraries(uhub ${SD_LIBRARIES})
-        target_link_libraries(autotest-bin ${SD_LIBRARIES})
-        target_link_libraries(uhub-passwd ${SD_LIBRARIES})
-        target_link_libraries(uhub-admin ${SD_LIBRARIES})
-        include_directories(${SD_INCLUDE_DIRS})
-        add_definitions(-DSYSTEMD)
+	target_link_libraries(uhub ${SD_LIBRARIES})
+	target_link_libraries(autotest-bin ${SD_LIBRARIES})
+	target_link_libraries(uhub-passwd ${SD_LIBRARIES})
+	target_link_libraries(uhub-admin ${SD_LIBRARIES})
+	include_directories(${SD_INCLUDE_DIRS})
+	add_definitions(-DSYSTEMD)
 endif()
 
 configure_file ("${PROJECT_SOURCE_DIR}/version.h.in" "${PROJECT_BINARY_DIR}/version.h")
@@ -238,9 +239,10 @@ if (LOWLEVEL_DEBUG)
 endif()
 
 if (UNIX)
-	install( TARGETS uhub uhub-passwd RUNTIME DESTINATION bin )
-	install( TARGETS mod_example mod_welcome mod_logging mod_auth_simple mod_auth_sqlite mod_chat_history mod_chat_history_sqlite mod_chat_only mod_topic mod_no_guest_downloads DESTINATION /usr/lib/uhub/ OPTIONAL )
+	install( TARGETS uhub uhub-admin uhub-passwd RUNTIME DESTINATION bin )
+	install( TARGETS mod_auth_simple mod_auth_sqlite mod_chat_history mod_chat_history_sqlite mod_chat_only mod_example mod_logging mod_no_guest_downloads mod_topic mod_welcome DESTINATION /usr/lib/uhub/ OPTIONAL )
 	install( FILES ${CMAKE_SOURCE_DIR}/doc/uhub.conf ${CMAKE_SOURCE_DIR}/doc/plugins.conf ${CMAKE_SOURCE_DIR}/doc/rules.txt ${CMAKE_SOURCE_DIR}/doc/motd.txt DESTINATION /etc/uhub OPTIONAL )
+	install( FILES ${CMAKE_SOURCE_DIR}/doc/uhub.1 ${CMAKE_SOURCE_DIR}/doc/uhub-passwd.1 DESTINATION /usr/share/man/man1 OPTIONAL )
 endif()
 
 
