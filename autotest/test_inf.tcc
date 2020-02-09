@@ -140,6 +140,7 @@ EXO_TEST(inf_limit_hubs_setup,
 	inf_hub->config->limit_min_hubs_reg  = 2;
 	inf_hub->config->limit_min_hubs_op   = 2;
 	inf_hub->config->limit_max_hubs      = 25;
+	inf_hub->config->limit_min_hubs      = 1;
 	
 	return 1;
 } );
