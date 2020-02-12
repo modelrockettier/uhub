@@ -27,7 +27,6 @@ void config_defaults(struct hub_config* config)
 	config->max_send_buffer = 131072;
 	config->max_send_buffer_soft = 98304;
 	config->low_bandwidth_mode = 0;
-	config->max_chat_history = 20;
 	config->max_logout_log = 20;
 	config->limit_max_hubs_user = 10;
 	config->limit_max_hubs_reg = 10;
@@ -81,8 +80,8 @@ void config_defaults(struct hub_config* config)
 	config->msg_error_no_memory = hub_strdup("No memory");
 	config->msg_user_share_size_low = hub_strdup("User is not sharing enough");
 	config->msg_user_share_size_high = hub_strdup("User is sharing too much");
-	config->msg_user_slots_low = hub_strdup("User have too few upload slots.");
-	config->msg_user_slots_high = hub_strdup("User have too many upload slots.");
+	config->msg_user_slots_low = hub_strdup("User has too few upload slots.");
+	config->msg_user_slots_high = hub_strdup("User has too many upload slots.");
 	config->msg_user_hub_limit_low = hub_strdup("User is on too few hubs.");
 	config->msg_user_hub_limit_high = hub_strdup("User is on too many hubs.");
 	config->msg_user_flood_chat = hub_strdup("Chat flood detected, messages are dropped.");
@@ -312,19 +311,6 @@ static int apply_config(struct hub_config* config, char* key, char* data, int li
 		{
 			LOG_ERROR("Configuration parse error on line %d", line_count);
 			LOG_ERROR("\"low_bandwidth_mode\" (boolean), default=0");
-			return -1;
-		}
-		return 0;
-	}
-
-	if (!strcmp(key, "max_chat_history"))
-	{
-		min = 0;
-		max = 250;
-		if (!apply_integer(key, data, &config->max_chat_history, &min, &max))
-		{
-			LOG_ERROR("Configuration parse error on line %d", line_count);
-			LOG_ERROR("\"max_chat_history\" (integer), default=20, max=250");
 			return -1;
 		}
 		return 0;
@@ -934,7 +920,7 @@ static int apply_config(struct hub_config* config, char* key, char* data, int li
 		if (!apply_string(key, data, &config->msg_user_slots_low, (char*) ""))
 		{
 			LOG_ERROR("Configuration parse error on line %d", line_count);
-			LOG_ERROR("\"msg_user_slots_low\" (message), default=\"User have too few upload slots.\"");
+			LOG_ERROR("\"msg_user_slots_low\" (message), default=\"User has too few upload slots.\"");
 			return -1;
 		}
 		return 0;
@@ -945,7 +931,7 @@ static int apply_config(struct hub_config* config, char* key, char* data, int li
 		if (!apply_string(key, data, &config->msg_user_slots_high, (char*) ""))
 		{
 			LOG_ERROR("Configuration parse error on line %d", line_count);
-			LOG_ERROR("\"msg_user_slots_high\" (message), default=\"User have too many upload slots.\"");
+			LOG_ERROR("\"msg_user_slots_high\" (message), default=\"User has too many upload slots.\"");
 			return -1;
 		}
 		return 0;
@@ -1214,9 +1200,6 @@ void dump_config(struct hub_config* config, int ignore_defaults)
 	if (!ignore_defaults || config->low_bandwidth_mode != 0)
 		fprintf(stdout, "low_bandwidth_mode = %s\n", config->low_bandwidth_mode ? "yes" : "no");
 
-	if (!ignore_defaults || config->max_chat_history != 20)
-		fprintf(stdout, "max_chat_history = %d\n", config->max_chat_history);
-
 	if (!ignore_defaults || config->max_logout_log != 20)
 		fprintf(stdout, "max_logout_log = %d\n", config->max_logout_log);
 
@@ -1376,10 +1359,10 @@ void dump_config(struct hub_config* config, int ignore_defaults)
 	if (!ignore_defaults || strcmp(config->msg_user_share_size_high, "User is sharing too much") != 0)
 		fprintf(stdout, "msg_user_share_size_high = \"%s\"\n", config->msg_user_share_size_high);
 
-	if (!ignore_defaults || strcmp(config->msg_user_slots_low, "User have too few upload slots.") != 0)
+	if (!ignore_defaults || strcmp(config->msg_user_slots_low, "User has too few upload slots.") != 0)
 		fprintf(stdout, "msg_user_slots_low = \"%s\"\n", config->msg_user_slots_low);
 
-	if (!ignore_defaults || strcmp(config->msg_user_slots_high, "User have too many upload slots.") != 0)
+	if (!ignore_defaults || strcmp(config->msg_user_slots_high, "User has too many upload slots.") != 0)
 		fprintf(stdout, "msg_user_slots_high = \"%s\"\n", config->msg_user_slots_high);
 
 	if (!ignore_defaults || strcmp(config->msg_user_hub_limit_low, "User is on too few hubs.") != 0)
