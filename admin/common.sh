@@ -91,7 +91,7 @@ function build_binaries
         fi
 
         cd ${PACKAGE}
-        ${MAKE} ${MAKEARGS} RELEASE=YES
+        ${MAKE} ${MAKEARGS}
         cd ..
 
         if [ ! -x ${PACKAGE}/${BINARY} ]; then

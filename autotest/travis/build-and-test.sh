@@ -14,14 +14,14 @@ CMAKEOPTS="..
 
 if [ "${CONFIG}" = "full" ]; then
     CMAKEOPTS="${CMAKEOPTS}
-               -DRELEASE=OFF
+               -DCMAKE_BUILD_TYPE=Debug
                -DLOWLEVEL_DEBUG=ON
                -DSSL_SUPPORT=ON
                -DUSE_OPENSSL=ON
                -DADC_STRESS=ON"
 else
     CMAKEOPTS="${CMAKEOPTS}
-               -DRELEASE=ON
+               -DCMAKE_BUILD_TYPE=Release
                -DLOWLEVEL_DEBUG=OFF
                -DSSL_SUPPORT=OFF
                -DADC_STRESS=OFF"

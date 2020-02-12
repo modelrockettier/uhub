@@ -1,6 +1,10 @@
 # ATTENTION!
 # Plugins are invoked in the order of listing in the plugin config file.
 
+# NOTE: By default:
+#   PLUGIN_DIR = /usr/lib/uhub or /usr/local/lib/uhub
+#   CONFIG_DIR = /etc/uhub
+#   LOG_DIR    = /var/log
 
 # Sqlite based user authentication.
 #
@@ -10,7 +14,7 @@
 #
 # Parameters:
 # file: path/filename for database.
-plugin /usr/lib/uhub/mod_auth_sqlite.so "file=/etc/uhub/users.db"
+plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db"
 
 # Topic commands.
 # Note: "topic" == "hub description" (as configured in uhub.conf)
@@ -20,17 +24,17 @@ plugin /usr/lib/uhub/mod_auth_sqlite.so "file=/etc/uhub/users.db"
 # !resettopic - reset the topic to the default (op required)
 #
 # This plugins takes no parameters.
-#plugin /usr/lib/uhub/mod_topic.so
+#plugin ${PLUGIN_DIR}/mod_topic.so
 
 # Log file writer
 #
 # Parameters:
 # file: path/filename for log file.
 # syslog: if true then syslog is used instead of writing to a file (Unix only)
-plugin /usr/lib/uhub/mod_logging.so "file=/var/log/uhub.log"
+plugin ${PLUGIN_DIR}/mod_logging.so "file=${LOG_DIR}/uhub.log"
 
 # A simple example plugin
-#plugin /usr/lib/uhub/mod_example.so
+#plugin ${PLUGIN_DIR}/mod_example.so
 
 # A plugin sending a welcome message.
 #
@@ -55,7 +59,7 @@ plugin /usr/lib/uhub/mod_logging.so "file=/var/log/uhub.log"
 # %p - 'am' or 'pm'
 # %M - Minutes (00-59) (Hub local time)
 # %S - Seconds (00-60) (Hub local time)
-plugin /usr/lib/uhub/mod_welcome.so "motd=/etc/uhub/motd.txt rules=/etc/uhub/rules.txt"
+plugin ${PLUGIN_DIR}/mod_welcome.so "motd=${CONFIG_DIR}/motd.txt rules=${CONFIG_DIR}/rules.txt"
 
 # Load the chat history plugin.
 #
@@ -67,7 +71,7 @@ plugin /usr/lib/uhub/mod_welcome.so "motd=/etc/uhub/motd.txt rules=/etc/uhub/rul
 # history_max:     the maximum number of messages to keep in history
 # history_default: when !history is provided without arguments, then this default number of messages are returned.
 # history_connect: the number of chat history messages to send when users connect (0 = do not send any history)
-plugin /usr/lib/uhub/mod_chat_history.so "history_max=200 history_default=10 history_connect=5"
+plugin ${PLUGIN_DIR}/mod_chat_history.so "history_max=200 history_default=10 history_connect=5"
 
 # Provides a persistent chat history at login and request
 #
@@ -83,18 +87,18 @@ plugin /usr/lib/uhub/mod_chat_history.so "history_max=200 history_default=10 his
 # history_max:     the maximum number of messages to keep in history
 # history_default: when !history is provided without arguments, then this default number of messages are returned.
 # history_connect: the number of chat history messages to send when users connect (0 = do not send any history)
-#plugin /usr/lib/uhub/mod_chat_history_sqlite.so "file=/etc/uhub/history.db history_max=200 history_default=10 history_connect=5"
+#plugin ${PLUGIN_DIR}/mod_chat_history_sqlite.so "file=${CONFIG_DIR}/history.db history_max=200 history_default=10 history_connect=5"
 
 # No guest downloading.
 #
 # This plugin only allows registered users to search and initiate transfers.
 #
 # This plugins takes no parameters.
-#plugin /usr/lib/uhub/mod_no_guest_downloads.so
+#plugin ${PLUGIN_DIR}/mod_no_guest_downloads.so
 
 # Turn uhub into a chat-only hub.
 #
 # Disables connection setup, search and results.
 #
 # This plugins takes no parameters.
-#plugin /usr/lib/uhub/mod_chat_only.so
+#plugin ${PLUGIN_DIR}/mod_chat_only.so
