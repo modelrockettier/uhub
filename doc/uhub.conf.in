@@ -37,10 +37,10 @@ hub_enabled = yes
 
 # DEPRECATED: See mod_auth_sqlite plugin for user management.
 # Access control list (user database)
-#file_acl = /etc/uhub/users.conf
+#file_acl = ${CONFIG_DIR}/users.conf
 
 # This file can contain a conf for plugin subsystem
-file_plugins = /etc/uhub/plugins.conf
+file_plugins = ${CONFIG_DIR}/plugins.conf
 
 # Slots/share/hubs limits
 limit_max_hubs_user = 10
