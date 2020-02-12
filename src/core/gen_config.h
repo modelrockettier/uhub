@@ -27,7 +27,6 @@ struct hub_config
 	int   max_send_buffer;                 /*<<< Max send buffer before disconnect, per user (default: 131072) */
 	int   max_send_buffer_soft;            /*<<< Max send buffer before message drops, per user (default: 98304) */
 	int   low_bandwidth_mode;              /*<<< Enable bandwidth saving measures (default: 0) */
-	int   max_chat_history;                /*<<< Number of chat messages kept in history (default: 20) */
 	int   max_logout_log;                  /*<<< Number of log entries for people leaving the hub (default: 20) */
 	int   limit_max_hubs_user;             /*<<< Max concurrent hubs as a guest user (default: 10) */
 	int   limit_max_hubs_reg;              /*<<< Max concurrent hubs as a registered user (default: 10) */
@@ -81,8 +80,8 @@ struct hub_config
 	char* msg_error_no_memory;             /*<<< "No memory" */
 	char* msg_user_share_size_low;         /*<<< "User is not sharing enough" */
 	char* msg_user_share_size_high;        /*<<< "User is sharing too much" */
-	char* msg_user_slots_low;              /*<<< "User have too few upload slots." */
-	char* msg_user_slots_high;             /*<<< "User have too many upload slots." */
+	char* msg_user_slots_low;              /*<<< "User has too few upload slots." */
+	char* msg_user_slots_high;             /*<<< "User has too many upload slots." */
 	char* msg_user_hub_limit_low;          /*<<< "User is on too few hubs." */
 	char* msg_user_hub_limit_high;         /*<<< "User is on too many hubs." */
 	char* msg_user_flood_chat;             /*<<< "Chat flood detected, messages are dropped." */
