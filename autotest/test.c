@@ -516,6 +516,15 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_list_get_last_prev_2, "list_get_last_prev_2");
 	exotic_add_test(&handle, &exotic_test_list_get_last_prev_next_1, "list_get_last_prev_next_1");
 	exotic_add_test(&handle, &exotic_test_list_clear, "list_clear");
+	exotic_add_test(&handle, &exotic_test_list_prepend_1, "list_prepend_1");
+	exotic_add_test(&handle, &exotic_test_list_prepend_2, "list_prepend_2");
+	exotic_add_test(&handle, &exotic_test_list_prepend_3, "list_prepend_3");
+	exotic_add_test(&handle, &exotic_test_list_prepend_4, "list_prepend_4");
+	exotic_add_test(&handle, &exotic_test_list_prepend_check, "list_prepend_check");
+	exotic_add_test(&handle, &exotic_test_list_clear_2, "list_clear_2");
+	exotic_add_test(&handle, &exotic_test_list_insert_ordered, "list_insert_ordered");
+	exotic_add_test(&handle, &exotic_test_list_insert_ordered_check, "list_insert_ordered_check");
+	exotic_add_test(&handle, &exotic_test_list_clear_3, "list_clear_3");
 	exotic_add_test(&handle, &exotic_test_list_remove_first_1_1, "list_remove_first_1_1");
 	exotic_add_test(&handle, &exotic_test_list_remove_first_1_2, "list_remove_first_1_2");
 	exotic_add_test(&handle, &exotic_test_list_remove_first_1_3, "list_remove_first_1_3");

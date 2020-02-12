@@ -40,7 +40,10 @@ extern void list_destroy(struct linked_list*);
 extern void list_clear(struct linked_list*, void (*free_handle)(void* ptr) );
 
 
+extern void list_prepend(struct linked_list* list, void* data_ptr);
 extern void list_append(struct linked_list* list, void* data_ptr);
+
+extern void list_insert_ordered(struct linked_list* list, void* data_ptr, int (*cmp)(void*,void*));
 
 /**
  * A special list append that moves all nodes from other_list to list.

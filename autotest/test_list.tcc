@@ -60,7 +60,7 @@ EXO_TEST(list_remove_3, {
 });
 
 EXO_TEST(list_remove_4, {
-	list_remove(list, (char*) B); /* already removed, so should have no effect */
+	list_remove(list, (char*) B);
 	return list->size == 0;
 });
 
@@ -129,6 +129,71 @@ EXO_TEST(list_clear, {
 	list_clear(list, &null_free);
 	return list->size == 0 && list->first == 0 && list->last == 0 && list->iterator == 0;
 });
+
+EXO_TEST(list_prepend_1, {
+	list_prepend(list, C);
+	return list->size == 1;
+});
+
+EXO_TEST(list_prepend_2, {
+	list_prepend(list, A);
+	return list->size == 2;
+});
+
+EXO_TEST(list_prepend_3, {
+	list_prepend(list, A);
+	return list->size == 3;
+});
+
+EXO_TEST(list_prepend_4, {
+	list_prepend(list, B);
+	return list->size == 4;
+});
+
+EXO_TEST(list_prepend_check, {
+	return list_get_index(list, 0) == B &&
+			list_get_index(list, 1) == A &&
+			list_get_index(list, 2) == A &&
+			list_get_index(list, 3) == C;
+});
+
+EXO_TEST(list_clear_2, {
+	list_clear(list, &null_free);
+	return list->size == 0 && list->first == 0 && list->last == 0 && list->iterator == 0;
+});
+
+EXO_TEST(list_insert_ordered, {
+	int (*cmp)(void*, void*) = (void *)strcmp;
+	list_insert_ordered(list, B,  cmp); /* first */
+	list_insert_ordered(list, B2, cmp); /* append */
+	list_insert_ordered(list, A,  cmp); /* prepend */
+	list_insert_ordered(list, A2, cmp); /* middle */
+	list_insert_ordered(list, C2, cmp); /* append */
+	list_insert_ordered(list, C2, cmp); /* append */
+	list_insert_ordered(list, A,  cmp); /* prepend */
+	list_insert_ordered(list, C,  cmp); /* middle */
+	list_insert_ordered(list, A2, cmp); /* middle */
+	return list->size == 9;
+});
+
+/* List should be (9 items): A, A, B, C, A2, A2, B2, C2, C2 */
+EXO_TEST(list_insert_ordered_check, {
+	return list_get_index(list, 0) == A &&
+			list_get_index(list, 1) == A &&
+			list_get_index(list, 2) == B &&
+			list_get_index(list, 3) == C &&
+			list_get_index(list, 4) == A2 &&
+			list_get_index(list, 5) == A2 &&
+			list_get_index(list, 6) == B2 &&
+			list_get_index(list, 7) == C2 &&
+			list_get_index(list, 8) == C2;
+});
+
+EXO_TEST(list_clear_3, {
+	list_clear(list, &null_free);
+	return list->size == 0 && list->first == 0 && list->last == 0 && list->iterator == 0;
+});
+
 
 static int g_remove_flag = 0;
 static void null_free_inc_flag(void* ptr)
