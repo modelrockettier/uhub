@@ -374,7 +374,7 @@ static int net_connect_process_queue(struct net_connect_handle* handle, struct n
 
 static int net_connect_process(struct net_connect_handle* handle)
 {
-	int ret4, ret6;
+	int ret6;
 
 	ret6 = net_connect_process_queue(handle, handle->job6);
 	if (ret6 == 1)
