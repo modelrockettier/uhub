@@ -73,8 +73,8 @@ void list_append(struct linked_list* list, void* data_ptr)
 
 	if (list->last)
 	{
-		list->last->next = new_node;
 		new_node->prev = list->last;
+		list->last->next = new_node;
 	}
 	else
 	{
@@ -117,9 +117,11 @@ void list_append_list(struct linked_list* list, struct linked_list* other)
 
 void list_remove(struct linked_list* list, void* data_ptr)
 {
-	struct node* node = list->first;
+	struct node* node;
+	uhub_assert(list);
 	uhub_assert(data_ptr);
 
+	node = list->first;
 	list->iterator = NULL;
 
 	while (node)

@@ -98,10 +98,10 @@ const char* auth_cred_to_string(enum auth_credentials cred)
 		case auth_cred_super:        return "super";
 		case auth_cred_link:         return "link";
 		case auth_cred_admin:        return "admin";
+		default:                     return "unknown";
 	}
 
-	return "";
-};
+}
 
 int auth_string_to_cred(const char* str, enum auth_credentials* out)
 {

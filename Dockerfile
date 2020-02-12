@@ -11,6 +11,10 @@ mkdir /app /app/bin /app/conf /app/lib /app/man /app/man/man1
 
 WORKDIR /uhub
 
+# Hardening flags for compilation
+ENV CFLAGS="-Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fPIE -pie -Wall -O2 -DALLOW_NICK_CHANGE -fstack-check"
+ENV LDFLAGS="-Wl,-z,relro"
+
 ARG BUILD=Release
 
 # When building from the uhub repository, just copy it in
@@ -36,6 +40,7 @@ cmake . \
 	-DPLUGIN_DIR=/libs \
 	-DCONFIG_DIR=/conf \
 	-DLOG_DIR=/conf \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
 	-DCMAKE_BUILD_TYPE="${BUILD}" && \
 echo "**** build uhub ****" && \
 make && \
@@ -86,6 +91,9 @@ EXPOSE 1151
 
 ENTRYPOINT ["/app/bin/start-uhub.sh"]
 CMD []
+
+ARG BUILD=Release
+LABEL build_type=${BUILD}
 
 COPY --from=builder /app /app
 
