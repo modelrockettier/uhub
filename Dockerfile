@@ -7,7 +7,7 @@ echo "**** install build dependencies ****" && \
 apk add --no-cache bash util-linux openssl-dev sqlite-dev \
 	build-base cmake gcc git make && \
 echo "**** create directories ****" && \
-mkdir /app /app/bin /app/lib /app/man /app/man/man1 /copy
+mkdir /app /app/bin /app/conf /app/lib /app/man /app/man/man1
 
 WORKDIR /uhub
 
@@ -23,9 +23,11 @@ COPY . .
 # a bit easier and to allow existing configs to work with the container.
 # /etc/uhub is also symlinked to /conf for ease of use
 
-# Move all the useful stuff into /copy so we can copy it all to the second
-# stage in 1 layer
+# Put everything in /app so it's self-contained and can be copied to the
+# second-stage image in 1 layer.
 # Gzipped man pages are only ~2k, so keep them in the final image.
+# Use /app/conf for configs here so the start script can install missing
+# configs on the first fun.
 RUN \
 echo "**** configure uhub ****" && \
 cmake . \
@@ -43,10 +45,12 @@ echo "**** install uhub ****" && \
 make install && \
 echo "**** compress man pages ****" && \
 gzip /app/man/*/*.? && \
+echo "**** move configs into place ****" && \
+mv -v /conf/* /app/conf/ && \
 echo "**** move plugins into place ****" && \
 mv -v /libs/* /app/lib/ && \
-echo "**** move uhub into place ****" && \
-mv -v /app /conf /copy/
+echo "**** move start script into place ****" && \
+mv -v tools/start-docker.sh /app/bin/start-uhub.sh
 
 
 # Actual production container
@@ -57,25 +61,33 @@ echo "**** install dependencies ****" && \
 apk add --no-cache bash pwgen util-linux openssl-dev sqlite-dev && \
 echo "**** remove unnecessary header files ****" && \
 rm -rf /usr/include /usr/lib/pkgconfig && \
+echo "**** create config directory ****" && \
+mkdir /conf && \
 echo "**** create plugin symlinks ****" && \
 ln -sv app/lib /libs && \
 ln -sv /app/lib /usr/lib/uhub && \
 echo "**** create config symlink ****" && \
 ln -sv /conf /etc/uhub
 
+VOLUME /conf
+
 # So that "man uhub" and "man uhub-passwd" work in the container
 ENV MANPATH=/app/man
 # so that "uhub-passwd" works in the container without the full path
 ENV PATH="/app/bin:${PATH}"
 
+# The admin/pass vars ONLY affect the first run (if there is no /conf/uhub.conf)
+ENV UHUB_ADMIN=admin
+# If UHUB_PASS is empty, it will be randomly generated.
+# Check /conf/admin.txt for the password and how to change it.
+ENV UHUB_PASS=
+
 EXPOSE 1151
 
-ENTRYPOINT ["/app/bin/uhub"]
-CMD ["-c", "/conf/uhub.conf"]
+ENTRYPOINT ["/app/bin/start-uhub.sh"]
+CMD []
 
-COPY --from=builder /copy/ /
+COPY --from=builder /app /app
 
 # Set workdir after copying /app so docker doesn't add another layer
 WORKDIR /app
-
-VOLUME /conf
