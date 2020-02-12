@@ -63,6 +63,19 @@ void command_shutdown(struct command_base* cbase)
 	hub_free(cbase);
 }
 
+int command_cmp(void *a, void *b)
+{
+	struct command_handle* ha = (struct command_handle*) a;
+	struct command_handle* hb = (struct command_handle*) b;
+
+	uhub_assert(a != NULL);
+	uhub_assert(b != NULL);
+	uhub_assert(ha->prefix != NULL);
+	uhub_assert(hb->prefix != NULL);
+
+	return strcmp(ha->prefix, hb->prefix);
+}
+
 int command_add(struct command_base* cbase, struct command_handle* cmd, void* ptr)
 {
 	uhub_assert(cbase != NULL);
@@ -70,7 +83,7 @@ int command_add(struct command_base* cbase, struct command_handle* cmd, void* pt
 	uhub_assert(cmd->length == strlen(cmd->prefix));
 	uhub_assert(cmd->handler != NULL);
 	uhub_assert(cmd->description && *cmd->description);
-	list_append(cbase->handlers, cmd);
+	list_insert_ordered(cbase->handlers, cmd, command_cmp);
 	cbase->prefix_length_max = MAX(cmd->length, cbase->prefix_length_max);
 	cmd->ptr = ptr;
 	return 1;

@@ -61,6 +61,34 @@ void list_clear(struct linked_list* list, void (*free_handle)(void* ptr))
 }
 
 
+void list_prepend(struct linked_list* list, void* data_ptr)
+{
+	struct node* new_node = (struct node*) hub_malloc_zero(sizeof(struct node));
+	if (!new_node)
+	{
+		LOG_FATAL("Unable to allocate memory");
+		return;
+	}
+	new_node->ptr = data_ptr;
+
+	uhub_assert(list != NULL);
+	// ensure either both list first and last are NULL or both are not NULL.
+	uhub_assert((list->first == NULL) == (list->last == NULL));
+
+	if (list->first)
+	{
+		new_node->next = list->first;
+		list->first->prev = new_node;
+	}
+	else
+	{
+		list->last = new_node;
+	}
+
+	list->first = new_node;
+	list->size++;
+}
+
 void list_append(struct linked_list* list, void* data_ptr)
 {
 	struct node* new_node = (struct node*) hub_malloc_zero(sizeof(struct node));
@@ -70,6 +98,10 @@ void list_append(struct linked_list* list, void* data_ptr)
 		return;
 	}
 	new_node->ptr = data_ptr;
+
+	uhub_assert(list != NULL);
+	// ensure either both list first and last are NULL or both are not NULL.
+	uhub_assert((list->first == NULL) == (list->last == NULL));
 
 	if (list->last)
 	{
@@ -83,6 +115,49 @@ void list_append(struct linked_list* list, void* data_ptr)
 
 	list->last = new_node;
 	list->size++;
+}
+
+void list_insert_ordered(struct linked_list* list, void* data_ptr, int (*cmp)(void*,void*))
+{
+	uhub_assert(list != NULL);
+	uhub_assert(cmp != NULL);
+	// ensure either both list first and last are NULL or both are not NULL.
+	uhub_assert((list->first == NULL) == (list->last == NULL));
+
+	if (!list->first || cmp(data_ptr, list->first->ptr) <= 0)
+	{
+		list_prepend(list, data_ptr);
+	}
+	else if (cmp(data_ptr, list->last->ptr) >= 0)
+	{
+		list_append(list, data_ptr);
+	}
+	else
+	{
+		// If we're here, then current is >= list->first
+		struct node* current = list->first->next;
+		struct node* new_node = (struct node*) hub_malloc_zero(sizeof(struct node));
+		if (!new_node)
+		{
+			LOG_FATAL("Unable to allocate memory");
+			return;
+		}
+		new_node->ptr = data_ptr;
+
+		while (cmp(data_ptr, current->ptr) >= 0)
+		{
+			uhub_assert(current->next);
+			current = current->next;
+		}
+
+		new_node->next = current;
+		new_node->prev = current->prev;
+
+		current->prev = new_node;
+		new_node->prev->next = new_node;
+
+		list->size++;
+	}
 }
 
 void list_append_list(struct linked_list* list, struct linked_list* other)
