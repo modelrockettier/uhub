@@ -1,5 +1,5 @@
 AUTHORS
-README
-doc/getstarted.txt
-doc/ssl-documentation.txt
+README.md
+doc/getstarted.md
+doc/tls-documentation.md
 doc/users.conf

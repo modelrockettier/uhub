@@ -52,12 +52,14 @@ install -m644 doc/init.d.RedHat/etc/sysconfig/uhub  $RPM_BUILD_ROOT/etc/sysconfi
 install -m644 doc/init.d.RedHat/etc/logrotate.d/uhub $RPM_BUILD_ROOT/etc/logrotate.d/
 /bin/gzip -9c doc/uhub.1 > doc/uhub.1.gz &&
 install -m644 doc/uhub.1.gz $RPM_BUILD_ROOT/usr/share/man/man1
+/bin/gzip -9c doc/uhub-passwd.1 > doc/uhub-passwd.1.gz &&
+install -m644 doc/uhub-passwd.1.gz $RPM_BUILD_ROOT/usr/share/man/man1
 install -m644 mod_*.so $RPM_BUILD_ROOT/usr/lib/uhub
 
 
 %files
 %defattr(-,root,root)
-%doc AUTHORS BUGS COPYING ChangeLog README TODO doc/Doxyfile doc/architecture.txt doc/compile.txt doc/extensions.txt doc/getstarted.txt doc/uhub.dot
+%doc AUTHORS COPYING ChangeLog README.md doc/Doxyfile doc/architecture.txt doc/compile.md doc/extensions.txt doc/getstarted.md doc/uhub.dot doc/motd.txt doc/tls-documentation.md
 %config(noreplace) /etc/uhub/uhub.conf
 #%{_sysconfdir}/uhub/uhub.conf
 %config(noreplace) %{_sysconfdir}/uhub/users.conf
