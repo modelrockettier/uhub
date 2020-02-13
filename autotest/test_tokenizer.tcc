@@ -87,12 +87,24 @@ EXO_TEST(tokenizer_escape_5, { return compare("\"value1\" value\\\\2", "value1 v
 EXO_TEST(tokenizer_escape_6, { return compare("\"value1\" value\\\t2", "value1 value|2"); });
 EXO_TEST(tokenizer_escape_7, { return compare("\"value1\" \"value\t2\"", "value1 value|2"); });
 
+static inline int strcmp_null(const char* a, const char* b)
+{
+	if (!a && !b)
+		return 0;
+	else if (!b)
+		return 1;
+	else if (!a)
+		return -1;
+	else
+		return strcmp(a, b);
+}
+
 static int test_setting(const char* str, const char* expected_key, const char* expected_value)
 {
 	int success = 0;
 	struct cfg_settings* setting = cfg_settings_split(str);
 	if (!setting) return expected_key == NULL;
-	success = (!strcmp(cfg_settings_get_key(setting), expected_key) && !strcmp(cfg_settings_get_value(setting), expected_value));
+	success = (!strcmp_null(cfg_settings_get_key(setting), expected_key) && !strcmp_null(cfg_settings_get_value(setting), expected_value));
 	cfg_settings_free(setting);
 	return success;
 }
