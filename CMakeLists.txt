@@ -123,6 +123,7 @@ add_library(mod_chat_history MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_chat_histo
 add_library(mod_chat_history_sqlite MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_chat_history_sqlite.c )
 add_library(mod_chat_only MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_chat_only.c)
 add_library(mod_example MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_example.c)
+add_library(mod_guest_passwd MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_guest_passwd.c)
 add_library(mod_logging MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_logging.c ${PROJECT_SOURCE_DIR}/adc/sid.c)
 add_library(mod_no_guest_downloads MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_no_guest_downloads.c)
 add_library(mod_topic MODULE ${PROJECT_SOURCE_DIR}/plugins/mod_topic.c)
@@ -135,6 +136,7 @@ set_target_properties(
 	mod_chat_history_sqlite
 	mod_chat_only
 	mod_example
+	mod_guest_passwd
 	mod_logging
 	mod_no_guest_downloads
 	mod_topic
@@ -150,6 +152,7 @@ target_link_libraries(mod_chat_history utils)
 target_link_libraries(mod_chat_history_sqlite ${SQLITE3_LIBRARIES} utils)
 target_link_libraries(mod_chat_only utils)
 target_link_libraries(mod_example utils)
+target_link_libraries(mod_guest_passwd utils)
 target_link_libraries(mod_logging network utils)
 target_link_libraries(mod_no_guest_downloads utils)
 target_link_libraries(mod_topic utils)
@@ -253,7 +256,7 @@ add_test(NAME autotest COMMAND autotest-bin)
 
 if (UNIX)
 	install( TARGETS uhub uhub-admin uhub-passwd RUNTIME DESTINATION ${BIN_DIR} )
-	install( TARGETS mod_auth_simple mod_auth_sqlite mod_chat_history mod_chat_history_sqlite mod_chat_only mod_example mod_logging mod_no_guest_downloads mod_topic mod_welcome LIBRARY DESTINATION ${PLUGIN_DIR} OPTIONAL )
+	install( TARGETS mod_auth_simple mod_auth_sqlite mod_chat_history mod_chat_history_sqlite mod_chat_only mod_example mod_guest_passwd mod_logging mod_no_guest_downloads mod_topic mod_welcome LIBRARY DESTINATION ${PLUGIN_DIR} OPTIONAL )
 	install( FILES ${CMAKE_SOURCE_DIR}/doc/uhub.conf ${CMAKE_SOURCE_DIR}/doc/plugins.conf ${CMAKE_SOURCE_DIR}/doc/rules.txt ${CMAKE_SOURCE_DIR}/doc/motd.txt DESTINATION ${CONFIG_DIR} OPTIONAL )
 	install( FILES ${CMAKE_SOURCE_DIR}/doc/uhub.1 ${CMAKE_SOURCE_DIR}/doc/uhub-passwd.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL )
 endif()
