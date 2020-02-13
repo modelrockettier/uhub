@@ -16,6 +16,18 @@
 # file: path/filename for database.
 plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db"
 
+# Require a default password from all guests.
+#
+# This does not affect registered users, but guests that do not specify a
+# password, or who specify the wrong password will be denied.
+#
+# To avoid problems, this should appear after your normal auth plugin in
+# the plugins.conf file.
+#
+# Parameters:
+# password: the default guest password
+#plugin ${PLUGIN_DIR}/mod_guest_passwd.so "password=uhub-guest"
+
 # Topic commands.
 # Note: "topic" == "hub description" (as configured in uhub.conf)
 #
