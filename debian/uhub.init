@@ -14,8 +14,8 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 NAME=uhub
 DESC="ADC hub"
 DAEMON=/usr/bin/uhub
-PIDFILE=/var/run/uhub/uhub.pid
-LOGFILE=/var/log/uhub/uhub.log
+PIDFILE=/var/run/uhub.pid
+LOGFILE=/var/log/uhub.log
 SCRIPTNAME=/etc/init.d/uhub
 
 DEFAULTFILE=/etc/default/uhub
@@ -29,7 +29,6 @@ test -x $DAEMON || exit 0
 . /lib/lsb/init-functions
 
 ulimit -n 65536
-mkdir -p /var/run/uhub/
 
 set -e
 

@@ -1,14 +1,47 @@
-language: cpp
-dist: xenial
+language: c
+os: linux
+dist: bionic
+arch: amd64
 compiler:
   - gcc
   - clang
 env:
   - CONFIG=minimal
   - CONFIG=full
+
+jobs:
+  # Allow experimental builds to fail
+  allow_failures:
+#   - os: osx
+#   - os: windows
+
+  # Additional builds to do (outside the build matrix)
+  include:
+    # Xenial can build without SSL_SUPPORT (needs openssl 1.1, has 1.0)
+    - os: linux
+      dist: xenial
+      arch: amd64
+      env: CONFIG=minimal OLD=1
+    # ARM builds
+    - os: linux
+      arch: arm64
+      env: CONFIG=minimal
+    - os: linux
+      arch: arm64
+      env: CONFIG=full
+    # Debian package builds
+    - os: linux
+      arch: amd64
+      env: CONFIG=deb
+    # Docker build
+    - language: minimal
+      os: linux
+      arch: amd64
+      services: docker
+      env: CONFIG=docker
+
 install:
   - autotest/travis/install-build-depends.sh
 script:
   - autotest/travis/build-and-test.sh
-dist: xenial
 

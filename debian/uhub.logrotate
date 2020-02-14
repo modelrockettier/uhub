@@ -1,4 +1,4 @@
-/var/log/uhub/*.log
+/var/log/uhub.log
 {
         compress
         size 10M

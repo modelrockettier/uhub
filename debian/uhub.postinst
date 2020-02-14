@@ -3,7 +3,7 @@ set -e
 
 case "$1" in
     configure)
-	chmod 0750 /var/log/uhub
+	chmod 0750 /var/log
 
 	if [ -x /etc/init.d/uhub ]; then
         	update-rc.d uhub defaults >/dev/null
