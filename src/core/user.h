@@ -202,6 +202,11 @@ extern int user_is_protected(struct hub_user* user);
 extern int user_is_registered(struct hub_user* user);
 
 /**
+ * Returns 1 if a user is connected over TLS.
+ */
+extern int user_is_tls_connected(struct hub_user* user);
+
+/**
  * User supports the protocol extension as given in fourcc.
  * This is usually set while the user is connecting, but can
  * also be used to subscribe to a new class of messages from the
@@ -272,6 +277,18 @@ extern void user_net_io_want_write(struct hub_user* user);
  * Mark the user with a want read flag, meaning it should poll for readability.
  */
 extern void user_net_io_want_read(struct hub_user* user);
+
+/**
+ * Return the user's feature casts as a string. The returned string is
+ * dynamically allocated and needs to be freed with hub_free().
+ */
+char* user_feature_cast_to_string(struct hub_user* user);
+
+/**
+ * Return the user's flags as a string. The returned string is dynamically
+ * allocated and needs to be freed with hub_free().
+ */
+extern char* user_flags_to_string(struct hub_user* user);
 
 #endif /* HAVE_UHUB_USER_H */
 

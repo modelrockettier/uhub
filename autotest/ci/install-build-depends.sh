@@ -157,7 +157,7 @@ elif [ "$OS_NAME" = "freebsd" ]; then
     PACKAGES="cmake coreutils sqlite3"
 
 	case "${CONFIG}" in
-		full) PACKAGES="$PACKAGES git openssl" ;;
+		full) PACKAGES="$PACKAGES openssl" ;; # git is borked in pkg
 		minimal) ;;
 		*)
 			echo "Unknown config: ${CONFIG}" >&2

@@ -310,6 +310,19 @@ int user_is_registered(struct hub_user* user)
 	return auth_cred_is_registered(user->credentials);
 }
 
+/**
+ * Returns 1 if a user is connected over TLS.
+ */
+int user_is_tls_connected(struct hub_user* user)
+{
+#if SSL_SUPPORT
+	if (net_con_is_ssl(user->connection))
+		return 1;
+	else
+#endif
+	return 0;
+}
+
 void user_net_io_want_write(struct hub_user* user)
 {
 	net_con_update(user->connection, NET_EVENT_READ | NET_EVENT_WRITE);
@@ -345,4 +358,93 @@ const char* user_get_quit_reason_string(enum user_quit_reason reason)
 const char* user_get_address(struct hub_user* user)
 {
 	return ip_convert_to_string(&user->id.addr);
+}
+
+
+char* user_feature_cast_to_string(struct hub_user* user)
+{
+	struct cbuffer* buf;
+	char* result;
+	char* tmp;
+
+	if (!user->feature_cast || list_size(user->feature_cast) == 0)
+		return hub_strdup("");
+
+	buf = cbuf_create(128);
+	LIST_FOREACH(char*, tmp, user->feature_cast,
+	{
+		cbuf_append_format(buf, "%s ", tmp);
+	});
+
+	cbuf_chomp(buf, NULL);
+
+	result = hub_strdup(cbuf_get(buf));
+
+	cbuf_destroy(buf);
+
+	return result;
+}
+
+
+struct user_flag
+{
+	uint32_t value;
+	char const* desc;
+};
+
+/* Features are UPPERCASE, flags are lowercase */
+static struct user_flag const user_flags[] = {
+	{ .value = feature_base,    .desc = "BASE"       },
+	{ .value = feature_auto,    .desc = "AUTO"       },
+	{ .value = feature_bbs,     .desc = "BBS"        },
+	{ .value = feature_ucmd,    .desc = "UCMD"       },
+	{ .value = feature_zlif,    .desc = "ZLIF"       },
+	{ .value = feature_tiger,   .desc = "TIGER"      },
+	{ .value = feature_bloom,   .desc = "BLOOM"      },
+	{ .value = feature_ping,    .desc = "PING"       },
+	{ .value = feature_link,    .desc = "LINK"       },
+	{ .value = feature_adcs,    .desc = "ADCS"       },
+	{ .value = feature_bas0,    .desc = "BAS0"       },
+	{ .value = flag_flood,      .desc = "flood"      },
+	{ .value = flag_muted,      .desc = "muted"      },
+	{ .value = flag_ignore,     .desc = "ignore"     },
+	{ .value = flag_maxbuf,     .desc = "maxbuf"     },
+	{ .value = flag_choke,      .desc = "choke"      },
+	{ .value = flag_want_read,  .desc = "want_read"  },
+	{ .value = flag_want_write, .desc = "want_write" },
+	{ .value = flag_user_list,  .desc = "user_list"  },
+	{ .value = flag_pipeline,   .desc = "pipeline"   },
+	{ .value = flag_nat,        .desc = "nat"        },
+};
+
+char* user_flags_to_string(struct hub_user* user)
+{
+	struct cbuffer* buf;
+	char* result;
+	uint32_t flags = user->flags;
+	size_t i;
+
+	if (!flags)
+		return hub_strdup("");
+
+	buf = cbuf_create(160);
+	for (i = 0; i < (sizeof(user_flags) / sizeof(user_flags[0])); i++)
+	{
+		if (flags & user_flags[i].value)
+		{
+			flags &= ~user_flags[i].value;
+			cbuf_append_format(buf, "%s ", user_flags[i].desc);
+		}
+	}
+
+	if (flags)
+		cbuf_append_format(buf, "unknown-%lx ", (unsigned long)flags);
+
+	cbuf_chomp(buf, NULL);
+
+	result = hub_strdup(cbuf_get(buf));
+
+	cbuf_destroy(buf);
+
+	return result;
 }

@@ -363,6 +363,10 @@ static int command_kick(struct command_base* cbase, struct hub_user* user, struc
 	{
 		cbuf_append(buf, "Cannot kick yourself.");
 	}
+	else if (user->credentials < target->credentials)
+	{
+		cbuf_append(buf, "Permission denied.");
+	}
 	else
 	{
 		if (message)
@@ -410,7 +414,8 @@ static int command_shutdown_hub(struct command_base* cbase, struct hub_user* use
 static int command_version(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
 {
 	struct cbuffer* buf;
-	if (cbase->hub->config->show_banner_sys_info)
+	// Always show sys info to supers and admins
+	if (cbase->hub->config->show_banner_sys_info || user->credentials >= auth_cred_super)
 		buf = cbuf_create_const("Powered by " PRODUCT_STRING " on " OPSYS "/" CPUINFO);
 	else
 		buf = cbuf_create_const("Powered by " PRODUCT_STRING);
@@ -595,7 +600,76 @@ static int command_stats(struct command_base* cbase, struct hub_user* user, stru
 	return command_status(cbase, user, cmd, buf);
 }
 
-static struct command_handle* add_builtin(struct command_base* cbase, const char* prefix, const char* args, enum auth_credentials cred, command_handler handler, const char* description)
+static int send_user_info(struct command_base* cbase, struct hub_user* user, struct hub_user* target, int all_info, struct hub_command* cmd)
+{
+	struct cbuffer* buf = cbuf_create(128);
+	cbuf_append_format(buf, "User \"%s\" is a %s\n", target->id.nick, auth_cred_to_string(target->credentials));
+
+	if (all_info || user == target)
+		cbuf_append_format(buf, "Address: %s\n", user_get_address(target));
+
+	if (user_is_tls_connected(target))
+		cbuf_append(buf, "Connected securely with ADCS\n");
+	else
+		cbuf_append(buf, "Connected with (unencrypted) ADC\n");
+
+	if (user_flag_get(target, feature_auto))
+		cbuf_append(buf, "Automatic NAT traversal is on\n");
+
+	if (all_info)
+	{
+		if (user_flag_get(target, flag_muted))
+			cbuf_append(buf, "User is muted\n");
+		if (user_flag_get(target, flag_flood))
+			cbuf_append(buf, "User has been notified about flooding\n");
+
+		if (target->id.cid[0] != '\0')
+			cbuf_append_format(buf, "Client ID: %s\n", target->id.cid);
+
+		if (target->id.user_agent[0] != '\0')
+			cbuf_append_format(buf, "User Agent: %s\n", target->id.user_agent);
+
+#ifdef DEBUG
+		// Show the full features and flags to supers and admins
+		if (user->credentials >= auth_cred_super)
+		{
+			char *tmp;
+			tmp = user_feature_cast_to_string(target);
+			if (tmp[0] != '\0')
+				cbuf_append_format(buf, "Features: %s\n", tmp);
+			hub_free(tmp);
+
+			tmp = user_flags_to_string(target);
+			if (tmp[0] != '\0')
+				cbuf_append_format(buf, "Flags: %s\n", tmp);
+			hub_free(tmp);
+		}
+#endif
+	}
+	return command_status(cbase, user, cmd, buf);
+}
+
+static int command_me(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
+{
+	// Only operators and above are allowed to see their own CID, etc.
+	int all_info = (user->credentials >= auth_cred_operator);
+	return send_user_info(cbase, user, user, all_info, cmd);
+}
+
+static int command_user_info(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
+{
+	struct hub_command_arg_data* arg = hub_command_arg_next(cmd, type_user);
+	struct hub_user* target = arg->data.user;
+
+	// Hide sensitive admin info from ops
+	int all_info = (user->credentials >= target->credentials);
+
+	return send_user_info(cbase, user, target, all_info, cmd);
+}
+
+
+static struct command_handle* add_builtin(struct command_base* cbase, const char* prefix, const char* args,
+	enum auth_credentials cred, command_handler handler, const char* description)
 {
 	struct command_handle* handle = (struct command_handle*) hub_malloc_zero(sizeof(struct command_handle));
 	handle->prefix = prefix;
@@ -617,11 +691,13 @@ void commands_builtin_add(struct command_base* cbase)
 	ADD_COMMAND("broadcast", "+m",  auth_cred_operator, command_broadcast,    "Send a message to all users" );
 	ADD_COMMAND("getip",     "u",   auth_cred_operator, command_getip,        "Show IP address for a user"  );
 	ADD_COMMAND("help",      "?c",  auth_cred_guest,    command_help,         "Show this help message."     );
+	ADD_COMMAND("info",      "u",   auth_cred_operator, command_user_info,    "Show info about a user."     );
 	ADD_COMMAND("kick",      "u?m", auth_cred_operator, command_kick,         "Kick a user"                 );
 	ADD_COMMAND("log",       "?m",  auth_cred_operator, command_log,          "Display log"                 ); // fail
+	ADD_COMMAND("me",        "",    auth_cred_guest,    command_me,           "Show info about you."        );
 	ADD_COMMAND("myip",      "",    auth_cred_guest,    command_myip,         "Show your own IP."           );
 	ADD_COMMAND("reload",    "",    auth_cred_admin,    command_reload,       "Reload configuration files." );
-	ADD_COMMAND("shutdown",  "",    auth_cred_admin,    command_shutdown_hub, "Shutdown hub."           );
+	ADD_COMMAND("shutdown",  "",    auth_cred_admin,    command_shutdown_hub, "Shutdown hub."               );
 	ADD_COMMAND("stats",     "",    auth_cred_super,    command_stats,        "Show hub statistics."        );
 	ADD_COMMAND("uptime",    "",    auth_cred_guest,    command_uptime,       "Display hub uptime info."    );
 	ADD_COMMAND("version",   "",    auth_cred_guest,    command_version,      "Show hub version info."      );

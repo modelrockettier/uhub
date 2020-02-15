@@ -115,6 +115,28 @@ void cbuf_append_strftime(struct cbuffer* buf, const char* format, const struct 
 	cbuf_append_bytes(buf, tmp, bytes);
 }
 
+void cbuf_chomp(struct cbuffer* buf, char const* remove)
+{
+	char const* tmp;
+
+	/* This shouldn't be called on const buffers */
+	uhub_assert(buf->capacity != 0);
+
+	if (remove == NULL)
+		remove = " \t\r\n";
+
+	while (buf->size > 0)
+	{
+		// check if the last non-NUL char is in the string of chars to remove
+		tmp = strchr(remove, buf->buf[buf->size - 1]);
+		if (tmp == NULL)
+			break;
+
+		buf->size--;
+		buf->buf[buf->size] = '\0';
+	}
+}
+
 const char* cbuf_get(struct cbuffer* buf)
 {
 	return buf->buf;

@@ -79,7 +79,7 @@ static void probe_net_event(struct net_connection* con, int events, void *arg)
 			{
 				LOG_TRACE("Probed ADC");
 #ifdef SSL_SUPPORT
-				if (probe->hub->config->tls_enable && probe->hub->config->tls_require)
+				if (!net_con_is_ssl(con) && probe->hub->config->tls_enable && probe->hub->config->tls_require)
 				{
 					if (*probe->hub->config->tls_require_redirect_addr)
 					{
