@@ -566,7 +566,7 @@ static int command_stats(struct command_base* cbase, struct hub_user* user, stru
 	static char txbuf[64] = { "0 B" };
 
 	cbuf_append(buf, "Hub statistics: ");
-	cbuf_append_format(buf, PRINTF_SIZE_T "/" PRINTF_SIZE_T " users (peak %d). ", hub->users->count, hub->config->max_users, hub->users->count_peak);
+	cbuf_append_format(buf, PRINTF_SIZE_T "/%d users (peak " PRINTF_SIZE_T "). ", hub->users->count, hub->config->max_users, hub->users->count_peak);
 
 	format_size(hub->stats.net_rx, rxbuf, sizeof(rxbuf));
 	format_size(hub->stats.net_tx, txbuf, sizeof(txbuf));

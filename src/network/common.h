@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef HAVE_UHUB_NETWORK_COMMON_H
+#define HAVE_UHUB_NETWORK_COMMON_H
+
 #define NET_WANT_READ             NET_EVENT_READ
 #define NET_WANT_WRITE            NET_EVENT_WRITE
 #define NET_WANT_ACCEPT           NET_EVENT_READ
@@ -46,3 +49,4 @@ struct ssl_handle; /* abstract type */
 	NET_CON_STRUCT_BASIC
 #endif /* SSL_SUPPORT */
 
+#endif /* HAVE_UHUB_NETWORK_COMMON_H */

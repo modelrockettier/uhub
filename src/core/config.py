@@ -4,9 +4,9 @@
   Copyright (C) 2007-2013, Jan Vidar Krey
 """
 
-from xml.dom import minidom, Node
+from xml.dom import minidom
 from datetime import datetime
-import argparse
+# import argparse
 
 class OptionParseError(Exception):
 	pass

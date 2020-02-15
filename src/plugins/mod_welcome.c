@@ -167,7 +167,8 @@ static struct cbuffer* parse_message(struct plugin_user* user, const char* msg)
 	const char* start = msg;
 	const char* offset = NULL;
 	time_t timestamp = time(NULL);
-	struct tm* now = localtime(&timestamp);
+	struct tm now;
+	localtime_r(&timestamp, &now);
 
 	while ((offset = strchr(start, '%')))
 	{
@@ -192,27 +193,27 @@ static struct cbuffer* parse_message(struct plugin_user* user, const char* msg)
 				break;
 
 			case 'H':
-				cbuf_append_strftime(buf, "%H", now);
+				cbuf_append_strftime(buf, "%H", &now);
 				break;
 
 			case 'I':
-				cbuf_append_strftime(buf, "%I", now);
+				cbuf_append_strftime(buf, "%I", &now);
 				break;
 
 			case 'P':
-				cbuf_append_strftime(buf, "%P", now);
+				cbuf_append_strftime(buf, "%P", &now);
 				break;
 
 			case 'p':
-				cbuf_append_strftime(buf, "%p", now);
+				cbuf_append_strftime(buf, "%p", &now);
 				break;
 
 			case 'M':
-				cbuf_append_strftime(buf, "%M", now);
+				cbuf_append_strftime(buf, "%M", &now);
 				break;
 
 			case 'S':
-				cbuf_append_strftime(buf, "%S", now);
+				cbuf_append_strftime(buf, "%S", &now);
 				break;
 		}
 

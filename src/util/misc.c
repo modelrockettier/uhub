@@ -436,8 +436,9 @@ int split_string(const char* string, const char* split, struct linked_list* list
 const char* get_timestamp(time_t now)
 {
 	static char ts[32] = {0, };
-	struct tm* t  = localtime(&now);
-	snprintf(ts, sizeof(ts), "[%02d:%02d]", t->tm_hour, t->tm_min);
+	struct tm t;
+	localtime_r(&now, &t);
+	snprintf(ts, sizeof(ts), "[%02d:%02d]", t.tm_hour, t.tm_min);
 	return ts;
 }
 

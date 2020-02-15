@@ -358,7 +358,7 @@ static int del(size_t argc, const char** argv)
 	return 0;
 }
 
-void main_usage(const char* binary)
+void main_usage()
 {
 	printf(
 			"Usage: %s filename command [...]\n"
@@ -389,7 +389,7 @@ int main(int argc, char** argv)
 
 	if (argc < 3)
 	{
-		main_usage(argv[0]);
+		main_usage();
 		return 1;
 	}
 
@@ -400,6 +400,6 @@ int main(int argc, char** argv)
 	}
 
 	// Unknown command!
-	main_usage(argv[0]);
+	main_usage();
 	return 1;
 }

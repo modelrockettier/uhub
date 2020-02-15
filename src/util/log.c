@@ -159,7 +159,7 @@ void hub_log(int log_verbosity, const char *format, ...)
 {
 	static char logmsg[1024];
 	static char timestamp[32];
-	struct tm *tmp;
+	struct tm tmp;
 	time_t t;
 	va_list args;
 
@@ -190,8 +190,8 @@ void hub_log(int log_verbosity, const char *format, ...)
 	if (log_verbosity < verbosity)
 	{
 		t = time(NULL);
-		tmp = localtime(&t);
-		strftime(timestamp, 32, "%Y-%m-%d %H:%M:%S", tmp);
+		localtime_r(&t, &tmp);
+		strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", &tmp);
 		va_start(args, format);
 		vsnprintf(logmsg, 1024, format, args);
 		va_end(args);

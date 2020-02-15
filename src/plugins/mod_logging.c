@@ -174,7 +174,7 @@ static void log_close(struct log_data* data)
 static void log_message(struct log_data* data, const char *format, ...)
 {
 	static char logmsg[1024];
-	struct tm *tmp;
+	struct tm tmp;
 	time_t t;
 	va_list args;
 	ssize_t size = 0;
@@ -182,8 +182,8 @@ static void log_message(struct log_data* data, const char *format, ...)
 	if (data->logmode == mode_file)
 	{
 		t = time(NULL);
-		tmp = localtime(&t);
-		strftime(logmsg, 32, "%Y-%m-%d %H:%M:%S ", tmp);
+		localtime_r(&t, &tmp);
+		strftime(logmsg, sizeof(logmsg), "%Y-%m-%d %H:%M:%S ", &tmp);
 
 		va_start(args, format);
 		size = vsnprintf(logmsg + 20, 1004, format, args);

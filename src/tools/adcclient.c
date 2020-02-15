@@ -754,7 +754,8 @@ static int ADC_client_parse_address(struct ADC_client* client, const char* arg)
 
 	/* Ensure port number is valid */
 	client->address.port = strtol(split+1, NULL, 10);
-	if (client->address.port <= 0 || client->address.port > 65535)
+	// port 0 is invalid
+	if (client->address.port == 0)
 		return 0;
 
 	client->address.hostname = strndup(hub_address, &split[0] - &hub_address[0]);
