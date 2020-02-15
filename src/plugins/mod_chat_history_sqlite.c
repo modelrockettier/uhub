@@ -19,20 +19,21 @@
 
 #include "plugin_api/handle.h"
 #include "plugin_api/command_api.h"
-#include "util/config_token.h"
 #include <sqlite3.h>
+#include "util/config_token.h"
 #include "util/memory.h"
 #include "util/misc.h"
 #include "util/list.h"
+#include "util/log.h"
 #include "util/cbuffer.h"
 
 #define MAX_HISTORY_SIZE 614400
 
 struct chat_history_data
 {
-	size_t history_max;	///<<< "the maximum number of chat messages kept in history."
-	size_t history_default;	///<<< "the default number of chat messages returned if no limit was provided"
-	size_t history_connect;	///<<< "the number of chat messages provided when users connect to the hub."
+	int history_max;	///<<< "the maximum number of chat messages kept in history."
+	int history_default;	///<<< "the default number of chat messages returned if no limit was provided"
+	int history_connect;	///<<< "the number of chat messages provided when users connect to the hub."
 	sqlite3* db;		///<<< "The chat history storage database."
 	struct plugin_command_handle* command_history_handle;		///<<< "A handle to the !history command."
 	struct plugin_command_handle* command_historycleanup_handle;	///<<< "A handle to the !historycleanup command."
@@ -40,39 +41,25 @@ struct chat_history_data
 
 struct chat_history_line
 {
-	char message[MAX_HISTORY_SIZE];
-	char from[MAX_NICK_LEN];
+	char from[MAX_NICK_LEN+1];
 	char time[20];
+	char* message;
 };
 
 static int null_callback(void* ptr, int argc, char **argv, char **colName) { return 0; }
 
-static const char* sql_escape_string(const char* str)
-{
-	static char out[MAX_HISTORY_SIZE];
-	size_t i = 0;
-	size_t n = 0;
-	for (; n < strlen(str); n++)
-	{
-		if (str[n] == '\'')
-			out[i++] = '\'';
-		out[i++] = str[n];
-	}
-	out[i++] = '\0';
-	return out;
-}
-
 static int sql_execute(struct chat_history_data* sql, int (*callback)(void* ptr, int argc, char **argv, char **colName), void* ptr, const char* sql_fmt, ...)
 {
 	va_list args;
-	char query[MAX_HISTORY_SIZE];
+	char* query;
 	char* errMsg;
 	int rc;
 
 	va_start(args, sql_fmt);
-	vsnprintf(query, sizeof(query), sql_fmt, args);
+	query = sqlite3_vmprintf(sql_fmt, args);
 
 	rc = sqlite3_exec(sql->db, query, callback, ptr, &errMsg);
+	sqlite3_free(query);
 	if (rc != SQLITE_OK)
 	{
 		sqlite3_free(errMsg);
@@ -95,19 +82,18 @@ static void create_tables(struct plugin_handle* plugin)
 	struct chat_history_data* data = (struct chat_history_data*) plugin->ptr;
 	sql_execute(data, null_callback, NULL, table_create);
 }
+
 /**
  * Add a chat message to history.
  */
 static void history_add(struct plugin_handle* plugin, struct plugin_user* from, const char* message, int flags)
 {
 	struct chat_history_data* data = (struct chat_history_data*) plugin->ptr;
-	char* history_line = strdup(sql_escape_string(message));
-	char* history_nick = strdup(sql_escape_string(from->nick));
 
-	sql_execute(data, null_callback, NULL, "INSERT INTO chat_history (from_nick, message) VALUES('%s', '%s');DELETE FROM chat_history WHERE time <= (SELECT time FROM chat_history ORDER BY time DESC LIMIT %d,1);", history_nick, history_line, data->history_max);
+	sql_execute(data, null_callback, NULL, "INSERT INTO chat_history (from_nick, message) VALUES('%q', '%q');", from->nick, message);
 
-	hub_free(history_line);
-	hub_free(history_nick);
+	if (data->history_max > 0)
+	    sql_execute(data, null_callback, NULL, "DELETE FROM chat_history WHERE time <= (SELECT time FROM chat_history ORDER BY time DESC LIMIT %d, 1);", data->history_max);
 }
 
 /**
@@ -119,19 +105,37 @@ static int get_messages_callback(void* ptr, int argc, char **argv, char **colNam
 	struct linked_list* messages = (struct linked_list*) ptr;
 	struct chat_history_line* line = hub_malloc(sizeof(struct chat_history_line));
 	int i = 0;
+	int message_found = 0;
 	
 	memset(line, 0, sizeof(struct chat_history_line));
 	
 	for (; i < argc; i++) {
 		if (strcmp(colName[i], "from_nick") == 0)
-			strncpy(line->from, argv[i], MAX_NICK_LEN);
-		else if (strcmp(colName[i], "message") == 0)
-			strncpy(line->message, argv[i], MAX_HISTORY_SIZE);
+			snprintf(line->from, sizeof(line->from), "%s", argv[i]);
 		else if (strcmp(colName[i], "time") == 0)
-			strncpy(line->time, argv[i], 20);
+			snprintf(line->time, sizeof(line->time), "%s", argv[i]);
+		else if (strcmp(colName[i], "message") == 0)
+		{
+			line->message = hub_strdup(argv[i]);
+			message_found = 1;
+		}
 	}
-	
-	list_append(messages, line);
+
+	if (line->message)
+	{
+		list_append(messages, line);
+		return 0;
+	}
+
+	hub_free(line);
+
+	if (argc > 0)
+	{
+		if (message_found)
+			LOG_ERROR("get_messages_callback(): Out of memory");
+		else
+			LOG_WARN("get_messages_callback(): Found row with no message");
+	}
 	
 	return 0;
 }
@@ -142,18 +146,19 @@ void user_login(struct plugin_handle* plugin, struct plugin_user* user)
 	struct cbuffer* buf = NULL;
 	struct linked_list* found = (struct linked_list*) list_create();
 	
-	sql_execute(data, get_messages_callback, found, "SELECT from_nick,message, datetime(time, 'localtime') as time FROM chat_history ORDER BY time DESC LIMIT 0,%d;", (int) data->history_connect);
+	sql_execute(data, get_messages_callback, found, "SELECT from_nick,message, datetime(time, 'localtime') as time FROM chat_history ORDER BY time DESC LIMIT 0,%d;", data->history_connect);
 
-	if (data->history_connect > 0 && list_size(found) > 0)
+	if (data->history_connect != 0 && list_size(found) > 0)
 	{
 		buf = cbuf_create(MAX_HISTORY_SIZE);
-		cbuf_append(buf, "Chat history:\n\n");
+		cbuf_append(buf, "Chat history:\n");
 		struct chat_history_line* history_line;
 		history_line = (struct chat_history_line*) list_get_last(found);
 		while (history_line)
 		{
 			cbuf_append_format(buf, "[%s] <%s> %s\n", history_line->time, history_line->from, history_line->message);
 			list_remove(found, history_line);
+			hub_free(history_line->message);
 			hub_free(history_line);
 			history_line = (struct chat_history_line*) list_get_last(found);
 		}
@@ -186,13 +191,14 @@ static int command_history(struct plugin_handle* plugin, struct plugin_user* use
 
 	if (linecount > 0)
 	{
-		cbuf_append_format(buf, "*** %s: Chat History:\n\n", cmd->prefix);
+		cbuf_append_format(buf, "*** %s: Chat History:\n", cmd->prefix);
 		struct chat_history_line* history_line;
 		history_line = (struct chat_history_line*) list_get_last(found);
 		while (history_line)
 		{
 			cbuf_append_format(buf, "[%s] <%s> %s\n", history_line->time, history_line->from, history_line->message);
 			list_remove(found, history_line);
+			hub_free(history_line->message);
 			hub_free(history_line);
 			history_line = (struct chat_history_line*) list_get_last(found);
 		}
@@ -276,15 +282,15 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 		}
 		else if (strcmp(cfg_settings_get_key(setting), "history_max") == 0)
 		{
-			data->history_max = (size_t) uhub_atoi(cfg_settings_get_value(setting));
+			data->history_max = uhub_atoi(cfg_settings_get_value(setting));
 		}
 		else if (strcmp(cfg_settings_get_key(setting), "history_default") == 0)
 		{
-			data->history_default = (size_t) uhub_atoi(cfg_settings_get_value(setting));
+			data->history_default = uhub_atoi(cfg_settings_get_value(setting));
 		}
 		else if (strcmp(cfg_settings_get_key(setting), "history_connect") == 0)
 		{
-			data->history_connect = (size_t) uhub_atoi(cfg_settings_get_value(setting));
+			data->history_connect = uhub_atoi(cfg_settings_get_value(setting));
 		}
 		else
 		{
@@ -323,7 +329,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	plugin->hub.command_add(plugin, data->command_history_handle);
 
 	data->command_historycleanup_handle = (struct plugin_command_handle*) hub_malloc(sizeof(struct plugin_command_handle));
-	PLUGIN_COMMAND_INITIALIZE(data->command_historycleanup_handle, plugin, "historycleanup", "", auth_cred_admin, &command_historycleanup, "Clean chat message history.");
+	PLUGIN_COMMAND_INITIALIZE(data->command_historycleanup_handle, plugin, "historycleanup", "", auth_cred_super, &command_historycleanup, "Clean chat message history.");
 	plugin->hub.command_add(plugin, data->command_historycleanup_handle);
 
 	return 0;

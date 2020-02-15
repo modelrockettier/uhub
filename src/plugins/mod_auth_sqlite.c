@@ -43,18 +43,19 @@ static int null_callback(void* ptr, int argc, char **argv, char **colName) { ret
 static int sql_execute(struct sql_data* sql, int (*callback)(void* ptr, int argc, char **argv, char **colName), void* ptr, const char* sql_fmt, ...)
 {
 	va_list args;
-	char query[1024];
+	char* query;
 	char* errMsg;
 	int rc;
 
 	va_start(args, sql_fmt);
-	vsnprintf(query, sizeof(query), sql_fmt, args);
+	query = sqlite3_vmprintf(sql_fmt, args);
 
 #ifdef DEBUG_SQL
 	printf("SQL: %s\n", query);
 #endif
 
 	rc = sqlite3_exec(sql->db, query, callback, ptr, &errMsg);
+	sqlite3_free(query);
 	if (rc != SQLITE_OK)
 	{
 #ifdef DEBUG_SQL
@@ -125,26 +126,11 @@ static struct sql_data* parse_config(const char* line, struct plugin_handle* plu
 
 	if (!data->db)
 	{
-	      set_error_message(plugin, "No database file is given, use file=<database>");
-	      hub_free(data);
-	      return 0;
+		set_error_message(plugin, "No database file is given, use file=<database>");
+		hub_free(data);
+		return 0;
 	}
 	return data;
-}
-
-static const char* sql_escape_string(const char* str)
-{
-	static char out[1024];
-	size_t i = 0;
-	size_t n = 0;
-	for (; n < strlen(str); n++)
-	{
-		if (str[n] == '\'')
-			out[i++] = '\'';
-		out[i++] = str[n];
-	}
-	out[i++] = '\0';
-	return out;
 }
 
 struct data_record {
@@ -177,11 +163,11 @@ static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, st
 {
 	struct sql_data* sql = (struct sql_data*) plugin->ptr;
 	struct data_record result;
-	char query[1024];
-	char* errMsg;
+	char* query;
+	char* errMsg = NULL;
 	int rc;
 
-	snprintf(query, sizeof(query), "SELECT * FROM users WHERE nickname='%s';", sql_escape_string(nickname));
+	query = sqlite3_mprintf("SELECT * FROM users WHERE nickname='%q';", nickname);
 	memset(data, 0, sizeof(struct auth_info));
 
 	result.data = data;
@@ -191,7 +177,8 @@ static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, st
 	printf("SQL: %s\n", query);
 #endif
 
-	rc = sqlite3_exec(sql->db, query , get_user_callback, &result, &errMsg);
+	rc = sqlite3_exec(sql->db, query, get_user_callback, &result, &errMsg);
+	sqlite3_free(query);
 	if (rc != SQLITE_OK) {
 #ifdef DEBUG_SQL
 		fprintf(stderr, "SQL: ERROR: %s\n", errMsg);
@@ -202,61 +189,77 @@ static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, st
 
 	if (result.found)
 		return st_allow;
+
+#ifdef DEBUG_SQL
+	printf("SQL: User not found: %s\n", nickname);
+#endif
 	return st_default;
 }
 
 static plugin_st register_user(struct plugin_handle* plugin, struct auth_info* user)
 {
 	struct sql_data* sql = (struct sql_data*) plugin->ptr;
-	char* nick = strdup(sql_escape_string(user->nickname));
-	char* pass = strdup(sql_escape_string(user->password));
+	const char* nick = user->nickname;
+	const char* pass = user->password;
 	const char* cred = auth_cred_to_string(user->credentials);
-	int rc = sql_execute(sql, null_callback, NULL, "INSERT INTO users (nickname, password, credentials) VALUES('%s', '%s', '%s');", nick, pass, cred);
+	int rc;
 
-	free(nick);
-	free(pass);
+	if (sql->exclusive)
+		return st_deny;
+
+	rc = sql_execute(sql, null_callback, NULL, "INSERT INTO users (nickname, password, credentials) VALUES('%q', '%q', '%q');", nick, pass, cred);
 
 	if (rc <= 0)
 	{
-		fprintf(stderr, "Unable to add user \"%s\"\n", user->nickname);
+		fprintf(stderr, "Unable to add user \"%s\"\n", nick);
 		return st_deny;
 	}
 	return st_allow;
-
 }
 
 static plugin_st update_user(struct plugin_handle* plugin, struct auth_info* user)
 {
 	struct sql_data* sql = (struct sql_data*) plugin->ptr;
-
-	char* nick = strdup(sql_escape_string(user->nickname));
-	char* pass = strdup(sql_escape_string(user->password));
+	const char* nick = user->nickname;
+	const char* pass = user->password;
 	const char* cred = auth_cred_to_string(user->credentials);
-	int rc = sql_execute(sql, null_callback, NULL, "INSERT INTO users (nickname, password, credentials) VALUES('%s', '%s', '%s');", nick, pass, cred);
+	int rc;
 
-	free(nick);
-	free(pass);
+	if (sql->exclusive)
+		return st_deny;
+
+	rc = sql_execute(sql, null_callback, NULL, "INSERT OR REPLACE INTO users (nickname, password, credentials) VALUES('%q', '%q', '%q');", nick, pass, cred);
 
 	if (rc <= 0)
 	{
-		fprintf(stderr, "Unable to add user \"%s\"\n", user->nickname);
+		fprintf(stderr, "Unable to update user \"%s\"\n", nick);
 		return st_deny;
 	}
 	return st_allow;
-
 }
 
 static plugin_st delete_user(struct plugin_handle* plugin, struct auth_info* user)
 {
 	struct sql_data* sql = (struct sql_data*) plugin->ptr;
+	const char* nick = user->nickname;
+	int rc;
+
 	if (sql->exclusive)
 		return st_deny;
-	return st_default;
+
+	rc = sql_execute(sql, null_callback, NULL, "DELETE FROM users WHERE nickname='%q' LIMIT 1;", nick);
+
+	if (rc <= 0)
+	{
+		fprintf(stderr, "Unable to update user \"%s\"\n", nick);
+		return st_deny;
+	}
+	return st_allow;
 }
 
 int plugin_register(struct plugin_handle* plugin, const char* config)
 {
-	PLUGIN_INITIALIZE(plugin, "SQLite authentication plugin", "1.0", "Authenticate users based on a SQLite database.");
+	PLUGIN_INITIALIZE(plugin, "SQLite authentication plugin", "1.1", "Authenticate users based on a SQLite database.");
 
 	// Authentication actions.
 	plugin->funcs.auth_get_user = get_user;
