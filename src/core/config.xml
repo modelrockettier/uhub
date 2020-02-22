@@ -165,6 +165,14 @@
 		<since>0.3.2</since>
 	</option>
 
+	<option name="nmdc_redirect_addr" type="string" default="">
+		<check regexp="(adcs?|dchub)://.*" />
+		<short>Redirect any NMDC users to this hub address.</short>
+		<description><![CDATA[
+		This is the redirect address used when a user connects to the hub with NMDC instead of ADC.
+		]]></description>
+		<since>0.5.2</since>
+	</option>
 
 	<option name="max_recv_buffer" type="int" default="4096" advanced="true" >
 		<check min="1024" max="1048576" />

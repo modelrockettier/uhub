@@ -89,6 +89,9 @@ obsolete_clients = yes
 # fulfilling some requirements.
 #redirect_addr =
 
+# Redirect any NMDC users to this hub address.
+#nmdc_redirect_addr = adc://192.168.1.2:1511/
+
 # Allow users to register themselves on the hub with the !register command.
 # Otherwise only operators can register users.
 register_self = no

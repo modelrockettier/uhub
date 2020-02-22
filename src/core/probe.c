@@ -28,6 +28,36 @@ static void probe_net_event(struct net_connection* con, int events, void *arg)
 	struct hub_probe* probe = (struct hub_probe*) net_con_get_ptr(con);
 	if (events == NET_EVENT_TIMEOUT)
 	{
+		/* Send NMDC redirect if configured.
+		 *
+		 * NMDC is weird, the server is actually the first one to speak, so in
+		 * order to detect NMDC connections we have to wait a second or 2 to
+		 * see if the client sends us anything. If they don't and it times out,
+		 * we have to blindly assume it's an NMDC connection attempt.
+		 */
+		if (*probe->hub->config->nmdc_redirect_addr)
+		{
+			char buf[512];
+			int len = snprintf(buf, sizeof(buf), "<hub> Redirecting...|$ForceMove %s|", probe->hub->config->nmdc_redirect_addr);
+			if (len <= 0)
+			{
+				LOG_WARN("Error %d while sending NMDC redirect", len);
+			}
+			else if (len >= sizeof(buf))
+			{
+				LOG_WARN("NMDC Redirect address is too long: %d", len);
+			}
+			else
+			{
+				net_con_send(con, buf, (size_t) len);
+				LOG_TRACE("Probe timed out, redirecting to %s (via NMDC).", probe->hub->config->nmdc_redirect_addr);
+			}
+		}
+		else
+		{
+			LOG_TRACE("Probe timed out");
+		}
+
 		probe_destroy(probe);
 		return;
 	}
@@ -117,6 +147,7 @@ static void probe_net_event(struct net_connection* con, int events, void *arg)
 struct hub_probe* probe_create(struct hub_info* hub, int sd, struct ip_addr_encap* addr)
 {
 	struct hub_probe* probe = (struct hub_probe*) hub_malloc_zero(sizeof(struct hub_probe));
+	int timeout;
 
 	if (probe == NULL)
 		return NULL; /* OOM */
@@ -126,7 +157,13 @@ struct hub_probe* probe_create(struct hub_info* hub, int sd, struct ip_addr_enca
 	probe->hub = hub;
 	probe->connection = net_con_create();
 	net_con_initialize(probe->connection, sd, probe_net_event, probe, NET_EVENT_READ);
-	net_con_set_timeout(probe->connection, TIMEOUT_CONNECTED);
+
+	if (*hub->config->nmdc_redirect_addr)
+		timeout = TIMEOUT_REDIRECT;
+	else
+		timeout = TIMEOUT_CONNECTED;
+
+	net_con_set_timeout(probe->connection, timeout);
 
 	memcpy(&probe->addr, addr, sizeof(struct ip_addr_encap));
 	return probe;

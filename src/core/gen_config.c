@@ -23,6 +23,7 @@ void config_defaults(struct hub_config* config)
 	config->hub_name = hub_strdup("uhub");
 	config->hub_description = hub_strdup("no description");
 	config->redirect_addr = hub_strdup("");
+	config->nmdc_redirect_addr = hub_strdup("");
 	config->max_recv_buffer = 4096;
 	config->max_send_buffer = 131072;
 	config->max_send_buffer_soft = 98304;
@@ -263,6 +264,17 @@ static int apply_config(struct hub_config* config, char* key, char* data, int li
 		{
 			LOG_ERROR("Configuration parse error on line %d", line_count);
 			LOG_ERROR("\"redirect_addr\" (string), default=\"\"");
+			return -1;
+		}
+		return 0;
+	}
+
+	if (!strcmp(key, "nmdc_redirect_addr"))
+	{
+		if (!apply_string(key, data, &config->nmdc_redirect_addr, (char*) ""))
+		{
+			LOG_ERROR("Configuration parse error on line %d", line_count);
+			LOG_ERROR("\"nmdc_redirect_addr\" (string), default=\"\"");
 			return -1;
 		}
 		return 0;
@@ -1053,6 +1065,8 @@ void free_config(struct hub_config* config)
 
 	hub_free(config->redirect_addr);
 
+	hub_free(config->nmdc_redirect_addr);
+
 	hub_free(config->tls_require_redirect_addr);
 
 	hub_free(config->tls_certificate);
@@ -1187,6 +1201,9 @@ void dump_config(struct hub_config* config, int ignore_defaults)
 
 	if (!ignore_defaults || strcmp(config->redirect_addr, "") != 0)
 		fprintf(stdout, "redirect_addr = \"%s\"\n", config->redirect_addr);
+
+	if (!ignore_defaults || strcmp(config->nmdc_redirect_addr, "") != 0)
+		fprintf(stdout, "nmdc_redirect_addr = \"%s\"\n", config->nmdc_redirect_addr);
 
 	if (!ignore_defaults || config->max_recv_buffer != 4096)
 		fprintf(stdout, "max_recv_buffer = %d\n", config->max_recv_buffer);

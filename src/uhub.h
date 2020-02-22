@@ -39,6 +39,7 @@
 #endif
 
 #define TIMEOUT_CONNECTED 15
+#define TIMEOUT_REDIRECT  2
 #define TIMEOUT_HANDSHAKE 30
 #define TIMEOUT_SENDQ     120
 #define TIMEOUT_STATS     10
