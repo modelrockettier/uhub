@@ -325,12 +325,6 @@ int hub_handle_chat_message(struct hub_info* hub, struct hub_user* u, struct adc
 		}
 	}
 
-	/* FIXME: Plugin should do this! */
-	if (relay && (((hub->config->chat_is_privileged && !user_is_protected(u)) || (user_flag_get(u, flag_muted))) && broadcast))
-	{
-		relay = 0;
-	}
-
 	if (relay)
 	{
 		plugin_st status = st_default;
@@ -919,6 +913,9 @@ void hub_set_variables(struct hub_info* hub, struct acl_handle* acl)
 		tmp = adc_msg_escape(hub->config->hub_description);
 		adc_msg_add_named_argument(hub->command_info, ADC_INF_FLAG_DESCRIPTION, tmp);
 		hub_free(tmp);
+
+		if (*hub->config->failover_redirect_addr)
+			adc_msg_add_named_argument(hub->command_info, ADC_INF_FLAG_FAILOVER_ADDR, hub->config->failover_redirect_addr);
 	}
 
 	hub->command_support = adc_msg_construct(ADC_CMD_ISUP, 6 + strlen(ADC_PROTO_SUPPORT));
@@ -1019,7 +1016,7 @@ void hub_send_status(struct hub_info* hub, struct hub_user* user, enum status_me
 		STATUS(32, msg_ban_temporarily, "TL600", 600, 0); /* FIXME: Proper timeout? */
 		STATUS(23, msg_auth_invalid_password, 0, 0, 0);
 		STATUS(20, msg_auth_user_not_found, 0, 0, 0);
-		STATUS(30, msg_error_no_memory, 0, 0, 0);
+		STATUS(30, msg_error_no_memory, 0, 0, 1);
 		STATUS(43, msg_user_share_size_low,   "FB" ADC_INF_FLAG_SHARED_SIZE, 0, 1);
 		STATUS(43, msg_user_share_size_high,  "FB" ADC_INF_FLAG_SHARED_SIZE, 0, 1);
 		STATUS(43, msg_user_slots_low,        "FB" ADC_INF_FLAG_UPLOAD_SLOTS, 0, 1);

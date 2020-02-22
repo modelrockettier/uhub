@@ -102,10 +102,6 @@ obsolete_clients = yes
 # back in response to an HTTP request.
 ignore_http = no
 
-# Allow users to register themselves on the hub with the !register command.
-# Otherwise only operators can register users.
-register_self = no
-
 # Enable SSL/TLS support.
 # tls_certificate and tls_private_key must be set if this is enabled.
 #tls_enable = yes
@@ -177,7 +173,3 @@ msg_proto_no_common_hash       = No common hash algorithm.
 
 # Message to be shown to old clients using an older version of ADC than ADC/1.0
 msg_proto_obsolete_adc0        = Client is using an obsolete ADC protocol version.
-
-# Obsolete
-# if chat_is_privileged = yes only registered users may write in main chat
-chat_is_privileged = no
