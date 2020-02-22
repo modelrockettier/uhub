@@ -128,21 +128,36 @@ class CSourceGenerator(SourceGenerator):
 
 	def _write_apply_impl(self, option):
 		s = "\tif (!strcmp(key, \"%s\"))\n\t{\n" % option.name
+		s_type = option.otype
+		s_default = option.default
+		s_min_str = ""
+		s_max_str = ""
 		if option.otype == "int":
+			s_type = "integer"
 			s_min = "0"
 			s_max = "0"
 			if (option.check_min):
 				s += "\t\tmin = %s;\n" % option.check_min
+				if (option.check_min != "0"):
+					s_min_str = ", min=%s" % option.check_min
 				s_min = "&min"
 			if (option.check_max):
 				s += "\t\tmax = %s;\n" % option.check_max
+				s_max_str = ", max=%s" % option.check_max
 				s_max = "&max"
 			s+= "\t\tif (!apply_integer(key, data, &config->%s, %s, %s))\n" % (option.name, s_min, s_max)
 		elif option.otype == "boolean":
 			s += "\t\tif (!apply_boolean(key, data, &config->%s))\n" % option.name
 		elif option.is_string:
+			s_default = "\\\"%s\\\"" % option.default
 			s += "\t\tif (!apply_string(key, data, &config->%s, (char*) \"\"))\n" % option.name
-		s += "\t\t{\n\t\t\tLOG_ERROR(\"Configuration parse error on line %d\", line_count);\n\t\t\treturn -1;\n\t\t}\n\t\treturn 0;\n\t}\n\n"
+		s += "\t\t{\n"
+		s += "\t\t\tLOG_ERROR(\"Configuration parse error on line %d\", line_count);\n"
+		s += "\t\t\tLOG_ERROR(\"\\\"%s\\\" (%s), default=%s%s%s\");\n" % (option.name, s_type, s_default, s_min_str, s_max_str)
+		s += "\t\t\treturn -1;\n"
+		s += "\t\t}\n"
+		s += "\t\treturn 0;\n"
+		s += "\t}\n\n"
 		self.f.write(s)
 
 	def _write_free_impl(self, option):
