@@ -107,7 +107,7 @@ int route_to_user(struct hub_info* hub, struct hub_user* user, struct adc_messag
 #endif
 
 	if (!user->connection)
-		return 0;
+		return 0; // No connection - we're about to drop this user.
 
 	uhub_assert(msg->cache && *msg->cache);
 

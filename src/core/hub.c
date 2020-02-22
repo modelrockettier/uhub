@@ -490,7 +490,6 @@ void hub_send_password_challenge(struct hub_info* hub, struct hub_user* u)
 void hub_send_flood_warning(struct hub_info* hub, struct hub_user* u, const char* message)
 {
 	struct adc_message* msg;
-	char* tmp;
 
 	if (user_flag_get(u, flag_flood))
 		return;
@@ -498,10 +497,8 @@ void hub_send_flood_warning(struct hub_info* hub, struct hub_user* u, const char
 	msg = adc_msg_construct(ADC_CMD_ISTA, 128);
 	if (msg)
 	{
-		tmp = adc_msg_escape(message);
 		adc_msg_add_argument(msg, "110");
-		adc_msg_add_argument(msg, tmp);
-		hub_free(tmp);
+		adc_msg_add_argument_string(msg, message);
 
 		route_to_user(hub, u, msg);
 		user_flag_set(u, flag_flood);
@@ -906,16 +903,12 @@ void hub_set_variables(struct hub_info* hub, struct acl_handle* acl)
 		adc_msg_add_named_argument(hub->command_info, ADC_INF_FLAG_USER_AGENT_PRODUCT, PRODUCT);
 		adc_msg_add_named_argument(hub->command_info, ADC_INF_FLAG_USER_AGENT_VERSION, GIT_VERSION);
 
-		tmp = adc_msg_escape(hub->config->hub_name);
-		adc_msg_add_named_argument(hub->command_info, ADC_INF_FLAG_NICK, tmp);
-		hub_free(tmp);
+		adc_msg_add_named_argument_string(hub->command_info, ADC_INF_FLAG_NICK, hub->config->hub_name);
 
-		tmp = adc_msg_escape(hub->config->hub_description);
-		adc_msg_add_named_argument(hub->command_info, ADC_INF_FLAG_DESCRIPTION, tmp);
-		hub_free(tmp);
+		adc_msg_add_named_argument_string(hub->command_info, ADC_INF_FLAG_DESCRIPTION, hub->config->hub_description);
 
 		if (*hub->config->failover_redirect_addr)
-			adc_msg_add_named_argument(hub->command_info, ADC_INF_FLAG_FAILOVER_ADDR, hub->config->failover_redirect_addr);
+			adc_msg_add_named_argument_string(hub->command_info, ADC_INF_FLAG_FAILOVER_ADDR, hub->config->failover_redirect_addr);
 	}
 
 	hub->command_support = adc_msg_construct(ADC_CMD_ISUP, 6 + strlen(ADC_PROTO_SUPPORT));
@@ -928,12 +921,11 @@ void hub_set_variables(struct hub_info* hub, struct acl_handle* acl)
 	if (hub->command_banner)
 	{
 		if (hub->config->show_banner_sys_info)
-			tmp = adc_msg_escape("Powered by " PRODUCT_STRING " on " OPSYS "/" CPUINFO);
+			tmp = "Powered by " PRODUCT_STRING " on " OPSYS "/" CPUINFO;
 		else
-			tmp = adc_msg_escape("Powered by " PRODUCT_STRING);
+			tmp = "Powered by " PRODUCT_STRING;
 		adc_msg_add_argument(hub->command_banner, "000");
-		adc_msg_add_argument(hub->command_banner, tmp);
-		hub_free(tmp);
+		adc_msg_add_argument_string(hub->command_banner, tmp);
 	}
 
 	if (hub_plugins_load(hub) < 0)

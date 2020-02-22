@@ -774,12 +774,22 @@ int adc_msg_add_named_argument_uint64(struct adc_message* cmd, const char prefix
 int adc_msg_add_argument(struct adc_message* cmd, const char* string)
 {
 	ADC_MSG_ASSERT(cmd);
+	if (!string)
+		return -1;
 
 	adc_msg_unterminate(cmd);
 	adc_msg_cache_append(cmd, " ", 1);
 	adc_msg_cache_append(cmd, string, strlen(string));
 	adc_msg_terminate(cmd);
 	return 0;
+}
+
+int adc_msg_add_argument_string(struct adc_message* cmd, const char* string)
+{
+	char* escaped = adc_msg_escape(string);
+	int ret = adc_msg_add_argument(cmd, escaped);
+	hub_free(escaped);
+	return ret;
 }
 
 

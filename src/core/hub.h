@@ -106,7 +106,7 @@ struct hub_info
 	struct adc_message* command_support; /* The hub's SUP command */
 	struct adc_message* command_banner;  /* The default welcome message */
 	time_t tm_started;
-	int status;
+	enum hub_state status;
 	char* recvbuf; /* Global receive buffer */
 	char* sendbuf; /* Global send buffer */
 

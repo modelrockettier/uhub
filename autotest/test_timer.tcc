@@ -1,6 +1,6 @@
 #include <uhub.h>
 
-#define MAX_EVENTS 15
+#define MAX_EVENTS 100
 static struct timeout_queue* g_queue;
 static time_t g_now;
 static size_t g_max;
