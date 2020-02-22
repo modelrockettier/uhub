@@ -53,6 +53,6 @@ if [ ! -f "/conf/uhub.conf" ]; then
     echo
 fi
 
-exec /app/bin/uhub -c /conf/uhub.conf "$@"
+exec /app/bin/uhub -c /conf/uhub.conf $UHUBOPT "$@"
 
 # vi: ft=sh ts=4 sw=4 tw=0 ai si et :

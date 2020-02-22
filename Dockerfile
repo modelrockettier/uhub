@@ -43,7 +43,7 @@ cmake . \
 	-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
 	-DCMAKE_BUILD_TYPE="${BUILD}" && \
 echo "**** build uhub ****" && \
-make && \
+make -j2 && \
 echo "**** run self-tests ****" && \
 ./autotest-bin && \
 echo "**** install uhub ****" && \
@@ -80,6 +80,9 @@ VOLUME /conf
 ENV MANPATH=/app/man
 # so that "uhub-passwd" works in the container without the full path
 ENV PATH="/app/bin:${PATH}"
+
+# Another way to override the uhub command-line arguments
+ENV UHUBOPT=
 
 # The admin/pass vars ONLY affect the first run (if there is no /conf/uhub.conf)
 ENV UHUB_ADMIN=admin
