@@ -24,6 +24,8 @@ struct hub_config
 	char* hub_description;                 /*<<< Short hub description, topic or subject. (default: "no description") */
 	char* redirect_addr;                   /*<<< A common hub redirect address. (default: "") */
 	char* nmdc_redirect_addr;              /*<<< Redirect any NMDC users to this hub address. (default: "") */
+	char* http_redirect_addr;              /*<<< Redirect any HTTP requests to this URL. (default: "") */
+	int   ignore_http;                     /*<<< Ignore HTTP requests. (default: 0) */
 	int   max_recv_buffer;                 /*<<< Max read buffer before parse, per user (default: 4096) */
 	int   max_send_buffer;                 /*<<< Max send buffer before disconnect, per user (default: 131072) */
 	int   max_send_buffer_soft;            /*<<< Max send buffer before message drops, per user (default: 98304) */

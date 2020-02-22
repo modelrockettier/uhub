@@ -174,6 +174,26 @@
 		<since>0.5.2</since>
 	</option>
 
+	<option name="http_redirect_addr" type="string" default="">
+		<check regexp="https?://.*" />
+		<short>Redirect any HTTP requests to this URL.</short>
+		<description><![CDATA[
+		This is the redirect address used when a user connects to the hub using HTTP.
+		If this is blank (the default), the server will send back an http error message.
+		This has no effect if ignore_http is enabled.
+		]]></description>
+		<since>0.5.2</since>
+	</option>
+
+	<option name="ignore_http" type="boolean" default="0">
+		<short>Ignore HTTP requests.</short>
+		<description><![CDATA[
+			If this is enabled all HTTP requests will be ignored and will not send anything back to the user.
+            Otherwise, the hub will respond with a simple HTTP error message or redirect (if http_redirect_addr is set).
+		]]></description>
+		<since>0.5.2</since>
+	</option>
+
 	<option name="max_recv_buffer" type="int" default="4096" advanced="true" >
 		<check min="1024" max="1048576" />
 		<short>Max read buffer before parse, per user</short>

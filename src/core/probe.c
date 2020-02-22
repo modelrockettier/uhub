@@ -23,6 +23,8 @@
 #define PROBE_RECV_SIZE 12
 static char probe_recvbuf[PROBE_RECV_SIZE];
 
+static void probe_handle_http(struct net_connection* con);
+
 static void probe_net_event(struct net_connection* con, int events, void *arg)
 {
 	struct hub_probe* probe = (struct hub_probe*) net_con_get_ptr(con);
@@ -100,22 +102,13 @@ static void probe_net_event(struct net_connection* con, int events, void *arg)
 				probe_destroy(probe);
 				return;
 			}
-			else if ((memcmp(probe_recvbuf, "GET ", 4) == 0) ||
-				 (memcmp(probe_recvbuf, "POST", 4) == 0) ||
-				 (memcmp(probe_recvbuf, "HEAD", 4) == 0))
-			{
-				/* Looks like HTTP - Not supported, but we log it. */
-				LOG_TRACE("Probed HTTP connection. Not supported closing connection (%s)", ip_convert_to_string(&probe->addr));
-				const char* buf = "501 Not implemented\r\n\r\n";
-				net_con_send(con, buf, strlen(buf));
-			}
-#ifdef SSL_SUPPORT
 			else if (bytes >= 11 &&
 				probe_recvbuf[0] == 22 &&
 				probe_recvbuf[1] == 3 && /* protocol major version */
 				probe_recvbuf[5] == 1 && /* message type */
 				probe_recvbuf[9] == probe_recvbuf[1])
 			{
+#ifdef SSL_SUPPORT
 				if (probe->hub->config->tls_enable)
 				{
 					LOG_TRACE("Probed TLS %d.%d connection", (int) probe_recvbuf[9], (int) probe_recvbuf[10]);
@@ -132,12 +125,32 @@ static void probe_net_event(struct net_connection* con, int events, void *arg)
 				{
 					LOG_TRACE("Probed TLS %d.%d connection. TLS disabled in hub.", (int) probe_recvbuf[9], (int) probe_recvbuf[10]);
 				}
+#else
+				LOG_TRACE("Probed TLS %d.%d connection. TLS not supported by hub.", (int) probe_recvbuf[9], (int) probe_recvbuf[10]);
+#endif
+				probe_destroy(probe);
+				return;
+			}
+			else if ((memcmp(probe_recvbuf, "GET ", 4) == 0) ||
+				 (memcmp(probe_recvbuf, "POST", 4) == 0) ||
+				 (memcmp(probe_recvbuf, "HEAD", 4) == 0) ||
+				 (memcmp(probe_recvbuf, "OPTI", 4) == 0))
+			{
+				/* Looks like HTTP. */
+				LOG_TRACE("Probed HTTP connection. Not supported closing connection (%s)", ip_convert_to_string(&probe->addr));
+				probe_handle_http(con);
+				probe_destroy(probe);
+			}
+			else if (memcmp(probe_recvbuf, "NICK", 4) == 0)
+			{
+				/* Looks like IRC - Not supported, but we log it. */
+				LOG_TRACE("Probed IRC connection. Not supported closing connection (%s)", ip_convert_to_string(&probe->addr));
+				probe_destroy(probe);
 			}
 			else
 			{
-				LOG_TRACE("Probed unsupported protocol: %x%x%x%x.", (int) probe_recvbuf[0], (int) probe_recvbuf[1], (int) probe_recvbuf[2], (int) probe_recvbuf[3]);
+				LOG_TRACE("Probed unsupported protocol: %02x%02x %02x%02x.", (int) probe_recvbuf[0], (int) probe_recvbuf[1], (int) probe_recvbuf[2], (int) probe_recvbuf[3]);
 			}
-#endif
 			probe_destroy(probe);
 			return;
 		}
@@ -178,4 +191,82 @@ void probe_destroy(struct hub_probe* probe)
 		probe->connection = 0;
 	}
 	hub_free(probe);
+}
+
+static void probe_handle_http(struct net_connection* con)
+{
+	struct hub_probe* probe = (struct hub_probe*) net_con_get_ptr(con);
+	struct hub_config* config = probe->hub->config;
+	size_t addr_len;
+	char* buf;
+
+	if (config->ignore_http)
+		return;
+
+	addr_len = strlen(config->http_redirect_addr);
+	if (addr_len != 0)
+	{
+		char const* fmt;
+		size_t allocated;
+		int len;
+		unsigned long content_length;
+		unsigned long body_off;
+
+		fmt = "HTTP/1.1 307 Temporary Redirect\r\n"
+			"Connection: close\r\n"
+			"Location: %s\r\n"
+			"Content-Type: text/html; charset=utf-8\r\n"
+			"Content-Length: %lu\r\n"
+			"\r\n"
+			"<html>\r\n"
+			"<head><title>307 Temporary Redirect</title></head>\r\n"
+			"<body>\r\n"
+			"<center><h1>307 Temporary Redirect</h1></center>\r\n"
+			"<hr><center><a href=\"%s\">Redirect</a></center>\r\n"
+			"</body>\r\n"
+			"</html>\r\n";
+
+		// the offset in fmt of the http body text
+		body_off = (unsigned long)strstr(fmt, "\r\n\r\n") - (unsigned long)fmt + 4;
+
+		// the length of the body after printf
+		content_length = strlen(fmt) - body_off + addr_len - 2;
+
+		// The %lu + 2 * %s in fmt give us space for the NUL and content-length
+		allocated = strlen(fmt) + (addr_len * 2);
+		buf = hub_malloc(allocated);
+		if (!buf)
+		{
+			LOG_ERROR("probe_handle_http(): out of memory");
+			return;
+		}
+
+		len = snprintf(buf, allocated, fmt, config->http_redirect_addr, content_length, config->http_redirect_addr);
+		if (len <= 0)
+			LOG_ERROR("probe_handle_http(): snprintf failed, %d", len);
+		else if ((size_t) len >= allocated)
+			LOG_ERROR("probe_handle_http(): buffer too small, %d/" PRINTF_SIZE_T, len + 1, allocated);
+		else
+			net_con_send(con, buf, len);
+
+		hub_free(buf);
+	}
+	else
+	{
+		// If you change this, ensure that Content-Length is still correct
+		buf = "HTTP/1.1 501 Not Implemented\r\n"
+			"Connection: close\r\n"
+			"Content-Type: text/html; charset=utf-8\r\n"
+			"Content-Length: 136\r\n"
+			"\r\n"
+			"<html>\r\n"
+			"<head><title>501 Not Implemented</title></head>\r\n"
+			"<body>\r\n"
+			"<center><h1>501 Not Implemented</h1></center>\r\n"
+			"<hr>\r\n"
+			"</body>\r\n"
+			"</html>\r\n";
+
+		net_con_send(con, buf, strlen(buf));
+	}
 }
