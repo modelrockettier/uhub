@@ -353,17 +353,25 @@ static int command_uptime(struct command_base* cbase, struct hub_user* user, str
 
 static int command_kick(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
 {
-	struct cbuffer* buf;
-	struct hub_command_arg_data* arg = hub_command_arg_next(cmd, type_user);
-	struct hub_user* target = arg->data.user;
+	struct cbuffer* buf = cbuf_create(128);
+	struct hub_command_arg_data* arg1 = hub_command_arg_next(cmd, type_user);
+	struct hub_command_arg_data* arg2 = hub_command_arg_next(cmd, type_string);
+	struct hub_user* target = arg1->data.user;
+	const char* message = arg2 ? arg2->data.string : NULL;
 
-	buf = cbuf_create(128);
 	if (target == user)
 	{
 		cbuf_append(buf, "Cannot kick yourself.");
 	}
 	else
 	{
+		if (message)
+		{
+			struct cbuffer* buf2 = cbuf_create(128);
+			cbuf_append_format(buf2, "You have been kicked by \"%s\": %s", user->id.nick, message);
+			send_message(cbase, target, buf2);
+		}
+
 		cbuf_append_format(buf, "Kicking user \"%s\".", target->id.nick);
 		hub_disconnect_user(cbase->hub, target, quit_kicked);
 	}
@@ -601,27 +609,27 @@ static struct command_handle* add_builtin(struct command_base* cbase, const char
 	return handle;
 }
 
-#define ADD_COMMAND(PREFIX, LENGTH, ARGS, CREDENTIALS, FUNCTION, DESCRIPTION) \
+#define ADD_COMMAND(PREFIX, ARGS, CREDENTIALS, FUNCTION, DESCRIPTION) \
 	command_add(cbase, add_builtin(cbase, PREFIX, ARGS, CREDENTIALS, FUNCTION, DESCRIPTION), NULL)
 
 void commands_builtin_add(struct command_base* cbase)
 {
-	ADD_COMMAND("broadcast",  9, "+m",auth_cred_operator,  command_broadcast,"Send a message to all users"  );
-	ADD_COMMAND("getip",      5, "u", auth_cred_operator,  command_getip,    "Show IP address for a user"   );
-	ADD_COMMAND("help",       4, "?c",auth_cred_guest,     command_help,     "Show this help message."      );
-	ADD_COMMAND("kick",       4, "u", auth_cred_operator,  command_kick,     "Kick a user"                  );
-	ADD_COMMAND("log",        3, "?m",auth_cred_operator,  command_log,      "Display log"                  ); // fail
-	ADD_COMMAND("myip",       4, "",  auth_cred_guest,     command_myip,     "Show your own IP."            );
-	ADD_COMMAND("reload",     6, "",  auth_cred_admin,     command_reload,   "Reload configuration files."  );
-	ADD_COMMAND("shutdown",   8, "",  auth_cred_admin,     command_shutdown_hub, "Shutdown hub."            );
-	ADD_COMMAND("stats",      5, "",  auth_cred_super,     command_stats,    "Show hub statistics."         );
-	ADD_COMMAND("uptime",     6, "",  auth_cred_guest,     command_uptime,   "Display hub uptime info."     );
-	ADD_COMMAND("version",    7, "",  auth_cred_guest,     command_version,  "Show hub version info."       );
-	ADD_COMMAND("whoip",      5, "r", auth_cred_operator,  command_whoip,    "Show users matching IP range" );
+	ADD_COMMAND("broadcast", "+m",  auth_cred_operator, command_broadcast,    "Send a message to all users" );
+	ADD_COMMAND("getip",     "u",   auth_cred_operator, command_getip,        "Show IP address for a user"  );
+	ADD_COMMAND("help",      "?c",  auth_cred_guest,    command_help,         "Show this help message."     );
+	ADD_COMMAND("kick",      "u?m", auth_cred_operator, command_kick,         "Kick a user"                 );
+	ADD_COMMAND("log",       "?m",  auth_cred_operator, command_log,          "Display log"                 ); // fail
+	ADD_COMMAND("myip",      "",    auth_cred_guest,    command_myip,         "Show your own IP."           );
+	ADD_COMMAND("reload",    "",    auth_cred_admin,    command_reload,       "Reload configuration files." );
+	ADD_COMMAND("shutdown",  "",    auth_cred_admin,    command_shutdown_hub, "Shutdown hub."           );
+	ADD_COMMAND("stats",     "",    auth_cred_super,    command_stats,        "Show hub statistics."        );
+	ADD_COMMAND("uptime",    "",    auth_cred_guest,    command_uptime,       "Display hub uptime info."    );
+	ADD_COMMAND("version",   "",    auth_cred_guest,    command_version,      "Show hub version info."      );
+	ADD_COMMAND("whoip",     "r",   auth_cred_operator, command_whoip,        "Show users matching IP range");
 
 #ifdef DEBUG_UNLOAD_PLUGINS
-	ADD_COMMAND("load",       4, "",  auth_cred_admin,     command_load,     "Load plugins."                );
-	ADD_COMMAND("unload",     6, "",  auth_cred_admin,     command_unload,   "Unload plugins."              );
+	ADD_COMMAND("load",      "",    auth_cred_admin,    command_load,         "Load plugins."               );
+	ADD_COMMAND("unload",    "",    auth_cred_admin,    command_unload,       "Unload plugins."             );
 #endif /* DEBUG_UNLOAD_PLUGINS */
 }
 
