@@ -334,6 +334,13 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 	if (command == NULL)
 		return NULL; /* OOM */
 
+	if (length < 4)
+	{
+		LOG_DEBUG("Dropped tiny message (" PRINTF_SIZE_T ").", length);
+		msg_free(command);
+		return NULL;
+	}
+
 	if (!is_printable_utf8(line, length))
 	{
 		LOG_DEBUG("Dropped message with non-printable UTF-8 characters.");
