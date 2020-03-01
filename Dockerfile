@@ -45,7 +45,7 @@ cmake . \
 echo "**** build uhub ****" && \
 make -j2 && \
 echo "**** run self-tests ****" && \
-./autotest-bin && \
+make test CTEST_OUTPUT_ON_FAILURE=1 && \
 echo "**** install uhub ****" && \
 make install && \
 echo "**** compress man pages ****" && \

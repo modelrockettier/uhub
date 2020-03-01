@@ -10,14 +10,14 @@ env:
   - CONFIG=full
 
 jobs:
-  # Allow experimental builds to fail
   allow_failures:
-#   - os: osx
 #   - os: windows
+#     env: CONFIG=full
 
   # Additional builds to do (outside the build matrix)
   include:
-    # Xenial can build without SSL_SUPPORT (needs openssl 1.1, has 1.0)
+    # SSL builds are currently broken on openssl < 1.1 (xenial has 1.0.2),
+    # so only build the minimal config
     - os: linux
       dist: xenial
       arch: amd64
@@ -25,10 +25,10 @@ jobs:
     # ARM builds
     - os: linux
       arch: arm64
-      env: CONFIG=minimal
+      env: CONFIG=full
     - os: linux
       arch: arm64
-      env: CONFIG=full
+      env: CONFIG=minimal
     # Debian package builds
     - os: linux
       arch: amd64
@@ -39,6 +39,18 @@ jobs:
       arch: amd64
       services: docker
       env: CONFIG=docker
+    # Mac OS X builds
+    - os: osx
+      env: CONFIG=full
+    - os: osx
+      env: CONFIG=minimal
+
+addons:
+  homebrew:
+    packages:
+    - cmake
+    - openssl
+    - sqlite
 
 install:
   - autotest/travis/install-build-depends.sh

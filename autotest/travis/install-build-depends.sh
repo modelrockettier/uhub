@@ -3,24 +3,31 @@
 set -x
 set -e
 
-case "${CONFIG}" in
-	deb|docker|full|minimal) ;;
-	*)
-		echo "Unknown config: ${CONFIG}" >&2
-		exit 5 ;;
-esac
-
 if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+    PACKAGES="cmake libsqlite3-dev make "
+
 	case "${CONFIG}" in
-		full) EXTRA="git libssl-dev libsystemd-dev pkg-config" ;;
-		deb)  EXTRA="debhelper fakeroot git libssl-dev pkg-config" ;; # libsystemd-dev
+		full) PACKAGES+=" git libssl-dev libsystemd-dev pkg-config" ;;
+		deb)  PACKAGES+=" debhelper fakeroot git libssl-dev pkg-config" ;; # libsystemd-dev
+		minimal) ;;
 		docker) exit 0 ;;
+		*)
+			echo "Unknown config: ${CONFIG}" >&2
+			exit 5 ;;
 	esac
 
 	sudo apt-get update -q
-	sudo apt-get install -y cmake make libsqlite3-dev $EXTRA
+	sudo apt-get install -y --no-install-suggests --no-install-recommends $PACKAGES
 
-#elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
+elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
+	case "${CONFIG}" in
+		minimal|full) exit 0 ;;
+		*)
+			echo "Unknown config: ${CONFIG}" >&2
+			exit 5 ;;
+	esac
+
+#	# The travis brew addon currently handles dependencies
 #	brew update
 #	brew install cmake openssl pkg-config sqlite
 
