@@ -199,6 +199,7 @@ set(PLUGINS
 	mod_logging # NOTE: depends on adc and network (later)
 	mod_no_guest_downloads
 	mod_topic
+	mod_users
 	mod_welcome # NOTE: depends on adc and network (later)
 )
 

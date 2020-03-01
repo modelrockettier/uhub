@@ -19,6 +19,27 @@
 # update_activity: Keep track of the date and time each user last logged in.
 plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db exclusive=0 readonly=0 update_activity=1"
 
+# User management commands
+#
+# This plugin provides hub commands to manage users.
+#
+# Hub commands:
+# !register - Register your username.
+# !password - Change your own password.
+# !useradd - Register a new user.
+# !userdel - Delete a registered user.
+# !usermod - Modify user credentials.
+# !userpass - Change password for a user.
+# !userlist - Show list of all registered users.
+#
+# Parameters:
+# notify:          notify ops when a user registers (or tries to)
+#                  also notifies admins about attempts to modify admin accounts
+# register_self:   allow users to register themselves
+# allow_spaces:    allow users to self-register who have spaces in their nick (hard to manage)
+# password_length: the minimum password length (only affects new/changed passwords)
+#plugin ${PLUGIN_DIR}/mod_users.so "notify=1 register_self=0 password_length=1"
+
 # Require a default password from all guests.
 #
 # This does not affect registered users, but guests that do not specify a
