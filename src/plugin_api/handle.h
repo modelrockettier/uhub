@@ -59,6 +59,7 @@ typedef plugin_st (*on_p2p_connect_t)(struct plugin_handle*, struct plugin_user*
 typedef plugin_st (*on_p2p_revconnect_t)(struct plugin_handle*, struct plugin_user* from, struct plugin_user* to);
 
 typedef plugin_st (*auth_get_user_t)(struct plugin_handle*, const char* nickname, struct auth_info* info);
+typedef plugin_st (*auth_get_user_list_t)(struct plugin_handle*, const char* search, struct linked_list* users);
 typedef plugin_st (*auth_register_user_t)(struct plugin_handle*, struct auth_info* user);
 typedef plugin_st (*auth_update_user_t)(struct plugin_handle*, struct auth_info* user);
 typedef plugin_st (*auth_delete_user_t)(struct plugin_handle*, struct auth_info* user);
@@ -100,6 +101,7 @@ struct plugin_funcs
 
 	// Authentication actions.
 	auth_get_user_t         auth_get_user;       /* Get authentication info from plugin */
+	auth_get_user_list_t    auth_get_user_list;  /* Get list of registered users from plugin */
 	auth_register_user_t    auth_register_user;  /* Register user */
 	auth_update_user_t      auth_update_user;    /* Update a registered user */
 	auth_delete_user_t      auth_delete_user;    /* Delete a registered user */
@@ -110,6 +112,7 @@ struct plugin_command_handle;
 struct plugin_command;
 struct plugin_command_arg_data;
 
+typedef int (*hfunc_send_chat)(struct plugin_handle*, enum auth_credentials cred_low, enum auth_credentials cred_high, const char* message);
 typedef int (*hfunc_send_message)(struct plugin_handle*, struct plugin_user* user, const char* message);
 typedef int (*hfunc_send_broadcast_message)(struct plugin_handle*, const char* message);
 typedef int (*hfunc_send_status)(struct plugin_handle*, struct plugin_user* to, int code, const char* message);
@@ -121,6 +124,13 @@ typedef size_t (*hfunc_command_arg_reset)(struct plugin_handle*, struct plugin_c
 typedef struct plugin_command_arg_data* (*hfunc_command_arg_next)(struct plugin_handle*, struct plugin_command*, enum plugin_command_arg_type);
 
 typedef size_t (*hfunc_get_usercount)(struct plugin_handle*);
+typedef struct plugin_user* (*hfunc_get_user_by_nick_t)(struct plugin_handle*, const char* nickname);
+
+typedef int (*hfunc_auth_get_user_t)(struct plugin_handle*, const char* nickname, struct auth_info* info);
+typedef int (*hfunc_auth_get_user_list_t)(struct plugin_handle*, const char* search, struct linked_list* users);
+typedef int (*hfunc_auth_register_user_t)(struct plugin_handle*, struct auth_info* user);
+typedef int (*hfunc_auth_update_user_t)(struct plugin_handle*, struct auth_info* user);
+typedef int (*hfunc_auth_delete_user_t)(struct plugin_handle*, struct auth_info* user);
 
 typedef char* (*hfunc_get_hub_name)(struct plugin_handle*);
 typedef void  (*hfunc_set_hub_name)(struct plugin_handle*, const char*);
@@ -133,6 +143,7 @@ typedef void  (*hfunc_set_hub_description)(struct plugin_handle*, const char*);
  */
 struct plugin_hub_funcs
 {
+	hfunc_send_chat send_chat;
 	hfunc_send_message send_message;
 	hfunc_send_broadcast_message send_broadcast_message;
 	hfunc_send_status send_status_message;
@@ -142,6 +153,12 @@ struct plugin_hub_funcs
 	hfunc_command_arg_reset command_arg_reset;
 	hfunc_command_arg_next command_arg_next;
 	hfunc_get_usercount get_usercount;
+	hfunc_get_user_by_nick_t get_user_by_nick;
+	hfunc_auth_get_user_t auth_get_user;
+	hfunc_auth_get_user_list_t auth_get_user_list;
+	hfunc_auth_register_user_t auth_register_user;
+	hfunc_auth_update_user_t auth_update_user;
+	hfunc_auth_delete_user_t auth_delete_user;
 	hfunc_get_hub_name get_name;
 	hfunc_set_hub_name set_name;
 	hfunc_get_hub_description get_description;

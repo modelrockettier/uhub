@@ -30,6 +30,10 @@
 #define MAX_PASS_LEN 64
 #endif
 
+#ifndef MAX_ACTIVITY_LEN
+#define MAX_ACTIVITY_LEN 64
+#endif
+
 #ifndef MAX_CID_LEN
 #define MAX_CID_LEN 39
 #endif
@@ -71,9 +75,10 @@ typedef enum plugin_status plugin_st;
 
 struct auth_info
 {
+	enum auth_credentials credentials;
 	char nickname[MAX_NICK_LEN+1];
 	char password[MAX_PASS_LEN+1];
-	enum auth_credentials credentials;
+	char activity[MAX_ACTIVITY_LEN+1];
 };
 
 enum ban_flags

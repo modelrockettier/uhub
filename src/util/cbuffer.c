@@ -60,6 +60,15 @@ void cbuf_destroy(struct cbuffer* buf)
 	hub_free(buf);
 }
 
+void cbuf_clear(struct cbuffer* buf)
+{
+	uhub_assert(buf);
+	uhub_assert(!(buf->flags & CBUF_FLAG_CONST_BUFFER));
+
+	buf->size = 0;
+	buf->buf[0] = '\0';
+}
+
 void cbuf_resize(struct cbuffer* buf, size_t capacity)
 {
 	uhub_assert(buf->flags == 0);

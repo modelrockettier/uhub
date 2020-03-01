@@ -25,6 +25,7 @@ struct cbuffer;
 extern struct cbuffer* cbuf_create(size_t capacity);
 extern struct cbuffer* cbuf_create_const(const char* buffer);
 extern void cbuf_destroy(struct cbuffer* buf);
+extern void cbuf_clear(struct cbuffer* buf);
 extern void cbuf_resize(struct cbuffer* buf, size_t capacity);
 extern void cbuf_append_bytes(struct cbuffer* buf, const char* msg, size_t len);
 extern void cbuf_append(struct cbuffer* buf, const char* msg);

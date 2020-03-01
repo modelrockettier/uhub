@@ -288,42 +288,12 @@ int acl_shutdown(struct acl_handle* handle)
 	return 0;
 }
 
-extern int acl_register_user(struct hub_info* hub, struct auth_info* info)
-{
-	if (plugin_auth_register_user(hub, info) != st_allow)
-	{
-		return 0;
-	}
-	return 1;
-}
-
-extern int acl_update_user(struct hub_info* hub, struct auth_info* info)
-{
-	if (plugin_auth_update_user(hub, info) != st_allow)
-	{
-		return 0;
-	}
-	return 1;
-}
-
-extern int acl_delete_user(struct hub_info* hub, const char* name)
-{
-	struct auth_info data;
-	strncpy(data.nickname, name, MAX_NICK_LEN);
-	data.nickname[MAX_NICK_LEN] = '\0';
-	data.password[0] = '\0';
-	data.credentials = auth_cred_none;
-	if (plugin_auth_delete_user(hub, &data) != st_allow)
-	{
-		return 0;
-	}
-	return 1;
-}
-
 struct auth_info* acl_get_access_info(struct hub_info* hub, const char* name)
 {
-	struct auth_info* info = 0;
-	info = (struct auth_info*) hub_malloc(sizeof(struct auth_info));
+	struct auth_info* info = (struct auth_info*) hub_malloc(sizeof(struct auth_info));
+	if (!info)
+		return NULL;
+
 	if (plugin_auth_get_user(hub, name, info) != st_allow)
 	{
 		hub_free(info);

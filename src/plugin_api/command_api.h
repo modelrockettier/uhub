@@ -75,14 +75,16 @@ struct plugin_command_handle
 
 #define PLUGIN_COMMAND_INITIALIZE(PTR, HANDLE, PREFIX, ARGS, CRED, CALLBACK, DESC) \
 	do { \
-		PTR->internal_handle = 0; \
-		PTR->handle = HANDLE; \
-		PTR->prefix = PREFIX; \
-		PTR->length = strlen(PREFIX); \
-		PTR->args = ARGS; \
-		PTR->cred = CRED; \
-		PTR->handler = CALLBACK; \
-		PTR->description = DESC; \
+		*(PTR) = (struct plugin_command_handle) { \
+			.internal_handle = 0, \
+			.handle = HANDLE, \
+			.prefix = PREFIX, \
+			.length = strlen(PREFIX), \
+			.args = ARGS, \
+			.cred = CRED, \
+			.handler = CALLBACK, \
+			.description = DESC, \
+		}; \
 	} while (0)
 
 

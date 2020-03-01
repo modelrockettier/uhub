@@ -35,8 +35,8 @@ static int plugin_command_dispatch(struct command_base* cbase, struct hub_user* 
 	struct plugin_handle* plugin = (struct plugin_handle*) cmd->ptr;
 	struct plugin_callback_data* data = get_callback_data(plugin);
 	struct plugin_command_handle* cmdh;
-	struct plugin_user* puser = (struct plugin_user*) user; // FIXME: Use a proper conversion function instead.
-	struct plugin_command* pcommand = (struct plugin_command*) cmd; // FIXME: Use a proper conversion function instead.
+	struct plugin_user* puser = (struct plugin_user*) user; // TODO: Use a proper conversion function instead.
+	struct plugin_command* pcommand = (struct plugin_command*) cmd; // TODO: Use a proper conversion function instead.
 
 	LOG_PLUGIN("plugin_command_dispatch: cmd=%s", cmd->prefix);
 
@@ -52,6 +52,29 @@ static struct hub_user* convert_user_type(struct plugin_user* user)
 {
 	struct hub_user* huser = (struct hub_user*) user;
 	return huser;
+}
+
+static int cbfunc_send_chat(struct plugin_handle* plugin, enum auth_credentials cred_low, enum auth_credentials cred_high, const char* message)
+{
+	struct hub_info* hub = plugin_get_hub(plugin);
+	struct hub_user* target;
+	char* buffer = adc_msg_escape(message);
+	struct adc_message* command = adc_msg_construct(ADC_CMD_IMSG, strlen(buffer) + 6);
+	adc_msg_add_argument(command, buffer);
+
+	target = (struct hub_user*) list_get_first(hub->users->list);
+	while (target)
+	{
+		if (target->credentials >= cred_low && target->credentials <= cred_high)
+		{
+			route_to_user(hub, target, command);
+		}
+		target = (struct hub_user*) list_get_next(hub->users->list);
+	}
+
+	adc_msg_free(command);
+	hub_free(buffer);
+	return 1;
 }
 
 static int cbfunc_send_message(struct plugin_handle* plugin, struct plugin_user* user, const char* message)
@@ -98,6 +121,12 @@ static int cbfunc_user_disconnect(struct plugin_handle* plugin, struct plugin_us
 
 static int cbfunc_command_add(struct plugin_handle* plugin, struct plugin_command_handle* cmdh)
 {
+	if (cmdh == NULL)
+	{
+		LOG_ERROR("Invalid command from plugin, NULL");
+		return 1;
+	}
+
 	struct plugin_callback_data* data = get_callback_data(plugin);
 	struct command_handle* command = (struct command_handle*) hub_malloc_zero(sizeof(struct command_handle));
 
@@ -117,6 +146,9 @@ static int cbfunc_command_add(struct plugin_handle* plugin, struct plugin_comman
 
 static int cbfunc_command_del(struct plugin_handle* plugin, struct plugin_command_handle* cmdh)
 {
+	if (cmdh == NULL)
+		return 0;
+
 	struct plugin_callback_data* data = get_callback_data(plugin);
 	struct command_handle* command = (struct command_handle*) cmdh->internal_handle;
 
@@ -143,6 +175,38 @@ static size_t cbfunc_get_usercount(struct plugin_handle* plugin)
 {
 	struct hub_info* hub = plugin_get_hub(plugin);
 	return hub->users->count;
+}
+
+static struct plugin_user* cbfunc_get_user_by_nick(struct plugin_handle* plugin, const char* nick)
+{
+	struct hub_info* hub = plugin_get_hub(plugin);
+	// TODO: Use a proper conversion function instead.
+	return (struct plugin_user*) uman_get_user_by_nick(hub->users, nick);
+}
+
+static int cbfunc_auth_get_user(struct plugin_handle* plugin, const char* nick, struct auth_info* info)
+{
+	return (plugin_auth_get_user(plugin_get_hub(plugin), nick, info) == st_allow ? 1 : 0);
+}
+
+static int cbfunc_auth_get_user_list(struct plugin_handle* plugin, const char* search, struct linked_list* users)
+{
+	return (plugin_auth_get_user_list(plugin_get_hub(plugin), search, users) != st_deny ? 1 : 0);
+}
+
+static int cbfunc_auth_register_user(struct plugin_handle* plugin, struct auth_info* info)
+{
+	return (plugin_auth_register_user(plugin_get_hub(plugin), info) == st_allow ? 1 : 0);
+}
+
+static int cbfunc_auth_update_user(struct plugin_handle* plugin, struct auth_info* info)
+{
+	return (plugin_auth_update_user(plugin_get_hub(plugin), info) == st_allow ? 1 : 0);
+}
+
+static int cbfunc_auth_delete_user(struct plugin_handle* plugin, struct auth_info* info)
+{
+	return (plugin_auth_delete_user(plugin_get_hub(plugin), info) == st_allow ? 1 : 0);
 }
 
 static char* cbfunc_get_hub_name(struct plugin_handle* plugin)
@@ -199,6 +263,7 @@ static void cbfunc_set_hub_description(struct plugin_handle* plugin, const char*
 
 void plugin_register_callback_functions(struct plugin_handle* handle)
 {
+	handle->hub.send_chat = cbfunc_send_chat;
 	handle->hub.send_message = cbfunc_send_message;
 	handle->hub.send_broadcast_message = cbfunc_send_broadcast;
 	handle->hub.send_status_message = cbfunc_send_status;
@@ -208,6 +273,12 @@ void plugin_register_callback_functions(struct plugin_handle* handle)
 	handle->hub.command_arg_reset = cbfunc_command_arg_reset;
 	handle->hub.command_arg_next = cbfunc_command_arg_next;
 	handle->hub.get_usercount = cbfunc_get_usercount;
+	handle->hub.get_user_by_nick = cbfunc_get_user_by_nick;
+	handle->hub.auth_get_user = cbfunc_auth_get_user;
+	handle->hub.auth_get_user_list = cbfunc_auth_get_user_list;
+	handle->hub.auth_register_user = cbfunc_auth_register_user;
+	handle->hub.auth_update_user = cbfunc_auth_update_user;
+	handle->hub.auth_delete_user = cbfunc_auth_delete_user;
 	handle->hub.get_name = cbfunc_get_hub_name;
 	handle->hub.set_name = cbfunc_set_hub_name;
 	handle->hub.get_description = cbfunc_get_hub_description;
