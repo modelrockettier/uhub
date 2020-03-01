@@ -79,6 +79,7 @@ endif()
 check_type_size( ssize_t SSIZE_T )
 check_symbol_exists(memmem string.h HAVE_MEMMEM)
 check_symbol_exists(strndup string.h HAVE_STRNDUP)
+check_symbol_exists(strlcpy string.h HAVE_STRLCPY)
 check_symbol_exists(localtime_r time.h HAVE_LOCALTIME_R)
 check_symbol_exists(localtime_s time.h HAVE_LOCALTIME_S)
 

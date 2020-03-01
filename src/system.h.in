@@ -87,6 +87,7 @@
 #cmakedefine HAVE_SSIZE_T
 #cmakedefine HAVE_STRNDUP
 #cmakedefine HAVE_MEMMEM
+#cmakedefine HAVE_STRLCPY
 #cmakedefine HAVE_LOCALTIME_R
 #cmakedefine HAVE_LOCALTIME_S
 
@@ -278,6 +279,16 @@ typedef int ssize_t;
 #ifdef _MSC_VER
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
+#endif
+
+#ifndef HAVE_STRLCPY
+/*
+ * Present in the BSDs, but not in GNU libc or MS libc.
+ * snprintf() is a more suitable alternative to strcpy_s since it truncates
+ * the output and returns the expected size rather than crashing when src
+ * can't fit in dst.
+ */
+#define strlcpy(dst, src, dstsize) (size_t)snprintf(dst, dstsize, "%s", src)
 #endif
 
 

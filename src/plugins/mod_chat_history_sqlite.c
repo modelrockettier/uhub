@@ -57,6 +57,7 @@ static int sql_execute(struct chat_history_data* sql, int (*callback)(void* ptr,
 
 	va_start(args, sql_fmt);
 	query = sqlite3_vmprintf(sql_fmt, args);
+	va_end(args);
 
 	rc = sqlite3_exec(sql->db, query, callback, ptr, &errMsg);
 	sqlite3_free(query);
@@ -106,9 +107,9 @@ static int get_messages_callback(void* ptr, int argc, char **argv, char **colNam
 	struct chat_history_line* line = hub_malloc(sizeof(struct chat_history_line));
 	int i = 0;
 	int message_found = 0;
-	
+
 	memset(line, 0, sizeof(struct chat_history_line));
-	
+
 	for (; i < argc; i++) {
 		if (strcmp(colName[i], "from_nick") == 0)
 			snprintf(line->from, sizeof(line->from), "%s", argv[i]);
@@ -136,7 +137,7 @@ static int get_messages_callback(void* ptr, int argc, char **argv, char **colNam
 		else
 			LOG_WARN("get_messages_callback(): Found row with no message");
 	}
-	
+
 	return 0;
 }
 
@@ -145,7 +146,7 @@ void user_login(struct plugin_handle* plugin, struct plugin_user* user)
 	struct chat_history_data* data = (struct chat_history_data*) plugin->ptr;
 	struct cbuffer* buf = NULL;
 	struct linked_list* found = (struct linked_list*) list_create();
-	
+
 	sql_execute(data, get_messages_callback, found, "SELECT from_nick,message, datetime(time, 'localtime') as time FROM chat_history ORDER BY time DESC LIMIT 0,%d;", data->history_connect);
 
 	if (data->history_connect != 0 && list_size(found) > 0)
@@ -223,7 +224,7 @@ static int command_historycleanup(struct plugin_handle* plugin, struct plugin_us
 	int rc = 0;
 
 	rc = sql_execute(data, null_callback, NULL, "DELETE FROM chat_history;");
- 
+
 	if (!rc)
 		cbuf_append_format(buf, "*** %s: Unable to clean chat history table.", cmd->prefix);
 	else
@@ -316,7 +317,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	plugin->funcs.on_user_chat_message = history_add;
 	plugin->funcs.on_user_login = user_login;
 	data = parse_config(config, plugin);
-	
+
 	if (!data)
 		return -1;
 

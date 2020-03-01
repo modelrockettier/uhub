@@ -14,7 +14,10 @@
 #
 # Parameters:
 # file: path/filename for database.
-plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db"
+# exclusive:       whether this is the only authentication plugin in use.
+# readonly:        don't make any changes to the database
+# update_activity: Keep track of the date and time each user last logged in.
+plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db exclusive=0 readonly=0 update_activity=1"
 
 # Require a default password from all guests.
 #

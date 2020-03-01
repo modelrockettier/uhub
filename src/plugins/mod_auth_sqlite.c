@@ -32,30 +32,37 @@ static void set_error_message(struct plugin_handle* plugin, const char* msg)
 	plugin->error_msg = msg;
 }
 
-struct sql_data
+struct auth_sqlite
 {
-	int exclusive;
 	sqlite3* db;
+	int exclusive; ///<<< "This is the only pdata plugin"
+	int readonly; ///<<< "Do not modify the user database"
+	int update_activity; ///<<< "Update the user's activity timestamp when they log in"
+	char journal[16]; ///<<< "The SQLite journal mode to use"
 };
 
-static int null_callback(void* ptr, int argc, char **argv, char **colName) { return 0; }
-
-static int sql_execute(struct sql_data* sql, int (*callback)(void* ptr, int argc, char **argv, char **colName), void* ptr, const char* sql_fmt, ...)
+static int sql_execute(struct auth_sqlite* pdata, int (*callback)(void* ptr, int argc, char **argv, char **colName), void* ptr, const char* sql_fmt, ...)
 {
 	va_list args;
-	char* query;
+	char const* query;
 	char* errMsg;
 	int rc;
 
 	va_start(args, sql_fmt);
 	query = sqlite3_vmprintf(sql_fmt, args);
+	va_end(args);
+
+	if (!query)
+		return -SQLITE_NOMEM;
 
 #ifdef DEBUG_SQL
 	printf("SQL: %s\n", query);
 #endif
 
-	rc = sqlite3_exec(sql->db, query, callback, ptr, &errMsg);
-	sqlite3_free(query);
+	rc = sqlite3_exec(pdata->db, query, callback, ptr, &errMsg);
+
+	sqlite3_free((char*) query);
+
 	if (rc != SQLITE_OK)
 	{
 #ifdef DEBUG_SQL
@@ -65,19 +72,63 @@ static int sql_execute(struct sql_data* sql, int (*callback)(void* ptr, int argc
 		return -rc;
 	}
 
-	rc = sqlite3_changes(sql->db);
+	rc = sqlite3_changes(pdata->db);
 	return rc;
 }
 
-
-static struct sql_data* parse_config(const char* line, struct plugin_handle* plugin)
+static void sqlite_setup(struct plugin_handle* plugin)
 {
-	struct sql_data* data = (struct sql_data*) hub_malloc_zero(sizeof(struct sql_data));
+	struct auth_sqlite* pdata = (struct auth_sqlite*) plugin->ptr;
+	int rc;
+
+	const char* table_create = "CREATE TABLE IF NOT EXISTS users"
+		"("
+			"nickname CHAR NOT NULL UNIQUE,"
+			"password CHAR NOT NULL,"
+			"credentials CHAR NOT NULL DEFAULT 'user',"
+			"created TIMESTAMP DEFAULT (DATETIME('NOW')),"
+			"activity TIMESTAMP DEFAULT (DATETIME('NOW'))"
+		");";
+
+	const char* query_check = "SELECT nickname FROM users LIMIT 1;";
+
+	if (!pdata->readonly)
+		sql_execute(pdata, NULL, NULL, table_create);
+
+	// set the sqlite journal mode if it's not an empty string, see:
+	// https://www.sqlite.org/pragma.html#pragma_journal_mode
+	if (pdata->journal[0])
+	{
+		rc = sql_execute(pdata, NULL, NULL, "PRAGMA journal_mode=%s;", pdata->journal);
+		if (rc < 0)
+		{
+			LOG_ERROR("mod_auth_sqlite: failed to set the database journal mode to \"%s\": %s",
+				pdata->journal, sqlite3_errstr(-rc));
+		}
+	}
+
+	// warn if we can't query the database
+	rc = sql_execute(pdata, NULL, NULL, query_check);
+	if (rc < 0)
+		LOG_ERROR("mod_auth_sqlite: failed to query database: %s", sqlite3_errstr(-rc));
+}
+
+static struct auth_sqlite* parse_config(const char* line, struct plugin_handle* plugin)
+{
+	struct auth_sqlite* pdata = (struct auth_sqlite*) hub_malloc_zero(sizeof(struct auth_sqlite));
 	struct cfg_tokens* tokens = cfg_tokenize(line);
 	char* token = cfg_token_get_first(tokens);
+	char* file = NULL;
+	int flags;
+	int rc;
 
-	if (!data)
-		return 0;
+	if (!pdata)
+		return NULL;
+
+	pdata->exclusive = 0;
+	pdata->readonly = 0;
+	pdata->update_activity = 2; // default value = on, but different from manually set
+	strcpy(pdata->journal, "");
 
 	while (token)
 	{
@@ -87,36 +138,70 @@ static struct sql_data* parse_config(const char* line, struct plugin_handle* plu
 		{
 			set_error_message(plugin, "Unable to parse startup parameters");
 			cfg_tokens_free(tokens);
-			hub_free(data);
-			return 0;
+			hub_free(file);
+			hub_free(pdata);
+			return NULL;
 		}
 
 		if (strcmp(cfg_settings_get_key(setting), "file") == 0)
 		{
-			if (!data->db)
+			if (file)
 			{
-				if (sqlite3_open(cfg_settings_get_value(setting), &data->db))
-				{
-					cfg_tokens_free(tokens);
-					cfg_settings_free(setting);
-					hub_free(data);
-					set_error_message(plugin, "Unable to open database file");
-					return 0;
-				}
+				set_error_message(plugin, "Only 1 database file is allowed");
+				cfg_tokens_free(tokens);
+				cfg_settings_free(setting);
+				hub_free(file);
+				hub_free(pdata);
+				return NULL;
+			}
+
+			file = hub_strdup(cfg_settings_get_value(setting));
+			if (!file)
+			{
+				cfg_tokens_free(tokens);
+				cfg_settings_free(setting);
+				hub_free(pdata);
+				set_error_message(plugin, "No memory");
+				return NULL;
+			}
+		}
+		else if (strcmp(cfg_settings_get_key(setting), "journal") == 0)
+		{
+			size_t jsz = sizeof(pdata->journal);
+			size_t len = (size_t)strlcpy(pdata->journal, cfg_settings_get_value(setting), jsz);
+
+			if (len >= jsz)
+			{
+				cfg_tokens_free(tokens);
+				cfg_settings_free(setting);
+				hub_free(pdata);
+				set_error_message(plugin, "Invalid journal setting");
+				return NULL;
 			}
 		}
 		else if (strcmp(cfg_settings_get_key(setting), "exclusive") == 0)
 		{
-			if (!string_to_boolean(cfg_settings_get_value(setting), &data->exclusive))
-				data->exclusive = 1;
+			if (!string_to_boolean(cfg_settings_get_value(setting), &pdata->exclusive))
+				pdata->exclusive = 1;
+		}
+		else if (strcmp(cfg_settings_get_key(setting), "readonly") == 0)
+		{
+			if (!string_to_boolean(cfg_settings_get_value(setting), &pdata->readonly))
+				pdata->readonly = 1;
+		}
+		else if (strcmp(cfg_settings_get_key(setting), "update_activity") == 0)
+		{
+			if (!string_to_boolean(cfg_settings_get_value(setting), &pdata->update_activity))
+				pdata->update_activity = 1;
 		}
 		else
 		{
 			set_error_message(plugin, "Unknown startup parameters given");
 			cfg_tokens_free(tokens);
 			cfg_settings_free(setting);
-			hub_free(data);
-			return 0;
+			hub_free(file);
+			hub_free(pdata);
+			return NULL;
 		}
 
 		cfg_settings_free(setting);
@@ -124,67 +209,139 @@ static struct sql_data* parse_config(const char* line, struct plugin_handle* plu
 	}
 	cfg_tokens_free(tokens);
 
-	if (!data->db)
+	if (!file)
 	{
 		set_error_message(plugin, "No database file is given, use file=<database>");
-		hub_free(data);
-		return 0;
+		hub_free(pdata);
+		return NULL;
 	}
-	return data;
+
+	if (pdata->readonly)
+	{
+		LOG_INFO("mod_auth_sqlite: The readonly flag is set, not user modifications are allowed");
+
+		if (pdata->update_activity == 1)
+			LOG_WARN("mod_auth_sqlite: User activity updates disabled: readonly database.");
+
+		pdata->update_activity = 0;
+
+		flags = SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_READONLY;
+	}
+	else
+		flags = SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+
+	rc = sqlite3_open_v2(file, &pdata->db, flags, NULL);
+	hub_free(file);
+
+	if (rc != SQLITE_OK)
+	{
+		hub_free(pdata);
+		set_error_message(plugin, "Unable to open database file");
+		return NULL;
+	}
+
+	return pdata;
 }
 
 struct data_record {
-	struct auth_info* data;
+	struct auth_info* userinfo;
 	int found;
 };
 
 static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
-	struct data_record* data = (struct data_record*) ptr;
+	struct data_record* rec = (struct data_record*) ptr;
+	struct auth_info* data;
 	int i = 0;
+	int rc;
+	size_t max;
+
+	if (!ptr)
+		return 0;
+
+	if (argc >= 1)
+		rec->found = 1;
+
+	data = rec->userinfo;
+
+	if (!data)
+		return 0;
+
+	data->nickname[0] = '\0';
+	data->password[0] = '\0';
+	data->credentials = auth_cred_none;
+
+	uhub_assert(((size_t) -1) > ((size_t) 0));
+
 	for (; i < argc; i++) {
-		if (strcmp(colName[i], "nickname") == 0)
-			strncpy(data->data->nickname, argv[i], MAX_NICK_LEN);
-		else if (strcmp(colName[i], "password") == 0)
-			strncpy(data->data->password, argv[i], MAX_PASS_LEN);
-		else if (strcmp(colName[i], "credentials") == 0)
+		rc = 0;
+		if (strcmp(colName[i], "credentials") == 0)
 		{
-			auth_string_to_cred(argv[i], &data->data->credentials);
-			data->found = 1;
+			auth_string_to_cred(argv[i], &data->credentials);
+			uhub_assert(data->credentials >= auth_cred_user);
+		}
+		else if (strcmp(colName[i], "nickname") == 0)
+		{
+			max = MAX_NICK_LEN+1;
+			rc = strlcpy(data->nickname, argv[i], max);
+			uhub_assert(sizeof(data->nickname) == max);
+		}
+		else if (strcmp(colName[i], "password") == 0)
+		{
+			max = MAX_PASS_LEN+1;
+			rc = strlcpy(data->password, argv[i], max);
+			uhub_assert(sizeof(data->password) == max);
+		}
+		else
+			LOG_WARN("Unknown column \"%s\" in get_user results\n", colName[i]);
+
+		if (((size_t) rc) >= max)
+		{
+			LOG_ERROR("Column \"%s\" data too long", colName[i]);
+			return -1;
 		}
 	}
 
 #ifdef DEBUG_SQL
-	printf("SQL: nickname=%s, password=%s, credentials=%s\n", data->data->nickname, data->data->password, auth_cred_to_string(data->data->credentials));
+	printf("SQL: nickname=%s, password=%s, credentials=%s\n",
+		data->nickname, data->password, auth_cred_to_string(data->credentials));
 #endif
 	return 0;
 }
 
-static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, struct auth_info* data)
+static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, struct auth_info* userinfo)
 {
-	struct sql_data* sql = (struct sql_data*) plugin->ptr;
+	struct auth_sqlite* pdata = (struct auth_sqlite*) plugin->ptr;
 	struct data_record result;
 	char* query;
 	char* errMsg = NULL;
+	plugin_st fail = (pdata->exclusive) ? st_deny : st_default;
 	int rc;
 
-	query = sqlite3_mprintf("SELECT * FROM users WHERE nickname='%q';", nickname);
-	memset(data, 0, sizeof(struct auth_info));
-
-	result.data = data;
 	result.found = 0;
+	result.userinfo = userinfo;
+
+	if (userinfo)
+		memset(userinfo, 0, sizeof(struct auth_info));
+
+	const char* query_fmt =
+		"SELECT credentials,nickname,password FROM users WHERE nickname='%q';";
+
+	query = sqlite3_mprintf(query_fmt, nickname);
+	if (!query) // OOM
+		return fail;
 
 #ifdef DEBUG_SQL
 	printf("SQL: %s\n", query);
 #endif
 
-	rc = sqlite3_exec(sql->db, query, get_user_callback, &result, &errMsg);
+	rc = sqlite3_exec(pdata->db, query, get_user_callback, &result, &errMsg);
 	sqlite3_free(query);
 	if (rc != SQLITE_OK) {
 #ifdef DEBUG_SQL
 		fprintf(stderr, "SQL: ERROR: %s\n", errMsg);
 #endif
 		sqlite3_free(errMsg);
-		return st_default;
+		return fail;
 	}
 
 	if (result.found)
@@ -193,73 +350,109 @@ static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, st
 #ifdef DEBUG_SQL
 	printf("SQL: User not found: %s\n", nickname);
 #endif
-	return st_default;
+
+	return fail;
 }
 
-static plugin_st register_user(struct plugin_handle* plugin, struct auth_info* user)
+static plugin_st register_user(struct plugin_handle* plugin, struct auth_info* userinfo)
 {
-	struct sql_data* sql = (struct sql_data*) plugin->ptr;
-	const char* nick = user->nickname;
-	const char* pass = user->password;
-	const char* cred = auth_cred_to_string(user->credentials);
+	struct auth_sqlite* pdata = (struct auth_sqlite*) plugin->ptr;
+	const char* nick = userinfo->nickname;
+	const char* pass = userinfo->password;
+	const char* cred = auth_cred_to_string(userinfo->credentials);
+	plugin_st fail = (pdata->exclusive) ? st_deny : st_default;
 	int rc;
 
-	if (sql->exclusive)
-		return st_deny;
+	if (pdata->readonly)
+		return fail;
 
-	rc = sql_execute(sql, null_callback, NULL, "INSERT INTO users (nickname, password, credentials) VALUES('%q', '%q', '%q');", nick, pass, cred);
+	// we only handle registered users
+	if (userinfo->credentials < auth_cred_user)
+		return fail;
+
+	const char* query = "INSERT INTO users (nickname, password, credentials) VALUES('%q', '%q', '%q');";
+	rc = sql_execute(pdata, NULL, NULL, query, nick, pass, cred);
 
 	if (rc <= 0)
 	{
-		fprintf(stderr, "Unable to add user \"%s\"\n", nick);
-		return st_deny;
+		LOG_ERROR("Unable to add user \"%s\"\n", nick);
+		return fail;
 	}
 	return st_allow;
 }
 
-static plugin_st update_user(struct plugin_handle* plugin, struct auth_info* user)
+static plugin_st update_user(struct plugin_handle* plugin, struct auth_info* userinfo)
 {
-	struct sql_data* sql = (struct sql_data*) plugin->ptr;
-	const char* nick = user->nickname;
-	const char* pass = user->password;
-	const char* cred = auth_cred_to_string(user->credentials);
+	struct auth_sqlite* pdata = (struct auth_sqlite*) plugin->ptr;
+	const char* nick = userinfo->nickname;
+	const char* pass = userinfo->password;
+	const char* cred = auth_cred_to_string(userinfo->credentials);
+	plugin_st fail = (pdata->exclusive) ? st_deny : st_default;
 	int rc;
 
-	if (sql->exclusive)
-		return st_deny;
+	if (pdata->readonly)
+		return fail;
 
-	rc = sql_execute(sql, null_callback, NULL, "INSERT OR REPLACE INTO users (nickname, password, credentials) VALUES('%q', '%q', '%q');", nick, pass, cred);
+	// we only handle registered users
+	if (userinfo->credentials < auth_cred_user)
+		return fail;
+
+	const char* query = "UPDATE users SET password='%q', credentials='%q' WHERE nickname='%q';";
+	rc = sql_execute(pdata, NULL, NULL, query, pass, cred, nick);
 
 	if (rc <= 0)
 	{
-		fprintf(stderr, "Unable to update user \"%s\"\n", nick);
-		return st_deny;
+		LOG_ERROR("Unable to update user \"%s\"\n", nick);
+		return fail;
 	}
 	return st_allow;
 }
 
-static plugin_st delete_user(struct plugin_handle* plugin, struct auth_info* user)
+static plugin_st delete_user(struct plugin_handle* plugin, struct auth_info* userinfo)
 {
-	struct sql_data* sql = (struct sql_data*) plugin->ptr;
-	const char* nick = user->nickname;
+	struct auth_sqlite* pdata = (struct auth_sqlite*) plugin->ptr;
+	const char* nick = userinfo->nickname;
+	plugin_st fail = (pdata->exclusive) ? st_deny : st_default;
 	int rc;
 
-	if (sql->exclusive)
-		return st_deny;
+	if (pdata->readonly)
+		return fail;
 
-	rc = sql_execute(sql, null_callback, NULL, "DELETE FROM users WHERE nickname='%q' LIMIT 1;", nick);
+	const char* query = "DELETE FROM users WHERE nickname='%q';";
+	rc = sql_execute(pdata, NULL, NULL, query, nick);
 
 	if (rc <= 0)
 	{
-		fprintf(stderr, "Unable to update user \"%s\"\n", nick);
-		return st_deny;
+		LOG_ERROR("Unable to delete user \"%s\"\n", nick);
+		return fail;
 	}
 	return st_allow;
+}
+
+// this can sometimes take over 60 ms on some systems, so high-traffic hubs may
+// want to disable this (set the update_activity parameter to 0)
+static void update_user_activity(struct plugin_handle* plugin, struct plugin_user* user)
+{
+	struct auth_sqlite* pdata = (struct auth_sqlite*) plugin->ptr;
+
+	if (user->credentials > auth_cred_guest)
+	{
+		const char* query = "UPDATE users SET activity=DATETIME('NOW') WHERE nickname='%q';";
+		int rc = sql_execute(pdata, NULL, NULL, query, user->nick);
+
+		if (rc < 0 || (rc == 0 && pdata->exclusive))
+			LOG_ERROR("Unable to update login stats for user \"%s\"\n", user->nick);
+	}
 }
 
 int plugin_register(struct plugin_handle* plugin, const char* config)
 {
-	PLUGIN_INITIALIZE(plugin, "SQLite authentication plugin", "1.1", "Authenticate users based on a SQLite database.");
+	struct auth_sqlite* pdata;
+	PLUGIN_INITIALIZE(plugin, "SQLite authentication plugin", "1.1", "Authenticate users with a SQLite database.");
+
+	pdata = parse_config(config, plugin);
+	if (!pdata)
+		return -1;
 
 	// Authentication actions.
 	plugin->funcs.auth_get_user = get_user;
@@ -267,19 +460,29 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	plugin->funcs.auth_update_user = update_user;
 	plugin->funcs.auth_delete_user = delete_user;
 
-	plugin->ptr = parse_config(config, plugin);
-	if (plugin->ptr)
-		return 0;
-	return -1;
+	// Log functions
+	if (pdata->update_activity)
+		plugin->funcs.on_user_login = update_user_activity;
+
+	plugin->ptr = pdata;
+
+	sqlite_setup(plugin);
+
+	return 0;
 }
 
 int plugin_unregister(struct plugin_handle* plugin)
 {
-	struct sql_data* sql;
+	struct auth_sqlite* pdata = (struct auth_sqlite*) plugin->ptr;
 	set_error_message(plugin, 0);
-	sql = (struct sql_data*) plugin->ptr;
-	sqlite3_close(sql->db);
-	hub_free(sql);
+
+	if (pdata)
+	{
+		sqlite3_close(pdata->db);
+		hub_free(pdata);
+		plugin->ptr = NULL;
+	}
+
 	return 0;
 }
 
