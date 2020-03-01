@@ -87,6 +87,16 @@
 #cmakedefine HAVE_SSIZE_T
 #cmakedefine HAVE_STRNDUP
 #cmakedefine HAVE_MEMMEM
+#cmakedefine HAVE_LOCALTIME_R
+#cmakedefine HAVE_LOCALTIME_S
+
+/*
+ * If the system doesn't support localtime_r, use localtime_s in its place
+ * NOTE: The args for _r and _s are flipped
+ */
+#if !defined(HAVE_LOCALTIME_R) && defined(HAVE_LOCALTIME_S)
+#define localtime_r(time_in, tm_out) localtime_s(tm_out, time_in)
+#endif
 
 /* printf support for size_t and uint64_t */
 #if defined(WIN32)

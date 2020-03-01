@@ -115,6 +115,18 @@ void net_dns_destroy()
 	g_dns = NULL;
 }
 
+// Visual studio doesn't allow #ifdefs inside macros (LIST_FOREACH)
+#ifdef DEBUG_LOOKUP_TIME
+static inline void print_lookup_time(struct net_dns_job* job)
+{
+	struct timeval time_result;
+	timersub(&job->time_finish, &job->time_start, &time_result);
+	LOG_TRACE("DNS lookup took %d ms", (time_result.tv_sec * 1000) + (time_result.tv_usec / 1000));
+}
+#else
+#define print_lookup_time(job) do {} while (0)
+#endif
+
 void net_dns_process()
 {
 	struct net_dns_result* result;
@@ -124,11 +136,7 @@ void net_dns_process()
 	LIST_FOREACH(struct net_dns_result*, result, g_dns->results,
 	{
 		struct net_dns_job* job = result->job;
-#ifdef DEBUG_LOOKUP_TIME
-		struct timeval time_result;
-		timersub(&result->job->time_finish, &result->job->time_start, &time_result);
-		LOG_TRACE("DNS lookup took %d ms", (time_result.tv_sec * 1000) + (time_result.tv_usec / 1000));
-#endif
+		print_lookup_time(job);
 
 		// wait for the work thread to finish
 		uhub_thread_join(job->thread_handle);

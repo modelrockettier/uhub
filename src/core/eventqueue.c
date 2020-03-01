@@ -24,6 +24,8 @@ static void eq_debug(const char* prefix, struct event_data* data)
 {
 	LOG_DUMP(">>> %s: %p, id: %x, flags=%d\n", prefix, data, data->id, data->flags);
 }
+#else
+#define eq_debug(prefix, data) do {} while(0)
 #endif
 
 
@@ -60,12 +62,10 @@ void event_queue_shutdown(struct event_queue* queue)
 
 static void event_queue_cleanup_callback(void* ptr)
 {
-#ifdef EQ_DEBUG
 	struct event_data* data = (struct event_data*) ptr;
 	eq_debug("NUKE", data);
-#endif
 
-	hub_free((struct event_data*) ptr);
+	hub_free(data);
 }
 
 int event_queue_process(struct event_queue* queue)
@@ -79,9 +79,7 @@ int event_queue_process(struct event_queue* queue)
 
 	LIST_FOREACH(struct event_data*, data, queue->q1,
 	{
-#ifdef EQ_DEBUG
 		eq_debug("EXEC", data);
-#endif
 		queue->callback(queue->callback_data, data);
 	});
 
@@ -114,9 +112,7 @@ void event_queue_post(struct event_queue* queue, struct event_data* message)
 		data->ptr   = message->ptr;
 		data->flags = message->flags;
 
-#ifdef EQ_DEBUG
 		eq_debug("POST", data);
-#endif
 
 		list_append(q, data);
 	}
