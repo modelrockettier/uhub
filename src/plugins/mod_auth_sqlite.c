@@ -168,7 +168,7 @@ static struct auth_sqlite* parse_config(const char* line, struct plugin_handle* 
 		else if (strcmp(cfg_settings_get_key(setting), "journal") == 0)
 		{
 			size_t jsz = sizeof(pdata->journal);
-			size_t len = (size_t)strlcpy(pdata->journal, cfg_settings_get_value(setting), jsz);
+			size_t len = strlcpy(pdata->journal, cfg_settings_get_value(setting), jsz);
 
 			if (len >= jsz)
 			{
@@ -252,7 +252,7 @@ static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
 	struct data_record* rec = (struct data_record*) ptr;
 	struct auth_info* data;
 	int i = 0;
-	int rc;
+	size_t len;
 	size_t max;
 
 	if (!ptr)
@@ -266,6 +266,7 @@ static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
 	if (!data)
 		return 0;
 
+	data->activity[0] = '\0';
 	data->nickname[0] = '\0';
 	data->password[0] = '\0';
 	data->credentials = auth_cred_none;
@@ -273,8 +274,14 @@ static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
 	uhub_assert(((size_t) -1) > ((size_t) 0));
 
 	for (; i < argc; i++) {
-		rc = 0;
-		if (strcmp(colName[i], "credentials") == 0)
+		len = 0;
+		if (strcmp(colName[i], "activity") == 0)
+		{
+			max = MAX_ACTIVITY_LEN+1;
+			len = strlcpy(data->activity, argv[i], max);
+			uhub_assert(sizeof(data->activity) == max);
+		}
+		else if (strcmp(colName[i], "credentials") == 0)
 		{
 			auth_string_to_cred(argv[i], &data->credentials);
 			uhub_assert(data->credentials >= auth_cred_user);
@@ -282,19 +289,19 @@ static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
 		else if (strcmp(colName[i], "nickname") == 0)
 		{
 			max = MAX_NICK_LEN+1;
-			rc = strlcpy(data->nickname, argv[i], max);
+			len = strlcpy(data->nickname, argv[i], max);
 			uhub_assert(sizeof(data->nickname) == max);
 		}
 		else if (strcmp(colName[i], "password") == 0)
 		{
 			max = MAX_PASS_LEN+1;
-			rc = strlcpy(data->password, argv[i], max);
+			len = strlcpy(data->password, argv[i], max);
 			uhub_assert(sizeof(data->password) == max);
 		}
 		else
 			LOG_WARN("Unknown column \"%s\" in get_user results\n", colName[i]);
 
-		if (((size_t) rc) >= max)
+		if (len >= max)
 		{
 			LOG_ERROR("Column \"%s\" data too long", colName[i]);
 			return -1;
@@ -305,6 +312,34 @@ static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
 	printf("SQL: nickname=%s, password=%s, credentials=%s\n",
 		data->nickname, data->password, auth_cred_to_string(data->credentials));
 #endif
+	return 0;
+}
+
+static int get_user_list_callback(void* ptr, int argc, char **argv, char **colName){
+	struct linked_list* users = (struct linked_list*) ptr;
+	struct data_record rec = { 0, };
+	int rc;
+
+	if (!ptr)
+		return 0;
+
+	rec.userinfo = hub_malloc(sizeof(struct auth_info));
+	if (!rec.userinfo)
+	{
+		LOG_ERROR("get_user_list_callback(): OOM");
+		list_clear(users, &hub_free);
+		return -1;
+	}
+
+	rc = get_user_callback(&rec, argc, argv, colName);
+	if (rc != 0)
+	{
+		list_clear(users, &hub_free);
+		hub_free(rec.userinfo);
+		return rc;
+	}
+
+	list_append(users, rec.userinfo);
 	return 0;
 }
 
@@ -324,7 +359,13 @@ static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, st
 		memset(userinfo, 0, sizeof(struct auth_info));
 
 	const char* query_fmt =
-		"SELECT credentials,nickname,password FROM users WHERE nickname='%q';";
+		"SELECT credentials,nickname,password,"
+		// when activity == created, user hasn't logged in
+		" CASE activity WHEN created THEN 'Never' ELSE datetime(activity, 'localtime') END AS activity"
+		" FROM users"
+		" WHERE nickname='%q'"
+		" LIMIT 1"
+		";";
 
 	query = sqlite3_mprintf(query_fmt, nickname);
 	if (!query) // OOM
@@ -352,6 +393,52 @@ static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, st
 #endif
 
 	return fail;
+}
+
+static plugin_st get_user_list(struct plugin_handle* plugin, const char* search, struct linked_list* users)
+{
+	struct auth_sqlite* pdata = (struct auth_sqlite*) plugin->ptr;
+	int rc;
+	char const* nick;
+
+	const char* query =
+		"SELECT credentials,nickname,password,"
+		"CASE activity WHEN created THEN 'Never' ELSE datetime(activity, 'localtime') END AS activity"
+		" FROM users"
+		" WHERE nickname LIKE '%%%q%%'"
+		" LIMIT 100"
+		" ORDER BY"
+		// order by the credential strings: users first, then bots
+		// within users and bots, higher privileges are first
+		" CASE credentials"
+		// users
+		"  WHEN 'admin'    THEN 0"
+		"  WHEN 'super'    THEN 1"
+		"  WHEN 'op'       THEN 2" // older uhub-passwd versions used "op"
+		"  WHEN 'operator' THEN 2" // auth_cred_to_string() uses "operator"
+		"  WHEN 'user'     THEN 3"
+		// bots
+		"  WHEN 'link'     THEN 4"
+		"  WHEN 'opubot'   THEN 5"
+		"  WHEN 'opbot'    THEN 6"
+		"  WHEN 'ubot'     THEN 7"
+		"  WHEN 'bot'      THEN 8"
+		"  ELSE       credentials"
+		" END,"
+		" nickname"
+		";";
+
+	if (search != NULL)
+		nick = search;
+	else
+		nick = "";
+
+	rc = sql_execute(pdata, get_user_list_callback, users, query, nick);
+
+	if (rc < 0)
+		return st_deny;
+
+	return (pdata->exclusive) ? st_allow : st_default;
 }
 
 static plugin_st register_user(struct plugin_handle* plugin, struct auth_info* userinfo)
@@ -397,7 +484,7 @@ static plugin_st update_user(struct plugin_handle* plugin, struct auth_info* use
 	if (userinfo->credentials < auth_cred_user)
 		return fail;
 
-	const char* query = "UPDATE users SET password='%q', credentials='%q' WHERE nickname='%q';";
+	const char* query = "UPDATE users SET password='%q', credentials='%q' WHERE nickname='%q' LIMIT 1;";
 	rc = sql_execute(pdata, NULL, NULL, query, pass, cred, nick);
 
 	if (rc <= 0)
@@ -418,7 +505,7 @@ static plugin_st delete_user(struct plugin_handle* plugin, struct auth_info* use
 	if (pdata->readonly)
 		return fail;
 
-	const char* query = "DELETE FROM users WHERE nickname='%q';";
+	const char* query = "DELETE FROM users WHERE nickname='%q' LIMIT 1;";
 	rc = sql_execute(pdata, NULL, NULL, query, nick);
 
 	if (rc <= 0)
@@ -429,7 +516,7 @@ static plugin_st delete_user(struct plugin_handle* plugin, struct auth_info* use
 	return st_allow;
 }
 
-// this can sometimes take over 60 ms on some systems, so high-traffic hubs may
+// This can sometimes take over 60 ms on some systems, so high-traffic hubs may
 // want to disable this (set the update_activity parameter to 0)
 static void update_user_activity(struct plugin_handle* plugin, struct plugin_user* user)
 {
@@ -437,7 +524,7 @@ static void update_user_activity(struct plugin_handle* plugin, struct plugin_use
 
 	if (user->credentials > auth_cred_guest)
 	{
-		const char* query = "UPDATE users SET activity=DATETIME('NOW') WHERE nickname='%q';";
+		const char* query = "UPDATE users SET activity=DATETIME('NOW') WHERE nickname='%q' LIMIT 1;";
 		int rc = sql_execute(pdata, NULL, NULL, query, user->nick);
 
 		if (rc < 0 || (rc == 0 && pdata->exclusive))
@@ -456,12 +543,13 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 
 	// Authentication actions.
 	plugin->funcs.auth_get_user = get_user;
+	plugin->funcs.auth_get_user_list = get_user_list;
 	plugin->funcs.auth_register_user = register_user;
 	plugin->funcs.auth_update_user = update_user;
 	plugin->funcs.auth_delete_user = delete_user;
 
 	// Log functions
-	if (pdata->update_activity)
+	if (pdata->update_activity) // note: readonly disables update_activity
 		plugin->funcs.on_user_login = update_user_activity;
 
 	plugin->ptr = pdata;
