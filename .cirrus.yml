@@ -1,0 +1,15 @@
+task:
+  name: FreeBSD
+  env:
+    CIRRUS_OS: freebsd
+    matrix:
+      - CONFIG: minimal
+      - CONFIG: full
+  freebsd_instance:
+    matrix:
+      - image_family: freebsd-12-1
+      - image_family: freebsd-11-3-snap
+  install_script: |
+    pkg install -y bash
+    bash ./autotest/travis/install-build-depends.sh
+  build_and_test_script: bash ./autotest/travis/build-and-test.sh

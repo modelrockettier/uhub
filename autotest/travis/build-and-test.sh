@@ -3,6 +3,45 @@
 set -x
 set -e
 
+
+if [ "$TRAVIS" = true ]; then
+	OS_NAME="${TRAVIS_OS_NAME:-$(uname -s)}"
+	DIST=$TRAVIS_DIST
+	BRANCH=$TRAVIS_BRANCH
+
+elif [ "$CIRRUS_CI" = true ]; then
+	unset OS
+	OS_NAME=${CIRRUS_OS:-$(uname -s)}
+
+	if [ -n "$CIRRUS_TAG" ]; then
+		BRANCH=$CIRRUS_TAG
+	elif [ -n "$CIRRUS_BRANCH" ]; then
+		BRANCH=$CIRRUS_BRANCH
+	elif [ -n "$CIRRUS_BASE_BRANCH" ]; then
+		BRANCH=$CIRRUS_BASE_BRANCH
+	fi
+
+else
+	echo "WARNING: Unknown CI" >&2
+	OS_NAME=$(uname -s)
+fi
+
+case "$OS_NAME" in
+	[Dd]arwin|osx)   OS_NAME=osx     ;;
+	freebsd|FreeBSD) OS_NAME=freebsd ;;
+	[Ll]inux)        OS_NAME=linux   ;;
+	[Ww]indows)      OS_NAME=windows ;;
+	*) echo "Unknown OS name: $OS_NAME" >&2; exit 6 ;;
+esac
+
+if [ -z "$CONFIG" ]; then
+	echo "WARNING: No CONFIG set, building minimal" >&2
+	CONFIG=minimal
+fi
+
+export BRANCH CONFIG DIST OS_NAME
+
+
 # Test creating the docker image
 if [ "${CONFIG}" = "docker" ]; then
 	docker build -t uhub:$(uname -m) .
@@ -39,7 +78,8 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	                -DSSL_SUPPORT=ON -DUSE_OPENSSL=ON -DADC_STRESS=ON"
 
 	# OS-specific cmake options
-	CMAKEOPTS_linux="-DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
+	CMAKEOPTS_linux="  -DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
+	CMAKEOPTS_freebsd="-DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
 
 	# Config and OS specific cmake options
 	CMAKEOPTS_full_linux="-DSYSTEMD_SUPPORT=ON"
@@ -47,7 +87,7 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 
 	# Grab the cmake options for this specific OS + config combination
 	CMAKEOPTS=""
-	for i in CMAKEOPTS_{all,$CONFIG,$TRAVIS_OS_NAME,${CONFIG}_${TRAVIS_OS_NAME}}; do
+	for i in CMAKEOPTS_{all,$CONFIG,$OS_NAME,${CONFIG}_${OS_NAME}}; do
 		CMAKEOPTS+=" ${!i}"
 	done
 
@@ -60,8 +100,7 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	du -shc autotest-bin mod_*.so uhub uhub-admin uhub-passwd
 	make test
 
-	if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-		# make install doesn't work on mac/windows
+	if [ "$OS_NAME" = "linux" ] || [ "$OS_NAME" = "freebsd" ]; then
 		sudo make install
 		du -shc /etc/uhub/* /usr/bin/uhub* /usr/lib/uhub/*
 	fi
