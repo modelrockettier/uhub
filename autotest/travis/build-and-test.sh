@@ -80,6 +80,8 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	# OS-specific cmake options
 	CMAKEOPTS_linux="  -DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
 	CMAKEOPTS_freebsd="-DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
+	CMAKEOPTS_osx="    -DCMAKE_INSTALL_PREFIX=/usr/local/opt/uhub -DPLUGIN_DIR=/usr/local/opt/uhub/lib
+	                   -DCONFIG_DIR=/usr/local/opt/uhub/etc -DLOG_DIR=/usr/local/opt/uhub/log"
 
 	# Config and OS specific cmake options
 	CMAKEOPTS_full_linux="-DSYSTEMD_SUPPORT=ON"
@@ -103,6 +105,9 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	if [ "$OS_NAME" = "linux" ] || [ "$OS_NAME" = "freebsd" ]; then
 		sudo make install
 		du -shc /etc/uhub/* /usr/bin/uhub* /usr/lib/uhub/*
+	elif [ "$OS_NAME" = "osx" ]; then
+		sudo make install
+		du -shc /usr/local/opt/uhub/{bin/uhub,etc/,lib/}*
 	fi
 
 else
