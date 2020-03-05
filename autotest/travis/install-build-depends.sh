@@ -3,6 +3,15 @@
 set -x
 set -e
 
+# Check if we have a working "which"
+if ! which bash &>/dev/null; then
+	which() { type -P "$@"; }
+fi
+
+# Don't need sudo as root
+if [ "$UID" = 0 ]; then
+	sudo() { "$@"; }
+fi
 
 if [ "$TRAVIS" = true ]; then
 	OS_NAME="${TRAVIS_OS_NAME:-$(uname -s)}"
@@ -43,20 +52,39 @@ export BRANCH CONFIG DIST OS_NAME
 
 
 if [ "$OS_NAME" = "linux" ]; then
-    PACKAGES="cmake libsqlite3-dev make "
+	if which apt-get &>/dev/null; then
+		PACKAGES="cmake libsqlite3-dev make "
 
-	case "${CONFIG}" in
-		full) PACKAGES+=" git libssl-dev libsystemd-dev pkg-config" ;;
-		deb)  PACKAGES+=" debhelper fakeroot git libssl-dev pkg-config" ;; # libsystemd-dev
-		minimal) ;;
-		docker) exit 0 ;;
-		*)
-			echo "Unknown config: ${CONFIG}" >&2
-			exit 5 ;;
-	esac
+		case "${CONFIG}" in
+			full) PACKAGES+=" git libssl-dev libsystemd-dev pkg-config" ;;
+			deb)  PACKAGES+=" debhelper fakeroot git libssl-dev pkg-config" ;; # libsystemd-dev
+			minimal) ;;
+			docker) exit 0 ;;
+			*)
+				echo "Unknown config: ${CONFIG}" >&2
+				exit 5 ;;
+		esac
 
-	sudo apt-get update -q
-	sudo apt-get install -y --no-install-suggests --no-install-recommends $PACKAGES
+		sudo apt-get update -q
+		sudo apt-get install -y --no-install-suggests --no-install-recommends $PACKAGES
+
+	elif which yum &>/dev/null; then
+		PACKAGES="cmake gcc make sqlite-devel "
+
+		case "${CONFIG}" in
+			full) PACKAGES+=" git openssl-devel pkgconfig systemd-devel" ;;
+			minimal) ;;
+			docker) exit 0 ;;
+			*)
+				echo "Unknown config: ${CONFIG}" >&2
+				exit 5 ;;
+		esac
+
+		sudo yum install --assumeyes $PACKAGES
+
+	else
+		echo "WARNING: Unknown package manager." >&2
+	fi
 
 elif [ "$OS_NAME" = "osx" ]; then
 	case "${CONFIG}" in

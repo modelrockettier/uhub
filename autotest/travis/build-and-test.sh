@@ -3,6 +3,15 @@
 set -x
 set -e
 
+# Check if we have a working "which"
+if ! which bash &>/dev/null; then
+	which() { type -P "$@"; }
+fi
+
+# Don't need sudo as root
+if [ "$UID" = 0 ]; then
+	sudo() { "$@"; }
+fi
 
 if [ "$TRAVIS" = true ]; then
 	OS_NAME="${TRAVIS_OS_NAME:-$(uname -s)}"
@@ -64,9 +73,9 @@ elif [ "${CONFIG}" = "deb" ]; then
 
 # Test the vanilla cmake build+install
 elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
-	rm -rf builddir
-	mkdir builddir
-	cd builddir
+	rm -rf build
+	mkdir build
+	cd build
 
 	CMAKEOPTS_all=".."
 

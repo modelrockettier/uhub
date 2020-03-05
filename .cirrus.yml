@@ -1,15 +1,31 @@
 task:
-  name: FreeBSD
+  name: FreeBSD-$RELEASEVER-$CONFIG
   env:
     CIRRUS_OS: freebsd
     matrix:
       - CONFIG: minimal
       - CONFIG: full
-  freebsd_instance:
     matrix:
-      - image_family: freebsd-12-1
-      - image_family: freebsd-11-3-snap
-  install_script: |
+      - RELEASEVER: 12-1
+      - RELEASEVER: 11-3-snap
+  freebsd_instance:
+    image_family: freebsd-$RELEASEVER
+  install_build_depends_script: |
     pkg install -y bash
     bash ./autotest/travis/install-build-depends.sh
+  build_and_test_script: bash ./autotest/travis/build-and-test.sh
+
+task:
+  env:
+    matrix:
+      - RELEASEVER: 7
+      - RELEASEVER: 8
+    matrix:
+      - CONFIG: minimal
+      - CONFIG: full
+    CIRRUS_DIST: centos$RELEASEVER
+  name: CentOS-$RELEASEVER-$CONFIG
+  container:
+    image: centos:$RELEASEVER
+  install_build_depends_script: bash ./autotest/travis/install-build-depends.sh
   build_and_test_script: bash ./autotest/travis/build-and-test.sh
