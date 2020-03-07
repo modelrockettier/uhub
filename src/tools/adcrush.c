@@ -42,7 +42,6 @@ static int cfg_quiet       = 0; /* quiet mode (no output) */
 static int cfg_clients     = ADC_CLIENTS_DEFAULT; /* number of clients */
 static int cfg_netstats_interval = STATS_INTERVAL;
 static int running         = 1;
-static int logged_in       = 0;
 static int blank           = 0;
 static struct net_statistics* stats_intermediate;
 static struct net_statistics* stats_total;
@@ -160,8 +159,6 @@ static size_t get_next_timeout_evt()
 }
 
 
-static void perf_result(struct ADC_client* client, sid_t target, const char* what, const char* token);
-
 static void perf_chat(struct ADC_client* client, int priv)
 {
 	size_t r = get_wait_rand(MAX_CHAT_MSGS-1);
@@ -196,6 +193,7 @@ static void perf_search(struct ADC_client* client)
 	ADC_client_send(client, cmd);
 }
 
+#if 0
 static void perf_result(struct ADC_client* client, sid_t target, const char* what, const char* token)
 {
 	char tmp[256];
@@ -212,10 +210,10 @@ static void perf_result(struct ADC_client* client, sid_t target, const char* wha
 
 	ADC_client_send(client, cmd);
 }
+#endif
 
 static void perf_ctm(struct ADC_client* client)
 {
-	char buf[1024] = { 0, };
 	struct adc_message* cmd = adc_msg_construct_source_dest(ADC_CMD_DCTM, ADC_client_get_sid(client), ADC_client_get_sid(client), 32);
 	adc_msg_add_argument(cmd, "ADC/1.0");
 	adc_msg_add_argument(cmd, "TOKEN123456");
@@ -267,14 +265,13 @@ static void perf_normal_action(struct ADC_client* client)
 {
 	struct AdcFuzzUser* user = (struct AdcFuzzUser*) ADC_client_get_ptr(client);
 	size_t r = get_wait_rand(5);
-	size_t p = get_wait_rand(100);
+	// size_t p = get_wait_rand(100);
 
 	switch (r)
 	{
 		case 0:
 			// if (p > (90 - (10 * cfg_level)))
 			{
-				struct ADC_client* c;
 				char* nick = hub_strdup(ADC_client_get_nick(client));
 				char* desc = hub_strdup(ADC_client_get_description(client));
 

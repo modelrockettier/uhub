@@ -97,6 +97,8 @@ void net_notify_signal(struct uhub_notify_handle* handle, char data)
 {
 	LOG_TRACE("net_notify_signal()");
 #ifndef WIN32
-	write(handle->pipe_fd[1], &data, 1);
+	int ret = write(handle->pipe_fd[1], &data, 1);
+	if (ret != 1)
+		LOG_WARN("Notify write returned unexpected value: %d", ret);
 #endif
 }

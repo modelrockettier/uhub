@@ -208,7 +208,14 @@ void tiger(uint64_t* str, uint64_t length, uint64_t res[3]) {
 
 	for (; j < 56; j++) temp[j] = 0;
 
+#if 0
+	// breaks C's strict aliasing rules
 	((uint64_t*) (&(temp[56])))[0] = ((uint64_t) length) << 3;
+#else
+	length <<= 3;
+	memcpy(&(temp[56]), &length, sizeof(uint64_t));
+#endif
+
 	tiger_compress(((uint64_t*) temp), res);
 
 #ifdef ARCH_BIGENDIAN
