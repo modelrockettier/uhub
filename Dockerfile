@@ -15,7 +15,11 @@ WORKDIR /uhub
 ENV CFLAGS="-Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fPIE -pie -Wall -O2 -DALLOW_NICK_CHANGE -fstack-check"
 ENV LDFLAGS="-Wl,-z,relro"
 
-ARG BUILD=Release
+ARG BUILD
+ENV BUILD=${BUILD:-Release}
+
+ARG VERBOSE
+ENV VERBOSE=${VERBOSE}
 
 # When building from the uhub repository, just copy it in
 COPY . .
@@ -33,6 +37,7 @@ COPY . .
 # Use /app/conf for configs here so the start script can install missing
 # configs on the first fun.
 RUN \
+if [ -z "$VERBOSE" ]; then export CMAKE_NO_VERBOSE=1; fi && \
 echo "**** configure uhub ****" && \
 cmake . \
 	-DCMAKE_INSTALL_PREFIX=/app \
@@ -55,7 +60,9 @@ mv -v /conf/* /app/conf/ && \
 echo "**** move plugins into place ****" && \
 mv -v /libs/* /app/lib/ && \
 echo "**** move start script into place ****" && \
-mv -v tools/start-docker.sh /app/bin/start-uhub.sh
+mv -v tools/start-docker.sh /app/bin/start-uhub.sh && \
+echo "**** file list ****" && \
+du -shc /app/conf/* /app/bin/* /app/lib/* /app/man/*/*
 
 
 # Actual production container

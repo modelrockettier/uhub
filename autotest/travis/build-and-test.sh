@@ -1,15 +1,33 @@
 #!/bin/bash
 
+# Exit codes
+# 0: Success
+#
+# 2: Could not find plugin dir after deb install
+# 5: Unknown config
+# 6: Unknown OS
+# 7: System does not have a working "which" command
+#
+# Anything else: Unknown error
+
 set -x
 set -e
 
+quiet() { "$@" >/dev/null 2>&1; }
+exists() { quiet which "$@"; }
+
 # Check if we have a working "which"
-if ! which bash &>/dev/null; then
-	which() { type -P "$@"; }
+if ! exists bash; then
+	exists() { quiet type -P "$@"; }
+
+	if ! exists bash; then
+		echo "ERROR: 'which' does not work" >&2
+		exit 7
+	fi
 fi
 
-# Don't need sudo as root
-if [ "$UID" = 0 ]; then
+# Don't need sudo as root and if there's no sudo, try running without it
+if [ "$UID" = 0 ] || ! exists sudo; then
 	sudo() { "$@"; }
 fi
 
@@ -87,13 +105,15 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	                -DSSL_SUPPORT=ON -DUSE_OPENSSL=ON -DADC_STRESS=ON"
 
 	# OS-specific cmake options
-	CMAKEOPTS_linux="  -DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
 	CMAKEOPTS_freebsd="-DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
+	CMAKEOPTS_linux="  -DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
 	CMAKEOPTS_osx="    -DCMAKE_INSTALL_PREFIX=/usr/local/opt/uhub -DPLUGIN_DIR=/usr/local/opt/uhub/lib
 	                   -DCONFIG_DIR=/usr/local/opt/uhub/etc -DLOG_DIR=/usr/local/opt/uhub/log"
 
 	# Config and OS specific cmake options
-	CMAKEOPTS_full_linux="-DSYSTEMD_SUPPORT=ON"
+	if [ -z "$NO_SYSTEMD" ]; then
+		CMAKEOPTS_full_linux="-DSYSTEMD_SUPPORT=ON"
+	fi
 	CMAKEOPTS_full_osx="-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl"
 
 	# Grab the cmake options for this specific OS + config combination
@@ -123,4 +143,3 @@ else
 	echo "Unknown config: ${CONFIG}" >&2
 	exit 5
 fi
-

@@ -9,6 +9,7 @@ CMakeFiles/*
 CTestTestfile.cmake
 Makefile
 adcrush
+build
 build-stamp
 cmake_install.cmake
 compile_commands.json

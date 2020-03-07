@@ -1,15 +1,32 @@
 #!/bin/bash
 
+# Exit codes
+# 0: Success
+#
+# 5: Unknown config
+# 6: Unknown OS
+# 7: System does not have a working "which" command
+#
+# Anything else: Unknown error
+
 set -x
 set -e
 
+quiet() { "$@" >/dev/null 2>&1; }
+exists() { quiet which "$@"; }
+
 # Check if we have a working "which"
-if ! which bash &>/dev/null; then
-	which() { type -P "$@"; }
+if ! exists bash; then
+	exists() { quiet type -P "$@"; }
+
+	if ! exists bash; then
+		echo "ERROR: 'which' does not work" >&2
+		exit 7
+	fi
 fi
 
-# Don't need sudo as root
-if [ "$UID" = 0 ]; then
+# Don't need sudo as root and if there's no sudo, try running without it
+if [ "$UID" = 0 ] || ! exists sudo; then
 	sudo() { "$@"; }
 fi
 
@@ -52,7 +69,7 @@ export BRANCH CONFIG DIST OS_NAME
 
 
 if [ "$OS_NAME" = "linux" ]; then
-	if which apt-get &>/dev/null; then
+	if exists apt-get; then
 		PACKAGES="cmake libsqlite3-dev make "
 
 		case "${CONFIG}" in
@@ -68,7 +85,7 @@ if [ "$OS_NAME" = "linux" ]; then
 		sudo apt-get update -q
 		sudo apt-get install -y --no-install-suggests --no-install-recommends $PACKAGES
 
-	elif which yum &>/dev/null; then
+	elif exists yum; then
 		PACKAGES="cmake gcc make sqlite-devel "
 
 		case "${CONFIG}" in
@@ -94,9 +111,13 @@ elif [ "$OS_NAME" = "osx" ]; then
 			exit 5 ;;
 	esac
 
-#	# The travis brew addon currently handles dependencies
-#	brew update
-#	brew install cmake openssl pkg-config sqlite
+	if [ "$TRAVIS" = true ]; then
+		# The travis brew addon currently handles dependencies
+		exit 0
+	else
+		brew update
+		brew install cmake openssl pkg-config sqlite
+	fi
 
 elif [ "$OS_NAME" = "freebsd" ]; then
     PACKAGES="cmake coreutils gmake llvm sqlite3"
