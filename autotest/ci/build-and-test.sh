@@ -68,6 +68,10 @@ fi
 
 export BRANCH CONFIG DIST OS_NAME
 
+if [ "$OS_NAME" = windows ]; then
+	export VCPKG_ROOT="$HOME/vcpkg-$CONFIG"
+fi
+
 
 # Test creating the docker image
 if [ "${CONFIG}" = "docker" ]; then
@@ -128,39 +132,58 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 
 	CMAKEOPTS_all=".."
 
+	if [ "$CONFIG" = "minimal" ]; then
+		BUILD_TYPE=Release
+	else
+		BUILD_TYPE=Debug
+	fi
+
 	# Config-specific cmake options
 	CMAKEOPTS_minimal="-DCMAKE_BUILD_TYPE=Release -DLOWLEVEL_DEBUG=OFF
 	                   -DSSL_SUPPORT=OFF -DADC_STRESS=OFF"
 
 	CMAKEOPTS_full="-DCMAKE_BUILD_TYPE=Debug -DLOWLEVEL_DEBUG=ON
-	                -DSSL_SUPPORT=ON -DADC_STRESS=ON"
+	                -DSSL_SUPPORT=ON"
 
 	# OS-specific cmake options
 	CMAKEOPTS_freebsd="-DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
 	CMAKEOPTS_linux="  -DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
 	CMAKEOPTS_osx="    -DCMAKE_INSTALL_PREFIX=/usr/local/opt/uhub -DPLUGIN_DIR=/usr/local/opt/uhub/lib
 	                   -DCONFIG_DIR=/usr/local/opt/uhub/etc -DLOG_DIR=/usr/local/opt/uhub/log"
+	CMAKEOPTS_windows="-DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
+	                   -DCTEST_OUTPUT_ON_FAILURE=1"
 
 	# Config and OS specific cmake options
 	if [ -z "$NO_SYSTEMD" ]; then
-		CMAKEOPTS_full_linux="-DSYSTEMD_SUPPORT=ON"
+		CMAKEOPTS_full_linux="-DSYSTEMD_SUPPORT=ON -DADC_STRESS=ON"
 	fi
-	CMAKEOPTS_full_osx="-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl"
+	CMAKEOPTS_full_freebsd="-DADC_STRESS=ON"
+	CMAKEOPTS_full_osx="-DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DADC_STRESS=ON"
 
 	# Grab the cmake options for this specific OS + config combination
 	CMAKEOPTS=""
 	for i in CMAKEOPTS_{all,$CONFIG,$OS_NAME,${CONFIG}_${OS_NAME}}; do
-		CMAKEOPTS+=" ${!i}"
+		CMAKEOPTS+=" ${!i} "
 	done
 
 	# If the tests fail, print the test output to the logs to help debugging
 	export CTEST_OUTPUT_ON_FAILURE=1
 
 	cmake ${CMAKEOPTS}
-	make VERBOSE=1 -j3
 
-	du -shc autotest-bin mod_*.so uhub uhub-admin uhub-passwd
-	make test
+	if [ "$OS_NAME" = "windows" ]; then
+		export VERBOSE=1
+		cmake --build . --target ALL_BUILD --config $BUILD_TYPE
+		unset VERBOSE
+
+		du -shc */autotest-bin.exe */mod_*.dll */uhub.exe */uhub-passwd.exe
+		cmake --build . --target RUN_TESTS --config $BUILD_TYPE
+	else
+		make VERBOSE=1 -j3
+
+		du -shc autotest-bin mod_*.so uhub uhub-admin uhub-passwd
+		make test
+	fi
 
 	if [ "$OS_NAME" = "linux" ] || [ "$OS_NAME" = "freebsd" ]; then
 		sudo make install
@@ -168,6 +191,12 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	elif [ "$OS_NAME" = "osx" ]; then
 		sudo make install
 		du -shc /usr/local/opt/uhub/{bin/uhub,etc/,lib/}*
+	elif [ "$OS_NAME" = "windows" ]; then
+		# make install doesn't work on windows, so don't do anything here
+		true
+	else
+		echo "Unknown platform" >&2
+		exit 6
 	fi
 
 else

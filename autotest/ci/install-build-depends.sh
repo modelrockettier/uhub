@@ -176,6 +176,48 @@ elif [ "$OS_NAME" = "freebsd" ]; then
 
 	pkg install -y $PACKAGES
 
+elif [ "$OS_NAME" = "windows" ]; then
+	CHOC_PKGS="cmake microsoft-build-tools visualstudio2017-workload-vctools"
+	VC_PKGS="sqlite3"
+
+	case "${CONFIG}" in
+		minimal) ;;
+		full) VC_PKGS="$VC_PKGS openssl" ;;
+		*)
+			echo "Unknown config: ${CONFIG}" >&2
+			exit 5 ;;
+	esac
+
+	if ! exists git; then
+		CHOC_PKGS="$CHOC_PKGS git"
+	fi
+
+	choco install -y $CHOC_PKGS
+
+	# Download and install vcpkg if it's missing
+	export VCPKG_ROOT="$HOME/vcpkg-$CONFIG"
+	export PATH="$PATH:$VCPKG_ROOT"
+	if [ ! -e "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" ] || ! exists vcpkg; then
+		rm -rf $VCPKG_ROOT
+		git clone https://github.com/Microsoft/vcpkg.git $VCPKG_ROOT
+		pushd $VCPKG_ROOT
+
+		# Try checking out the latest tag
+		TAG=$(git describe --abbrev=0 --tags) || true
+		git checkout "${TAG}" || true
+		git status || true
+
+		# Reduce the build times by not building debug variants of the dependencies
+		echo "set(VCPKG_BUILD_TYPE release)" | tee -a triplets/*-windows.cmake
+
+		cmd "/C bootstrap-vcpkg.bat"
+		popd
+	fi
+
+	for pkg in $VC_PKGS; do
+		vcpkg install $pkg
+	done
+
 else
 	echo "Unknown OS: ${OS_NAME}" >&2
 	exit 6

@@ -27,3 +27,22 @@ task:
     image: centos:$RELEASEVER
   install_build_depends_script: bash ./autotest/ci/install-build-depends.sh
   build_and_test_script: bash ./autotest/ci/build-and-test.sh
+
+task:
+  env:
+    # Git bash
+    CIRRUS_SHELL: "C:\\Program Files\\Git\\bin\\bash.exe"
+    CONFIG: minimal
+  name: Windows-minimal
+  windows_container:
+    image: cirrusci/windowsservercore:cmake
+    os_version: 2019
+  vcpkg_cache:
+    folder: ${HOME}/vcpkg-minimal
+    fingerprint_script:
+      - echo "CONFIG: ${CONFIG}"
+      - echo "OS: ${CIRRUS_OS}"
+      - cat autotest/ci/install-build-depends.sh
+  environment_script: env
+  install_build_depends_script: ./autotest/ci/install-build-depends.sh
+  build_and_test_script: ./autotest/ci/build-and-test.sh

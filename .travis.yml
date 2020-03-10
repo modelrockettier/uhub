@@ -48,19 +48,19 @@ jobs:
     - name: Mac OSX minimal
       os: osx
       env: CONFIG=minimal
-#    # Windows builds
-#    - name: Windows full
-#      os: windows
-#      env: CONFIG=full
-#      cache:
-#        directories:
-#          - $HOME/vcpkg-full
-#    - name: Windows minimal
-#      os: windows
-#      env: CONFIG=minimal
-#      cache:
-#        directories:
-#          - $HOME/vcpkg-minimal
+    # Windows builds
+#   - name: Windows full
+#     os: windows
+#     env: CONFIG=full
+#     cache:
+#       directories:
+#         - $HOME/vcpkg-full
+    - name: Windows minimal
+      os: windows
+      env: CONFIG=minimal
+      cache:
+        directories:
+          - $HOME/vcpkg-minimal
 
 addons:
   homebrew:

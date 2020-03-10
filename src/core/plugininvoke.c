@@ -47,19 +47,19 @@
 		}); \
 	}
 
-#define PLUGIN_INVOKE_STATUS_(HUB, FUNCNAME, ARGS...) \
+#define PLUGIN_INVOKE_STATUS_(HUB, FUNCNAME, ...) \
 	do { \
 		plugin_st status = st_default; \
 		INVOKE(HUB, FUNCNAME, { \
-			status = plugin->funcs.FUNCNAME(plugin, ARGS); \
+			status = plugin->funcs.FUNCNAME(plugin, __VA_ARGS__); \
 			if (status != st_default) \
 				break; \
 		}); \
 		return status; \
 	} while(0)
 
-#define PLUGIN_INVOKE_(HUB, FUNCNAME, ARGS...) \
-	INVOKE(HUB, FUNCNAME, { plugin->funcs.FUNCNAME(plugin, ARGS); })
+#define PLUGIN_INVOKE_(HUB, FUNCNAME, ...) \
+	INVOKE(HUB, FUNCNAME, { plugin->funcs.FUNCNAME(plugin, __VA_ARGS__); })
 
 
 static struct plugin_user* convert_user_type(struct hub_user* user)
