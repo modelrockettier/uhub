@@ -73,8 +73,8 @@ if [ "$OS_NAME" = "linux" ]; then
 		PACKAGES="cmake libsqlite3-dev make"
 
 		case "${CONFIG}" in
+			deb)  PACKAGES="$PACKAGES build-essential debhelper fakeroot git libssl-dev pkg-config" ;; # libsystemd-dev
 			full) PACKAGES="$PACKAGES git libssl-dev libsystemd-dev pkg-config" ;;
-			deb)  PACKAGES="$PACKAGES debhelper fakeroot git libssl-dev pkg-config" ;; # libsystemd-dev
 			minimal) ;;
 			docker) exit 0 ;;
 			*)
@@ -95,6 +95,7 @@ if [ "$OS_NAME" = "linux" ]; then
 
 		case "${CONFIG}" in
 			full) PACKAGES="$PACKAGES git openssl-devel pkgconfig systemd-devel" ;;
+			rpm) PACKAGES="$PACKAGES git openssl-devel pkgconfig rpm-build systemd-devel" ;; # redhat-lsb-core rpm-devel
 			minimal) ;;
 			docker) exit 0 ;;
 			*)

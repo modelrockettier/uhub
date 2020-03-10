@@ -22,6 +22,7 @@ task:
     matrix:
       - CONFIG: minimal
       - CONFIG: full
+      - CONFIG: rpm
   name: CentOS-$RELEASEVER-$CONFIG
   container:
     image: centos:$RELEASEVER

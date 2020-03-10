@@ -89,6 +89,38 @@ elif [ "${CONFIG}" = "deb" ]; then
 
 	du -shc /etc/uhub/* /usr/bin/uhub* "${PLUGIN_DIR}"/*
 
+# Test creating the rpm package with cmake
+elif [ "${CONFIG}" = "rpm" ]; then
+	rm -rf build
+	mkdir build
+	cd build
+
+	CMAKEOPTS=".. -DCMAKE_BUILD_TYPE=Release
+	           -DSSL_SUPPORT=ON -DUSE_OPENSSL=ON
+	           -DHARDENING=ON -DSYSTEMD_SUPPORT=ON
+	           -DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
+
+	# If the tests fail, print the test output to the logs to help debugging
+	export CTEST_OUTPUT_ON_FAILURE=1
+
+	cmake ${CMAKEOPTS}
+	make VERBOSE=1 -j3
+
+	du -shc autotest-bin mod_*.so uhub uhub-admin uhub-passwd
+	make test
+
+	cpack -G RPM #-DCPACK_RPM_PACKAGE_DEBUG=1
+	du -sh uhub-*.rpm
+
+	#files=$(rpm -q -l -p uhub-*.rpm)
+
+	#grep -q "^/etc/uhub/." <<<"$files"
+	#grep -q "^/usr/bin/uhub" <<<"$files"
+	#grep -q "^/usr/lib/uhub/." <<<"$files"
+
+	sudo rpm -i uhub*.rpm
+	du -shc /etc/uhub/* /usr/bin/uhub* /usr/lib/uhub/*
+
 # Test the vanilla cmake build+install
 elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	rm -rf build
@@ -126,8 +158,8 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	export CTEST_OUTPUT_ON_FAILURE=1
 
 	cmake ${CMAKEOPTS}
-
 	make VERBOSE=1 -j3
+
 	du -shc autotest-bin mod_*.so uhub uhub-admin uhub-passwd
 	make test
 
