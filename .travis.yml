@@ -64,7 +64,7 @@ addons:
     - sqlite
 
 install:
-  - autotest/travis/install-build-depends.sh
+  - autotest/ci/install-build-depends.sh
 script:
-  - autotest/travis/build-and-test.sh
+  - autotest/ci/build-and-test.sh
 
