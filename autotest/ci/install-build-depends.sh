@@ -70,26 +70,31 @@ export BRANCH CONFIG DIST OS_NAME
 
 if [ "$OS_NAME" = "linux" ]; then
 	if exists apt-get; then
-		PACKAGES="cmake libsqlite3-dev make "
+		PACKAGES="cmake libsqlite3-dev make"
 
 		case "${CONFIG}" in
-			full) PACKAGES+=" git libssl-dev libsystemd-dev pkg-config" ;;
-			deb)  PACKAGES+=" debhelper fakeroot git libssl-dev pkg-config" ;; # libsystemd-dev
+			full) PACKAGES="$PACKAGES git libssl-dev libsystemd-dev pkg-config" ;;
+			deb)  PACKAGES="$PACKAGES debhelper fakeroot git libssl-dev pkg-config" ;; # libsystemd-dev
 			minimal) ;;
 			docker) exit 0 ;;
 			*)
 				echo "Unknown config: ${CONFIG}" >&2
 				exit 5 ;;
 		esac
+
+		# Only install gcc if we don't already have a c compiler
+		if ! exists cc; then
+			PACKAGES="$PACKAGES gcc"
+		fi
 
 		sudo apt-get update -q
 		sudo apt-get install -y --no-install-suggests --no-install-recommends $PACKAGES
 
-	elif exists yum; then
-		PACKAGES="cmake gcc make sqlite-devel "
+	elif exists yum || exists dnf; then
+		PACKAGES="cmake make sqlite-devel"
 
 		case "${CONFIG}" in
-			full) PACKAGES+=" git openssl-devel pkgconfig systemd-devel" ;;
+			full) PACKAGES="$PACKAGES git openssl-devel pkgconfig systemd-devel" ;;
 			minimal) ;;
 			docker) exit 0 ;;
 			*)
@@ -97,7 +102,35 @@ if [ "$OS_NAME" = "linux" ]; then
 				exit 5 ;;
 		esac
 
-		sudo yum install --assumeyes $PACKAGES
+		# Only install gcc if we don't already have a c compiler
+		if ! exists cc; then
+			PACKAGES="$PACKAGES gcc"
+		fi
+
+		if exists yum; then
+			sudo yum install -y $PACKAGES
+		else
+			sudo dnf install -y $PACKAGES
+		fi
+
+	elif exists apk; then
+		PACKAGES="util-linux sqlite-dev build-base cmake make"
+
+		case "${CONFIG}" in
+			full) PACKAGES="$PACKAGES git openssl-dev" ;;
+			minimal) ;;
+			docker) exit 0 ;;
+			*)
+				echo "Unknown config: ${CONFIG}" >&2
+				exit 5 ;;
+		esac
+
+		# Only install gcc if we don't already have a c compiler
+		if ! exists cc; then
+			PACKAGES="$PACKAGES gcc"
+		fi
+
+		apk add --no-cache $PACKAGES
 
 	else
 		echo "WARNING: Unknown package manager." >&2
@@ -120,15 +153,25 @@ elif [ "$OS_NAME" = "osx" ]; then
 	fi
 
 elif [ "$OS_NAME" = "freebsd" ]; then
-    PACKAGES="cmake coreutils gmake llvm sqlite3"
+    PACKAGES="cmake coreutils sqlite3"
 
 	case "${CONFIG}" in
-		full) PACKAGES+=" git openssl" ;;
+		full) PACKAGES="$PACKAGES git openssl" ;;
 		minimal) ;;
 		*)
 			echo "Unknown config: ${CONFIG}" >&2
 			exit 5 ;;
 	esac
+
+	# Only install llvm if we don't already have a c compiler
+	if ! exists cc; then
+		PACKAGES="$PACKAGES llvm"
+	fi
+
+	# Only install gmake if we don't already have a make installed
+	if ! exists make; then
+		PACKAGES="$PACKAGES gmake"
+	fi
 
 	pkg install -y $PACKAGES
 

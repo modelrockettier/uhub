@@ -10,9 +10,8 @@ task:
       - RELEASEVER: 11-3-snap
   freebsd_instance:
     image_family: freebsd-$RELEASEVER
-  install_build_depends_script: |
-    pkg install -y bash
-    bash ./autotest/ci/install-build-depends.sh
+  install_bash_script: pkg install -y bash
+  install_build_depends_script: bash ./autotest/ci/install-build-depends.sh
   build_and_test_script: bash ./autotest/ci/build-and-test.sh
 
 task:
@@ -23,7 +22,6 @@ task:
     matrix:
       - CONFIG: minimal
       - CONFIG: full
-    CIRRUS_DIST: centos$RELEASEVER
   name: CentOS-$RELEASEVER-$CONFIG
   container:
     image: centos:$RELEASEVER

@@ -11,10 +11,6 @@ mkdir /app /app/bin /app/conf /app/lib /app/man /app/man/man1
 
 WORKDIR /uhub
 
-# Hardening flags for compilation
-ENV CFLAGS="-Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fPIE -pie -Wall -O2 -DALLOW_NICK_CHANGE -fstack-check"
-ENV LDFLAGS="-Wl,-z,relro"
-
 ARG BUILD
 ENV BUILD=${BUILD:-Release}
 
@@ -45,7 +41,7 @@ cmake . \
 	-DPLUGIN_DIR=/libs \
 	-DCONFIG_DIR=/conf \
 	-DLOG_DIR=/conf \
-	-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+	-DHARDENING=ON \
 	-DCMAKE_BUILD_TYPE="${BUILD}" && \
 echo "**** build uhub ****" && \
 make -j2 && \

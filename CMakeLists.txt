@@ -27,11 +27,34 @@ set(LOG_DIR    /var/log                          CACHE PATH "The default log loc
 option(LOWLEVEL_DEBUG  "Enable low level debug messages" OFF)
 option(SSL_SUPPORT     "Enable SSL support" ON)
 option(USE_OPENSSL     "Use OpenSSL's SSL support" ON)
+option(HARDENING       "Enable compiler options to harden uhub against memory corruption attacks" OFF)
 option(SYSTEMD_SUPPORT "Enable systemd notify and journal logging" OFF)
 option(ADC_STRESS      "Enable the stress tester client" OFF)
 
 # Set position independent to on by default
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+
+# Control generation of Position Independent Executable (PIE)
+if(POLICY CMP0083)
+	cmake_policy(SET CMP0083 NEW)
+
+	# Check if pie linker arguments work
+	include(CheckPIESupported)
+
+	# Retrieve any error message.
+	check_pie_supported(OUTPUT_VARIABLE pie_output LANGUAGES C)
+	if(NOT CMAKE_C_LINK_PIE_SUPPORTED)
+	  message(WARNING "PIE is not supported at link time: ${pie_output}.\n"
+					  "PIE link options will not be passed to linker.")
+	endif()
+endif()
+
+# Only interpret if() arguments as variables or keywords when unquoted.
+if(POLICY CMP0054)
+	cmake_policy(SET CMP0054 NEW)
+endif()
+
 
 include(BuildType)
 
@@ -50,6 +73,7 @@ list(APPEND CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
 TEST_BIG_ENDIAN(BIGENDIAN)
 if(BIGENDIAN)
 	add_definitions(-DARCH_BIGENDIAN)
+	list(APPEND CMAKE_REQUIRED_DEFINITIONS "-DARCH_BIGENDIAN")
 endif()
 
 if(SSL_SUPPORT)
@@ -74,6 +98,21 @@ endif()
 
 if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	list(APPEND CMAKE_REQUIRED_DEFINITIONS "-D_CRT_SECURE_NO_WARNINGS")
+endif()
+
+if(HARDENING)
+	if(MSVC)
+		# Enable ASLR
+		set(LINKER_FLAGS_TO_USE /DYNAMICBASE /NXCOMPAT)
+	else()
+		add_definitions(-D_FORTIFY_SOURCE=2)
+		list(APPEND CMAKE_REQUIRED_DEFINITIONS "-D_FORTIFY_SOURCE=2")
+
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat -Werror=format-security -Wall -fstack-protector-strong -fstack-check -O2")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro -Wl,-z,now ")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,relro -Wl,-z,now ")
+	endif()
 endif()
 
 check_include_file(stdint.h HAVE_STDINT_H)
@@ -277,6 +316,7 @@ message(STATUS "  LOG_DIR: ${LOG_DIR}")
 message(STATUS "  PLUGIN_DIR: ${PLUGIN_DIR}")
 message(STATUS "  SSL_SUPPORT: ${SSL_SUPPORT}")
 message(STATUS "  SYSTEMD_SUPPORT: ${SYSTEMD_SUPPORT}")
+message(STATUS "  HARDENING: ${HARDENING}")
 message(STATUS "**** End Build Configuration ***")
 
 enable_testing()
