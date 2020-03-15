@@ -213,7 +213,7 @@ static int sql_callback_list(void* ptr, int argc, char **argv, char **colName)
 	uhub_assert(strcmp(colName[0], "credentials") == 0);
 	uhub_assert(strcmp(colName[1], "nickname") == 0);
 	uhub_assert(strcmp(colName[2], "activity") == 0);
-	if (argc < 4)
+	if (argc < 3)
 		die("Unknown SQL response format\n");
 
 	const char* cred = argv[0];
@@ -242,7 +242,7 @@ static int list(size_t argc, const char** argv)
 		// when activity == created, user hasn't logged in
 		" CASE activity WHEN created THEN 'Never' ELSE datetime(activity, 'localtime') END AS activity"
 		" FROM users"
-		" WHERE nickname LIKE '%%%q%%'"
+		" %s"
 		" ORDER BY"
 		// order by the credential strings: users first, then bots
 		// within users and bots, higher privileges are first
@@ -263,9 +263,24 @@ static int list(size_t argc, const char** argv)
 		" END"
 		";";
 
-	char* query = sqlite3_mprintf(base_query, search);
+	char* where = "";
+	if (*search)
+	{
+		where = sqlite3_mprintf("WHERE nickname LIKE '%%%q%%'", search);
+		if (!where)
+			die("Error allocating memory for sql query");
+	}
+
+	char* query = sqlite3_mprintf(base_query, where);
+	if (*search)
+		sqlite3_free(where);
+
 	if (!query)
 		die("Error creating user list query");
+
+#ifdef DEBUG_SQL
+	printf("SQL: %s\n", query);
+#endif
 
 	printf("%s\t%s\t%s\n", "CREDS", "NICK", "LAST-LOGIN");
 

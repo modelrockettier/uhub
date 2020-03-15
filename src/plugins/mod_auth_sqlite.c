@@ -399,14 +399,12 @@ static plugin_st get_user_list(struct plugin_handle* plugin, const char* search,
 {
 	struct auth_sqlite* pdata = (struct auth_sqlite*) plugin->ptr;
 	int rc;
-	char const* nick;
 
 	const char* query =
 		"SELECT credentials,nickname,password,"
 		"CASE activity WHEN created THEN 'Never' ELSE datetime(activity, 'localtime') END AS activity"
 		" FROM users"
-		" WHERE nickname LIKE '%%%q%%'"
-		" LIMIT 100"
+		" %s"
 		" ORDER BY"
 		// order by the credential strings: users first, then bots
 		// within users and bots, higher privileges are first
@@ -424,16 +422,21 @@ static plugin_st get_user_list(struct plugin_handle* plugin, const char* search,
 		"  WHEN 'ubot'     THEN 7"
 		"  WHEN 'bot'      THEN 8"
 		"  ELSE       credentials"
-		" END,"
-		" nickname"
+		" END"
+		" LIMIT 100"
 		";";
 
-	if (search != NULL)
-		nick = search;
-	else
-		nick = "";
+	char* where = "";
+	if (search && *search)
+	{
+		where = sqlite3_mprintf("WHERE nickname LIKE '%%%q%%'", search);
+		if (!where)
+			return st_deny;
+	}
 
-	rc = sql_execute(pdata, get_user_list_callback, users, query, nick);
+	rc = sql_execute(pdata, get_user_list_callback, users, query, where);
+	if (search && *search)
+		sqlite3_free(where);
 
 	if (rc < 0)
 		return st_deny;
