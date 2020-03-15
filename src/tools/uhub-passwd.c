@@ -313,8 +313,10 @@ static int add(size_t argc, const char** argv)
 
 	rc = sql_execute("INSERT INTO users (nickname, password, credentials) VALUES('%q', '%q', '%q');", user, pass, cred);
 
-	if (rc != 1)
+	if (rc < 1)
 		die("Unable to add user \"%s\"\n", argv[0]);
+	else if (rc > 1)
+		fprintf(stderr, "Warning: %d users were added.\n", rc);
 
 	return 0;
 }
@@ -330,8 +332,10 @@ static int mod(size_t argc, const char** argv)
 
 	rc = sql_execute("UPDATE users SET credentials = '%q' WHERE nickname = '%q';", cred, user);
 
-	if (rc != 1)
+	if (rc < 1)
 		die("Unable to set credentials for user \"%s\"\n", argv[0]);
+	else if (rc > 1)
+		fprintf(stderr, "Warning: %d users were modified.\n", rc);
 
 	return 0;
 }
@@ -347,8 +351,10 @@ static int pass(size_t argc, const char** argv)
 
 	rc = sql_execute("UPDATE users SET password = '%q' WHERE nickname = '%q';", pass, user);
 
-	if (rc != 1)
+	if (rc < 1)
 		die("Unable to change password for user \"%s\"\n", argv[0]);
+	else if (rc > 1)
+		fprintf(stderr, "Warning: password was changed for %d users.\n", rc);
 
 	return 0;
 }
@@ -363,8 +369,10 @@ static int del(size_t argc, const char** argv)
 
 	rc = sql_execute("DELETE FROM users WHERE nickname = '%q';", user);
 
-	if (rc != 1)
+	if (rc < 1)
 		die("Unable to delete user \"%s\".\n", argv[0]);
+	else if (rc > 1)
+		fprintf(stderr, "Warning: %d users were deleted.\n", rc);
 
 	return 0;
 }
