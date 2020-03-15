@@ -56,7 +56,7 @@ static int sql_execute(struct auth_sqlite* pdata, int (*callback)(void* ptr, int
 		return -SQLITE_NOMEM;
 
 #ifdef DEBUG_SQL
-	printf("SQL: %s\n", query);
+	fprintf(stderr, "SQL: %s\n", query);
 #endif
 
 	rc = sqlite3_exec(pdata->db, query, callback, ptr, &errMsg);
@@ -90,8 +90,6 @@ static void sqlite_setup(struct plugin_handle* plugin)
 			"activity TIMESTAMP DEFAULT (DATETIME('NOW'))"
 		");";
 
-	const char* query_check = "SELECT nickname FROM users LIMIT 1;";
-
 	if (!pdata->readonly)
 		sql_execute(pdata, NULL, NULL, table_create);
 
@@ -108,6 +106,7 @@ static void sqlite_setup(struct plugin_handle* plugin)
 	}
 
 	// warn if we can't query the database
+	const char* query_check = "SELECT nickname FROM users LIMIT 1;";
 	rc = sql_execute(pdata, NULL, NULL, query_check);
 	if (rc < 0)
 		LOG_ERROR("mod_auth_sqlite: failed to query database: %s", sqlite3_errstr(-rc));
@@ -309,8 +308,8 @@ static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
 	}
 
 #ifdef DEBUG_SQL
-	printf("SQL: nickname=%s, password=%s, credentials=%s\n",
-		data->nickname, data->password, auth_cred_to_string(data->credentials));
+	fprintf(stderr, "SQL: nickname=%s, credentials=%s\n",
+		data->nickname, auth_cred_to_string(data->credentials));
 #endif
 	return 0;
 }
@@ -369,10 +368,13 @@ static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, st
 
 	query = sqlite3_mprintf(query_fmt, nickname);
 	if (!query) // OOM
+	{
+		LOG_ERROR("mod_auth_sqlite: OOM");
 		return fail;
+	}
 
 #ifdef DEBUG_SQL
-	printf("SQL: %s\n", query);
+	fprintf(stderr, "SQL: %s\n", query);
 #endif
 
 	rc = sqlite3_exec(pdata->db, query, get_user_callback, &result, &errMsg);
@@ -389,7 +391,7 @@ static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, st
 		return st_allow;
 
 #ifdef DEBUG_SQL
-	printf("SQL: User not found: %s\n", nickname);
+	fprintf(stderr, "SQL: User not found: %s\n", nickname);
 #endif
 
 	return fail;
@@ -431,7 +433,10 @@ static plugin_st get_user_list(struct plugin_handle* plugin, const char* search,
 	{
 		where = sqlite3_mprintf("WHERE nickname LIKE '%%%q%%'", search);
 		if (!where)
+		{
+			LOG_ERROR("mod_auth_sqlite: OOM");
 			return st_deny;
+		}
 	}
 
 	rc = sql_execute(pdata, get_user_list_callback, users, query, where);
@@ -439,7 +444,10 @@ static plugin_st get_user_list(struct plugin_handle* plugin, const char* search,
 		sqlite3_free(where);
 
 	if (rc < 0)
+	{
+		LOG_ERROR("mod_auth_sqlite: failed to get user list: %s", sqlite3_errstr(-rc));
 		return st_deny;
+	}
 
 	return (pdata->exclusive) ? st_allow : st_default;
 }
@@ -465,7 +473,7 @@ static plugin_st register_user(struct plugin_handle* plugin, struct auth_info* u
 
 	if (rc <= 0)
 	{
-		LOG_ERROR("Unable to add user \"%s\"\n", nick);
+		LOG_ERROR("Unable to add user \"%s\": %s\n", nick, sqlite3_errstr(-rc));
 		return fail;
 	}
 	return st_allow;
@@ -487,12 +495,12 @@ static plugin_st update_user(struct plugin_handle* plugin, struct auth_info* use
 	if (userinfo->credentials < auth_cred_user)
 		return fail;
 
-	const char* query = "UPDATE users SET password='%q', credentials='%q' WHERE nickname='%q' LIMIT 1;";
+	const char* query = "UPDATE users SET password='%q', credentials='%q' WHERE nickname='%q';";
 	rc = sql_execute(pdata, NULL, NULL, query, pass, cred, nick);
 
 	if (rc <= 0)
 	{
-		LOG_ERROR("Unable to update user \"%s\"\n", nick);
+		LOG_ERROR("Unable to update user \"%s\": %s\n", nick, sqlite3_errstr(-rc));
 		return fail;
 	}
 	return st_allow;
@@ -508,12 +516,12 @@ static plugin_st delete_user(struct plugin_handle* plugin, struct auth_info* use
 	if (pdata->readonly)
 		return fail;
 
-	const char* query = "DELETE FROM users WHERE nickname='%q' LIMIT 1;";
+	const char* query = "DELETE FROM users WHERE nickname='%q';";
 	rc = sql_execute(pdata, NULL, NULL, query, nick);
 
 	if (rc <= 0)
 	{
-		LOG_ERROR("Unable to delete user \"%s\"\n", nick);
+		LOG_ERROR("Unable to delete user \"%s\": %s\n", nick, sqlite3_errstr(-rc));
 		return fail;
 	}
 	return st_allow;
@@ -527,11 +535,14 @@ static void update_user_activity(struct plugin_handle* plugin, struct plugin_use
 
 	if (user->credentials > auth_cred_guest)
 	{
-		const char* query = "UPDATE users SET activity=DATETIME('NOW') WHERE nickname='%q' LIMIT 1;";
+		const char* query = "UPDATE users SET activity=DATETIME('NOW') WHERE nickname='%q';";
 		int rc = sql_execute(pdata, NULL, NULL, query, user->nick);
 
 		if (rc < 0 || (rc == 0 && pdata->exclusive))
-			LOG_ERROR("Unable to update login stats for user \"%s\"\n", user->nick);
+		{
+			LOG_ERROR("Unable to update login stats for user \"%s\": %s\n",
+				user->nick, sqlite3_errstr(-rc));
+		}
 	}
 }
 
