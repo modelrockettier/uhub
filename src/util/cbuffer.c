@@ -115,7 +115,8 @@ void cbuf_append_strftime(struct cbuffer* buf, const char* format, const struct 
 	cbuf_append_bytes(buf, tmp, bytes);
 }
 
-void cbuf_chomp(struct cbuffer* buf, char const* remove)
+// returns whether 1 if a character was removed
+int cbuf_chomp(struct cbuffer* buf, char const* remove)
 {
 	char const* tmp;
 
@@ -125,16 +126,17 @@ void cbuf_chomp(struct cbuffer* buf, char const* remove)
 	if (remove == NULL)
 		remove = " \t\r\n";
 
-	while (buf->size > 0)
-	{
-		// check if the last non-NUL char is in the string of chars to remove
-		tmp = strchr(remove, buf->buf[buf->size - 1]);
-		if (tmp == NULL)
-			break;
+	if (buf->size <= 0)
+		return 0;
 
-		buf->size--;
-		buf->buf[buf->size] = '\0';
-	}
+	// check if the last non-NUL char is in the string of chars to remove
+	tmp = strchr(remove, buf->buf[buf->size - 1]);
+	if (tmp == NULL)
+		return 0;
+
+	buf->size--;
+	buf->buf[buf->size] = '\0';
+	return 1;
 }
 
 const char* cbuf_get(struct cbuffer* buf)

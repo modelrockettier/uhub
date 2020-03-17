@@ -196,6 +196,7 @@ set(PLUGINS
 	mod_chat_only
 	mod_example
 	mod_guest_passwd
+	mod_joins
 	mod_logging
 	mod_no_guest_downloads
 	mod_topic

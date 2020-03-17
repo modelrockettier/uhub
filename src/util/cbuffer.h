@@ -32,7 +32,7 @@ extern void cbuf_append(struct cbuffer* buf, const char* msg);
 extern void cbuf_append_format(struct cbuffer* buf, const char* format, ...);
 extern void cbuf_append_strftime(struct cbuffer* buf, const char* format, const struct tm* tm);
 
-extern void cbuf_chomp(struct cbuffer* buf, char const* remove);
+extern int cbuf_chomp(struct cbuffer* buf, char const* remove);
 
 extern const char* cbuf_get(struct cbuffer* buf);
 extern size_t cbuf_size(struct cbuffer* buf);

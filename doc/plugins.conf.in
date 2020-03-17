@@ -111,7 +111,7 @@ plugin ${PLUGIN_DIR}/mod_logging.so "file=${LOG_DIR}/uhub.log"
 # %Z - The timezone name or abbreviation
 plugin ${PLUGIN_DIR}/mod_welcome.so "motd=${CONFIG_DIR}/motd.txt rules=${CONFIG_DIR}/rules.txt"
 
-# Load the chat history plugin.
+# Simple chat history plugin.
 #
 # This plugin provides temporary chat history functionality.
 # The chat history will be displayed when a user connects or when a user requests
@@ -148,6 +148,19 @@ plugin ${PLUGIN_DIR}/mod_chat_history.so "history_max=200 history_default=10 his
 # history_default: How many messages to show when the history command is called without arguments.
 # history_connect: the number of chat history messages to send when users connect (0 = do not send any history)
 #plugin ${PLUGIN_DIR}/mod_chat_history_sqlite.so "file=${CONFIG_DIR}/history.db history_max=200 history_default=10 history_connect=5"
+
+# Joins plugin
+#
+# Sends a chat message when users join or leave the hub.
+#
+# This accepts the same substitutions as mod_welcome plus:
+# %r - The reason the user left (only useful in the leave message)
+#
+# Parameters:
+# join: path/filename for the join message
+# leave: path/filename for the leave/quit/kick message
+# min_notify: minimum credentials able to see login messages (default: guest)
+#plugin ${PLUGIN_DIR}/mod_joins.so "join=${CONFIG_DIR}/join.txt leave=${CONFIG_DIR}/leave.txt"
 
 # No guest downloading.
 #
