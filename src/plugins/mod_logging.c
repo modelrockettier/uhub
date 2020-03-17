@@ -18,10 +18,7 @@
  */
 
 #include "system.h"
-#include "adc/adcconst.h"
-#include "adc/sid.h"
 #include "util/memory.h"
-#include "network/ipcalc.h"
 #include "plugin_api/handle.h"
 
 #include "util/misc.h"
@@ -29,8 +26,6 @@
 #ifndef WIN32
 #include <syslog.h>
 #endif
-
-struct ip_addr_encap;
 
 struct log_data
 {
@@ -219,27 +214,35 @@ static void log_message(struct log_data* data, const char *format, ...)
 static void log_user_login(struct plugin_handle* plugin, struct plugin_user* user)
 {
 	const char* cred = auth_cred_to_string(user->credentials);
-	const char* addr = ip_convert_to_string(&user->addr);
+	const char* addr = plugin->hub.ip_to_string(plugin, &user->addr);
+	const char* sid = plugin->hub.sid_to_string(plugin, user->sid);
 
-	log_message(plugin->ptr, "LoginOK     %s/%s %s \"%s\" (%s) \"%s\"\n", sid_to_string(user->sid), user->cid, addr, user->nick, cred, user->user_agent);
+	log_message(plugin->ptr, "LoginOK     %s/%s %s \"%s\" (%s) \"%s\"\n",
+		sid, user->cid, addr, user->nick, cred, user->user_agent);
 }
 
 static void log_user_login_error(struct plugin_handle* plugin, struct plugin_user* user, const char* reason)
 {
-	const char* addr = ip_convert_to_string(&user->addr);
-	log_message(plugin->ptr, "LoginError  %s/%s %s \"%s\" (%s) \"%s\"\n", sid_to_string(user->sid), user->cid, addr, user->nick, reason, user->user_agent);
+	const char* addr = plugin->hub.ip_to_string(plugin, &user->addr);
+	const char* sid = plugin->hub.sid_to_string(plugin, user->sid);
+	log_message(plugin->ptr, "LoginError  %s/%s %s \"%s\" (%s) \"%s\"\n",
+		sid, user->cid, addr, user->nick, reason, user->user_agent);
 }
 
 static void log_user_logout(struct plugin_handle* plugin, struct plugin_user* user, const char* reason)
 {
-	const char* addr = ip_convert_to_string(&user->addr);
-	log_message(plugin->ptr, "Logout      %s/%s %s \"%s\" (%s) \"%s\"\n", sid_to_string(user->sid), user->cid, addr, user->nick, reason, user->user_agent);
+	const char* addr = plugin->hub.ip_to_string(plugin, &user->addr);
+	const char* sid = plugin->hub.sid_to_string(plugin, user->sid);
+	log_message(plugin->ptr, "Logout      %s/%s %s \"%s\" (%s) \"%s\"\n",
+		sid, user->cid, addr, user->nick, reason, user->user_agent);
 }
 
 static void log_change_nick(struct plugin_handle* plugin, struct plugin_user* user, const char* new_nick)
 {
-	const char* addr = ip_convert_to_string(&user->addr);
-	log_message(plugin->ptr, "NickChange  %s/%s %s \"%s\" -> \"%s\"\n", sid_to_string(user->sid), user->cid, addr, user->nick, new_nick);
+	const char* addr = plugin->hub.ip_to_string(plugin, &user->addr);
+	const char* sid = plugin->hub.sid_to_string(plugin, user->sid);
+	log_message(plugin->ptr, "NickChange  %s/%s %s \"%s\" -> \"%s\"\n",
+		sid, user->cid, addr, user->nick, new_nick);
 }
 
 int plugin_register(struct plugin_handle* plugin, const char* config)

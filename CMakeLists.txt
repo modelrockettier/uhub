@@ -196,11 +196,11 @@ set(PLUGINS
 	mod_chat_only
 	mod_example
 	mod_guest_passwd
-	mod_logging # NOTE: depends on adc and network (later)
+	mod_logging
 	mod_no_guest_downloads
 	mod_topic
 	mod_users
-	mod_welcome # NOTE: depends on adc and network (later)
+	mod_welcome
 )
 
 set(CONFIG_FILES
@@ -254,11 +254,6 @@ target_link_libraries(uhub ${CMAKE_DL_LIBS} adc network utils)
 target_link_libraries(uhub-passwd ${SQLITE3_LIBRARIES} utils)
 target_link_libraries(autotest-bin ${CMAKE_DL_LIBS} adc network utils)
 target_link_libraries(utils network)
-
-# logging plugin uses ip_convert_to_string() from network and sid_to_string() from adc
-target_link_libraries(mod_logging adc network)
-# welcome plugin uses ip_convert_to_string() from network and sid_to_string() from adc
-target_link_libraries(mod_welcome adc network)
 
 if(WIN32)
 	target_link_libraries(uhub ws2_32)

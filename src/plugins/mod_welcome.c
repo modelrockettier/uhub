@@ -18,11 +18,8 @@
  */
 
 #include "system.h"
-#include "adc/adcconst.h"
-#include "adc/sid.h"
 #include "util/cbuffer.h"
 #include "util/memory.h"
-#include "network/ipcalc.h"
 #include "plugin_api/handle.h"
 #include "plugin_api/command_api.h"
 
@@ -125,7 +122,7 @@ static struct welcome_data* parse_config(const char* line, struct plugin_handle*
 			}
 
 			data->cmd_motd = hub_malloc_zero(sizeof(struct plugin_command_handle));
-			PLUGIN_COMMAND_INITIALIZE(data->cmd_motd, (void*) data, "motd", "", auth_cred_guest, command_handler_motd, "Show the message of the day.");
+			PLUGIN_COMMAND_INITIALIZE(data->cmd_motd, plugin, "motd", "", auth_cred_guest, command_handler_motd, "Show the message of the day.");
 		}
 		else if (strcmp(cfg_settings_get_key(setting), "rules") == 0)
 		{
@@ -138,7 +135,7 @@ static struct welcome_data* parse_config(const char* line, struct plugin_handle*
 			}
 
 			data->cmd_rules = hub_malloc_zero(sizeof(struct plugin_command_handle));
-			PLUGIN_COMMAND_INITIALIZE(data->cmd_rules, (void*) data, "rules", "", auth_cred_guest, command_handler_rules, "Show the hub rules.");
+			PLUGIN_COMMAND_INITIALIZE(data->cmd_rules, plugin, "rules", "", auth_cred_guest, command_handler_rules, "Show the hub rules.");
 		}
 		else
 		{
@@ -161,7 +158,7 @@ cleanup_parse_error:
 }
 
 
-static struct cbuffer* parse_message(struct plugin_user* user, const char* msg)
+static struct cbuffer* parse_message(struct plugin_handle* plugin, struct plugin_user* user, const char* msg)
 {
 	struct cbuffer* buf = cbuf_create(strlen(msg));
 	const char* start = msg;
@@ -182,8 +179,9 @@ static struct cbuffer* parse_message(struct plugin_user* user, const char* msg)
 				break;
 
 			case 'a':
-				cbuf_append(buf, ip_convert_to_string(&user->addr));
+				cbuf_append(buf, plugin->hub.ip_to_string(plugin, &user->addr));
 				break;
+
 			case 'c':
 				cbuf_append(buf, auth_cred_to_string(user->credentials));
 				break;
@@ -200,20 +198,30 @@ static struct cbuffer* parse_message(struct plugin_user* user, const char* msg)
 				cbuf_append_strftime(buf, "%I", &now);
 				break;
 
-			case 'P':
-				cbuf_append_strftime(buf, "%P", &now);
-				break;
-
-			case 'p':
-				cbuf_append_strftime(buf, "%p", &now);
-				break;
-
 			case 'M':
 				cbuf_append_strftime(buf, "%M", &now);
 				break;
 
 			case 'S':
 				cbuf_append_strftime(buf, "%S", &now);
+				break;
+
+			// NOTE: '%P' here is "AM/PM" which is strftime('%p')
+			case 'P':
+				cbuf_append_strftime(buf, "%p", &now);
+				break;
+
+			// NOTE: '%p' here is "am/pm" which is strftime('%P')
+			case 'p':
+				cbuf_append_strftime(buf, "%P", &now);
+				break;
+
+			case 'Z':
+				cbuf_append_strftime(buf, "%Z", &now);
+				break;
+
+			case 'z':
+				cbuf_append_strftime(buf, "%z", &now);
 				break;
 		}
 
@@ -232,7 +240,7 @@ static void send_motd(struct plugin_handle* plugin, struct plugin_user* user)
 	struct cbuffer* buf = NULL;
 	if (data->motd)
 	{
-		buf = parse_message(user, data->motd);
+		buf = parse_message(plugin, user, data->motd);
 		plugin->hub.send_message(plugin, user, cbuf_get(buf));
 		cbuf_destroy(buf);
 	}
@@ -244,7 +252,7 @@ static void send_rules(struct plugin_handle* plugin, struct plugin_user* user)
 	struct cbuffer* buf = NULL;
 	if (data->rules)
 	{
-		buf = parse_message(user, data->rules);
+		buf = parse_message(plugin, user, data->rules);
 		plugin->hub.send_message(plugin, user, cbuf_get(buf));
 		cbuf_destroy(buf);
 	}

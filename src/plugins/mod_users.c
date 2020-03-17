@@ -208,6 +208,27 @@ static int copy_credentials(struct plugin_handle* plugin, struct plugin_user* us
 	return 0;
 }
 
+// Returns 0 if the nick has spaces and spaces aren't allowed, 1 otherwise
+static int nick_space_check(struct plugin_handle* plugin, char const* nick)
+{
+	struct user_manager* manager = (struct user_manager*) plugin->ptr;
+
+	// spaces are allowed, we're good
+	if (manager->allow_spaces)
+		return 1;
+
+	// check for spaces
+	while (*nick)
+	{
+		if (is_white_space(*nick))
+			return 0;
+
+		nick++;
+	}
+
+	return 1;
+}
+
 static int nick_is_registered(struct plugin_handle* plugin, const char* nick)
 {
 	struct auth_info tmp;
@@ -266,7 +287,7 @@ static int command_register(struct plugin_handle* plugin, struct plugin_user* us
 
 	if (!copy_password(plugin, &userinfo, password, error, sizeof(error)))
 		cbuf_append_format(buf, "*** %s: %s", cmd->prefix, error);
-	else if (!manager->allow_spaces && strchr(user->nick, ' ') != NULL)
+	else if (!nick_space_check(plugin, user->nick))
 		cbuf_append_format(buf, "*** %s: You are not allowed to register with spaces in your name.", cmd->prefix);
 	else
 	{

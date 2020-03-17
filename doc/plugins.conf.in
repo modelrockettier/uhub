@@ -23,14 +23,23 @@ plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db exclusive=0
 #
 # This plugin provides hub commands to manage users.
 #
+# NOTE: To prevent privilege escalations, the !userdel, !usermod, and !userpass
+#   commands may not target higher-privileged users.  E.g. ops aren't allowed
+#   to change admin passwords and supers aren't allowed to demote an admin.
+#
+#   Likewise, the !useradd and !usermod commands only allow credentials up to
+#   the user's level.  E.g. ops can register users and ops, but not supers
+#   or admins. Likewise supers are allowed to promote users to supers, but
+#   only an admin can promote a user to admin.
+#
 # Hub commands:
-# !register - Register your username.
-# !password - Change your own password.
-# !useradd - Register a new user.
-# !userdel - Delete a registered user.
-# !usermod - Modify user credentials.
-# !userpass - Change password for a user.
-# !userlist - Show list of all registered users.
+# !register - Register your username (requires register_self=1)
+# !password - Change your own password
+# !useradd - Register a new user (op required)
+# !userdel - Delete a registered user (op required)
+# !usermod - Modify user credentials (super required)
+# !userpass - Change password for a user (op required)
+# !userlist - Show list of all registered users (op required)
 #
 # Parameters:
 # notify:          notify ops when a user registers (or tries to)
@@ -70,13 +79,16 @@ plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db exclusive=0
 plugin ${PLUGIN_DIR}/mod_logging.so "file=${LOG_DIR}/uhub.log"
 
 # A simple example plugin
+#
+# Hub commands:
+# !example - An example command (simply replies back with hello).
 #plugin ${PLUGIN_DIR}/mod_example.so
 
 # A plugin sending a welcome message.
 #
-# This plugin provides the following commands:
-# !motd - Message of the day
-# !rules - Show hub rules.
+# Hub commands:
+# !motd - Show the Message Of The Day
+# !rules - Show the hub rules.
 #
 # Parameters:
 # motd: path/filename for the welcome message (message of the day)
@@ -95,17 +107,25 @@ plugin ${PLUGIN_DIR}/mod_logging.so "file=${LOG_DIR}/uhub.log"
 # %p - 'am' or 'pm'
 # %M - Minutes (00-59) (Hub local time)
 # %S - Seconds (00-60) (Hub local time)
+# %z - The numeric timezone (+hhmm or -hhmm)
+# %Z - The timezone name or abbreviation
 plugin ${PLUGIN_DIR}/mod_welcome.so "motd=${CONFIG_DIR}/motd.txt rules=${CONFIG_DIR}/rules.txt"
 
 # Load the chat history plugin.
 #
-# This plugin provides chat history when users are connecting, or
-# when users invoke the !history command.
-# The history command can optionally take a parameter to indicate how many lines of history is requested.
+# This plugin provides temporary chat history functionality.
+# The chat history will be displayed when a user connects or when a user requests
+# the chat history with the !history command.
+#
+# NOTE: The chat history will be deleted when uhub is restarted see
+#   mod_chat_history_sqlite if you want the chat history to be kept after restarts.
+#
+# Hub commands:
+# !history - Show chat message history (optionally, how many lines to show)
 #
 # Parameters:
 # history_max:     the maximum number of messages to keep in history
-# history_default: when !history is provided without arguments, then this default number of messages are returned.
+# history_default: How many messages to show when the history command is called without arguments.
 # history_connect: the number of chat history messages to send when users connect (0 = do not send any history)
 plugin ${PLUGIN_DIR}/mod_chat_history.so "history_max=200 history_default=10 history_connect=5"
 
@@ -118,10 +138,14 @@ plugin ${PLUGIN_DIR}/mod_chat_history.so "history_max=200 history_default=10 his
 # this stores the chat history in a sqlite database. This means that the chat
 # history is kept between hub restarts.
 #
+# Hub commands:
+# !history - Show chat message history (optionally, how many lines to show)
+# !historycleanup - Delete the entire chat message history (super required)
+#
 # Parameters:
 # file:            Path/filename for the database (needs to be writable by the hub).
 # history_max:     the maximum number of messages to keep in history
-# history_default: when !history is provided without arguments, then this default number of messages are returned.
+# history_default: How many messages to show when the history command is called without arguments.
 # history_connect: the number of chat history messages to send when users connect (0 = do not send any history)
 #plugin ${PLUGIN_DIR}/mod_chat_history_sqlite.so "file=${CONFIG_DIR}/history.db history_max=200 history_default=10 history_connect=5"
 

@@ -111,6 +111,7 @@ struct plugin_funcs
 struct plugin_command_handle;
 struct plugin_command;
 struct plugin_command_arg_data;
+struct ip_addr_encap;
 
 typedef int (*hfunc_send_chat)(struct plugin_handle*, enum auth_credentials cred_low, enum auth_credentials cred_high, const char* message);
 typedef int (*hfunc_send_message)(struct plugin_handle*, struct plugin_user* user, const char* message);
@@ -136,6 +137,9 @@ typedef char* (*hfunc_get_hub_name)(struct plugin_handle*);
 typedef void  (*hfunc_set_hub_name)(struct plugin_handle*, const char*);
 typedef char* (*hfunc_get_hub_description)(struct plugin_handle*);
 typedef void  (*hfunc_set_hub_description)(struct plugin_handle*, const char*);
+
+typedef const char* (*hfunc_sid_to_string)(struct plugin_handle*, sid_t sid_);
+typedef const char* (*hfunc_ip_to_string)(struct plugin_handle*, struct ip_addr_encap* raw);
 
 /**
  * These are functions created and initialized by the hub and which can be used
@@ -163,6 +167,8 @@ struct plugin_hub_funcs
 	hfunc_set_hub_name set_name;
 	hfunc_get_hub_description get_description;
 	hfunc_set_hub_description set_description;
+	hfunc_sid_to_string sid_to_string;
+	hfunc_ip_to_string ip_to_string;
 };
 
 struct plugin_handle

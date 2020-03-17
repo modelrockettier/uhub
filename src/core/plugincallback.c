@@ -261,6 +261,16 @@ static void cbfunc_set_hub_description(struct plugin_handle* plugin, const char*
 	hub_free(new_str);
 }
 
+const char* cbfunc_sid_to_string(struct plugin_handle* plugin, sid_t sid_)
+{
+	return (const char*) sid_to_string(sid_);
+}
+
+const char* cbfunc_ip_to_string(struct plugin_handle* plugin, struct ip_addr_encap* raw)
+{
+	return ip_convert_to_string(raw);
+}
+
 void plugin_register_callback_functions(struct plugin_handle* handle)
 {
 	handle->hub.send_chat = cbfunc_send_chat;
@@ -283,6 +293,8 @@ void plugin_register_callback_functions(struct plugin_handle* handle)
 	handle->hub.set_name = cbfunc_set_hub_name;
 	handle->hub.get_description = cbfunc_get_hub_description;
 	handle->hub.set_description = cbfunc_set_hub_description;
+	handle->hub.sid_to_string = cbfunc_sid_to_string;
+	handle->hub.ip_to_string = cbfunc_ip_to_string;
 }
 
 void plugin_unregister_callback_functions(struct plugin_handle* handle)
