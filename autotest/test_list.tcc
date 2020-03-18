@@ -214,13 +214,17 @@ EXO_TEST(list_remove_first_1_2,
 {
 	g_remove_flag = 0;
 	list_remove_first(list, null_free_inc_flag);
-	return list->size == 2 && g_remove_flag == 1;
+	return list->size == 2 &&
+		g_remove_flag == 1 &&
+		list_get_index(list, 0) == B &&
+		list_get_index(list, 1) == C;
 });
 
 EXO_TEST(list_remove_first_1_3,
 {
 	list_remove_first(list, NULL);
-	return list->size == 1;
+	return list->size == 1 &&
+		list_get_index(list, 0) == C;
 });
 
 EXO_TEST(list_remove_first_1_4,
@@ -229,11 +233,154 @@ EXO_TEST(list_remove_first_1_4,
 	return list->size == 0;
 });
 
-
 EXO_TEST(list_remove_first_1_5,
 {
 	list_remove_first(list, NULL);
 	return list->size == 0;
+});
+
+
+EXO_TEST(list_remove_last_1_1,
+{
+	list_append(list, A);
+	list_append(list, B);
+	list_append(list, C);
+	return list->size == 3;
+});
+
+EXO_TEST(list_remove_last_1_2,
+{
+	g_remove_flag = 0;
+	list_remove_last(list, null_free_inc_flag);
+	return list->size == 2 &&
+		g_remove_flag == 1 &&
+		list_get_index(list, 0) == A &&
+		list_get_index(list, 1) == B;
+});
+
+EXO_TEST(list_remove_last_1_3,
+{
+	list_remove_last(list, NULL);
+	return list->size == 1 &&
+		list_get_index(list, 0) == A;
+});
+
+EXO_TEST(list_remove_last_1_4,
+{
+	list_remove_last(list, NULL);
+	return list->size == 0;
+});
+
+EXO_TEST(list_remove_last_1_5,
+{
+	list_remove_last(list, NULL);
+	return list->size == 0;
+});
+
+
+EXO_TEST(list_foreach_1_1,
+{
+	list_append(list, A);
+	list_append(list, B);
+	list_append(list, C);
+	return list->size == 3;
+});
+
+EXO_TEST(list_foreach_1_2,
+{
+	int i = 0;
+	char* item;
+	LIST_FOREACH(char *, item, list,
+	{
+		if (i == 0 && item != A)
+			return 0;
+		if (i == 1 && item != B)
+			return 0;
+		if (i == 2 && item != C)
+			return 0;
+		i++;
+	})
+	return i == 3;
+});
+
+EXO_TEST(list_foreach_1_3,
+{
+	list_remove_last(list, NULL);
+	list_remove_last(list, NULL);
+
+	int i = 0;
+	char* item;
+	LIST_FOREACH(char *, item, list,
+	{
+		if (i == 0 && item != A)
+			return 0;
+		i++;
+	})
+	return i == 1;
+});
+
+EXO_TEST(list_foreach_1_4,
+{
+	list_remove_last(list, NULL);
+	char* item;
+	LIST_FOREACH(char *, item, list,
+	{
+		return 0;
+	})
+	return 1;
+});
+
+
+EXO_TEST(list_foreach_reverse_1_1,
+{
+	list_append(list, A);
+	list_append(list, B);
+	list_append(list, C);
+	return list->size == 3;
+});
+
+EXO_TEST(list_foreach_reverse_1_2,
+{
+	int i = 0;
+	char* item;
+	LIST_FOREACH_REVERSE(char *, item, list,
+	{
+		if (i == 0 && item != C)
+			return 0;
+		if (i == 1 && item != B)
+			return 0;
+		if (i == 2 && item != A)
+			return 0;
+		i++;
+	})
+	return i == 3;
+});
+
+EXO_TEST(list_foreach_reverse_1_3,
+{
+	list_remove_last(list, NULL);
+	list_remove_last(list, NULL);
+
+	int i = 0;
+	char* item;
+	LIST_FOREACH_REVERSE(char *, item, list,
+	{
+		if (i == 0 && item != A)
+			return 0;
+		i++;
+	})
+	return i == 1;
+});
+
+EXO_TEST(list_foreach_reverse_1_4,
+{
+	list_remove_last(list, NULL);
+	char* item;
+	LIST_FOREACH_REVERSE(char *, item, list,
+	{
+		return 0;
+	})
+	return 1;
 });
 
 

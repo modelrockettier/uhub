@@ -248,6 +248,30 @@ void list_remove_first(struct linked_list* list, void (*free_handle)(void* ptr))
 	hub_free(node);
 }
 
+void list_remove_last(struct linked_list* list, void (*free_handle)(void* ptr))
+{
+	struct node* node = list->last;
+
+	list->iterator = NULL;
+
+	if (!node)
+		return;
+
+	list->last = node->prev;
+
+	if (list->last)
+		list->last->next = NULL;
+
+	if (list->first == node)
+		list->first = NULL;
+
+	list->size--;
+
+	if (free_handle)
+		free_handle(node->ptr);
+	hub_free(node);
+}
+
 
 size_t list_size(struct linked_list* list)
 {

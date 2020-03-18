@@ -20,7 +20,7 @@ static int test_tiger_hex(char* input, char* expected) {
 #endif
 	char* ptr = buf;
 	buf[TIGERSIZE*2] = 0;
-	
+
 	tiger((uint64_t*) input, strlen(input), (uint64_t*) tiger_res);
 	for (i = 0; i < TIGERSIZE; i++)
 		ptr = byte_to_hex(ptr, (char) (((uint8_t*) tiger_res)[i]) );

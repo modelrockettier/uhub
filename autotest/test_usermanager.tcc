@@ -8,7 +8,7 @@ static struct hub_user um_user[MAX_USERS];
 EXO_TEST(um_init_1, {
 	sid_t s;
 	uman = uman_init();
-	
+
 	for (s = 0; s < MAX_USERS; s++)
 	{
 		memset(&um_user[s], 0, sizeof(struct hub_user));

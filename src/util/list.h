@@ -72,9 +72,14 @@ extern struct node* list_get_last_node(struct linked_list*);
  * to ensure the data is freed also.
  */
 extern void list_remove_first(struct linked_list* list, void (*free_handle)(void* ptr));
+extern void list_remove_last(struct linked_list* list, void (*free_handle)(void* ptr));
 
 #define LIST_FOREACH(TYPE, ITEM, LIST, BLOCK) \
 		for (ITEM = (TYPE) list_get_first(LIST); ITEM; ITEM = (TYPE) list_get_next(LIST)) \
+			BLOCK
+
+#define LIST_FOREACH_REVERSE(TYPE, ITEM, LIST, BLOCK) \
+		for (ITEM = (TYPE) list_get_last(LIST); ITEM; ITEM = (TYPE) list_get_prev(LIST)) \
 			BLOCK
 
 #endif /* HAVE_UHUB_LINKED_LIST_H */

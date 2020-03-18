@@ -14,11 +14,11 @@ static void inf_create_hub()
 {
 	net_initialize();
 	inf_hub = (struct hub_info*) hub_malloc_zero(sizeof(struct hub_info));
-	
+
 	inf_hub->users = uman_init();
 	inf_hub->acl = (struct acl_handle*) hub_malloc_zero(sizeof(struct acl_handle));
 	inf_hub->config = (struct hub_config*) hub_malloc_zero(sizeof(struct hub_config));
-	
+
 	config_defaults(inf_hub->config);
 	acl_initialize(inf_hub->config, inf_hub->acl);
 }
@@ -111,7 +111,7 @@ EXO_TEST(inf_nick_10, {
 
 	nick[0] = 0xf7; nick[1] = 0x80; nick[2] = 0x7f; nick[3] = 0x81; nick[4] = 0x98; nick[5] = 0x00;
 	msg = adc_msg_parse_verify(inf_user, line, strlen(line));
-	
+
 	adc_msg_add_named_argument(msg, "NI", nick);
 	ok = hub_handle_info_login(inf_hub, inf_user, msg);
 	adc_msg_free(msg);
@@ -141,7 +141,7 @@ EXO_TEST(inf_limit_hubs_setup,
 	inf_hub->config->limit_min_hubs_op   = 2;
 	inf_hub->config->limit_max_hubs      = 25;
 	inf_hub->config->limit_min_hubs      = 1;
-	
+
 	return 1;
 } );
 

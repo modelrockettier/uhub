@@ -18,7 +18,7 @@ static void create_test_user()
 }
 
 EXO_TEST(adc_message_first, {
-	create_test_user();	
+	create_test_user();
 	return g_user != 0;
 });
 
