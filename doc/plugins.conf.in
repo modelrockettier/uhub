@@ -76,7 +76,8 @@ plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db exclusive=0
 # Parameters:
 # file: path/filename for log file.
 # syslog: if true then syslog is used instead of writing to a file (Unix only)
-plugin ${PLUGIN_DIR}/mod_logging.so "file=${LOG_DIR}/uhub.log"
+# max_log_entries: how many log entries to keep in memory for commands
+plugin ${PLUGIN_DIR}/mod_logging.so "file=${LOG_DIR}/uhub.log max_log_entries=200"
 
 # A simple example plugin
 #
