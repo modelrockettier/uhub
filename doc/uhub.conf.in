@@ -77,10 +77,6 @@ flood_ctl_extras = 5
 # e-mail address will be removed.
 low_bandwidth_mode = no
 
-# Operators can use the "!log" command to list users who have recently left.
-# This option specifies the maximum size of this log.
-#max_logout_log = 20
-
 # if obsolete_clients=1 allows old clients to enter, 0 gives an error message (msg_proto_obsolete_adc0) if they try connect
 # defaults obsolete_clients = 1
 obsolete_clients = yes

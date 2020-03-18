@@ -84,15 +84,6 @@ struct hub_stats
 	struct timeout_evt* timeout;    /**<< "Timeout handler for statistics" */
 };
 
-struct hub_logout_info
-{
-	time_t time;
-	char cid[MAX_CID_LEN+1];
-	char nick[MAX_NICK_LEN+1];
-	struct ip_addr_encap addr;
-	enum user_quit_reason reason;
-};
-
 struct hub_info
 {
 	struct net_connection* server;
@@ -109,8 +100,6 @@ struct hub_info
 	enum hub_state status;
 	char* recvbuf; /* Global receive buffer */
 	char* sendbuf; /* Global send buffer */
-
-	struct linked_list* logout_info;     /* Log of people logging out. */
 
 	struct command_base* commands;       /* Hub command handler */
 	struct uhub_plugins* plugins;        /* Plug-ins loaded for this hub instance. */
@@ -345,11 +334,6 @@ extern void hub_schedule_destroy_user(struct hub_info* hub, struct hub_user* use
  * Disconnect a user from the hub.
  */
 extern void hub_disconnect_user(struct hub_info* hub, struct hub_user* user, int reason);
-
-/**
- * Log a user logging out.
- */
-extern void hub_logout_log(struct hub_info* hub, struct hub_user* user);
 
 
 #endif /* HAVE_UHUB_HUB_H */

@@ -508,69 +508,6 @@ static int command_broadcast(struct command_base* cbase, struct hub_user* user, 
 	return 0;
 }
 
-static int command_log(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
-{
-	struct cbuffer* buf;
-	struct hub_command_arg_data* arg = hub_command_arg_next(cmd, type_string);
-	struct linked_list* messages = cbase->hub->logout_info;
-	struct hub_logout_info* log;
-	char* search = arg ? arg->data.string : "";
-	size_t search_len = strlen(search);
-	size_t search_hits = 0;
-
-	if (!list_size(messages))
-	{
-		return command_status(cbase, user, cmd, cbuf_create_const("No entries logged."));
-	}
-
-	buf = cbuf_create(128);
-	cbuf_append_format(buf, "Logged entries: " PRINTF_SIZE_T, list_size(messages));
-
-	if (search_len)
-	{
-		cbuf_append_format(buf, ", searching for \"%s\"", search);
-	}
-	command_status(cbase, user, cmd, buf);
-
-	buf = cbuf_create(MAX_HELP_LINE);
-	LIST_FOREACH(struct hub_logout_info*, log, messages,
-	{
-		const char* address = ip_convert_to_string(&log->addr);
-		int show = 0;
-
-		if (search_len)
-		{
-			if (memmem(log->cid, MAX_CID_LEN, search, search_len) || memmem(log->nick, MAX_NICK_LEN, search, search_len) || memmem(address, strlen(address), search, search_len))
-			{
-				search_hits++;
-				show = 1;
-			}
-		}
-		else
-		{
-			show = 1;
-		}
-
-		if (show)
-		{
-			cbuf_append_format(buf, "* %s %s, %s [%s] - %s", get_timestamp(log->time), log->cid, log->nick, ip_convert_to_string(&log->addr), user_get_quit_reason_string(log->reason));
-			send_message(cbase, user, buf);
-			buf = cbuf_create(MAX_HELP_LINE);
-		}
-	});
-
-	if (search_len)
-	{
-		cbuf_append_format(buf, PRINTF_SIZE_T " entries shown.", search_hits);
-		command_status(cbase, user, cmd, buf);
-		buf = NULL;
-	}
-
-	if (buf)
-		cbuf_destroy(buf);
-	return 0;
-}
-
 static int command_stats(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
 {
 	struct cbuffer* buf = cbuf_create(128);
@@ -693,7 +630,6 @@ void commands_builtin_add(struct command_base* cbase)
 	ADD_COMMAND("help",      "?c",  auth_cred_guest,    command_help,         "Show this help message."     );
 	ADD_COMMAND("info",      "u",   auth_cred_operator, command_user_info,    "Show info about a user."     );
 	ADD_COMMAND("kick",      "u?m", auth_cred_operator, command_kick,         "Kick a user"                 );
-	ADD_COMMAND("log",       "?m",  auth_cred_operator, command_log,          "Display log"                 ); // fail
 	ADD_COMMAND("me",        "",    auth_cred_guest,    command_me,           "Show info about you."        );
 	ADD_COMMAND("myip",      "",    auth_cred_guest,    command_myip,         "Show your own IP."           );
 	ADD_COMMAND("reload",    "",    auth_cred_admin,    command_reload,       "Reload configuration files." );

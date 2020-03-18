@@ -68,6 +68,5 @@ void on_logout_user(struct hub_info* hub, struct hub_user* user)
 	const char* reason = user_get_quit_reason_string(user->quit_reason);
 
 	plugin_log_user_logout(hub, user, reason);
-	hub_logout_log(hub, user);
 }
 

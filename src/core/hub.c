@@ -813,7 +813,6 @@ struct hub_info* hub_start_service(struct hub_config* config)
 		return 0;
 	}
 
-	hub->logout_info  = (struct linked_list*) list_create();
 	server_alt_port_start(hub, config);
 
 	hub->status = hub_status_running;
@@ -854,8 +853,6 @@ void hub_shutdown_service(struct hub_info* hub)
 	hub->status = hub_status_stopped;
 	hub_free(hub->sendbuf);
 	hub_free(hub->recvbuf);
-	list_clear(hub->logout_info, &hub_free);
-	list_destroy(hub->logout_info);
 	command_shutdown(hub->commands);
 	hub_free(hub);
 	hub = 0;
@@ -1305,21 +1302,3 @@ void hub_disconnect_user(struct hub_info* hub, struct hub_user* user, int reason
 		hub_schedule_destroy_user(hub, user);
 	}
 }
-
-void hub_logout_log(struct hub_info* hub, struct hub_user* user)
-{
-	struct hub_logout_info* loginfo = hub_malloc_zero(sizeof(struct hub_logout_info));
-	if (!loginfo) return;
-	loginfo->time = time(NULL);
-	memcpy(loginfo->cid, user->id.cid, sizeof(loginfo->cid));
-	memcpy(loginfo->nick, user->id.nick, sizeof(loginfo->nick));
-	memcpy(&loginfo->addr, &user->id.addr, sizeof(struct ip_addr_encap));
-	loginfo->reason = user->quit_reason;
-
-	list_append(hub->logout_info, loginfo);
-	while (list_size(hub->logout_info) > (size_t) hub->config->max_logout_log)
-	{
-		list_remove_first(hub->logout_info, hub_free);
-	}
-}
-
