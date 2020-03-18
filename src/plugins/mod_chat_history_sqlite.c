@@ -252,7 +252,7 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 	uhub_assert(data != NULL);
 
 	data->history_max = 200;
-	data->history_default = 25;
+	data->history_default = 10;
 	data->history_connect = 5;
 
 	while (token)

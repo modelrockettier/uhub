@@ -149,7 +149,6 @@ static struct joins_data* parse_config(const char* line, struct plugin_handle* p
 
 static struct cbuffer* parse_message(struct plugin_handle* plugin, struct plugin_user* user, const char* msg, const char* reason)
 {
-	struct joins_data* data = (struct joins_data*) plugin->ptr;
 	struct cbuffer* buf = cbuf_create(strlen(msg) + 32);
 	const char* start = msg;
 	const char* offset = NULL;

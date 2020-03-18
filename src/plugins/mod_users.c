@@ -60,7 +60,7 @@ static struct user_manager* parse_config(const char* line, struct plugin_handle*
 	manager->register_self = 0;
 	manager->allow_spaces = 0;
 	manager->notify = 1;
-	manager->password_length = 1;
+	manager->password_length = 6;
 
 	while (token)
 	{

@@ -47,7 +47,7 @@ plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db exclusive=0
 # register_self:   allow users to register themselves
 # allow_spaces:    allow users to self-register who have spaces in their nick (hard to manage)
 # password_length: the minimum password length (only affects new/changed passwords)
-#plugin ${PLUGIN_DIR}/mod_users.so "notify=1 register_self=0 password_length=1"
+#plugin ${PLUGIN_DIR}/mod_users.so "notify=1 register_self=0 allow_spaces=0 password_length=6"
 
 # Require a default password from all guests.
 #
@@ -163,8 +163,8 @@ plugin ${PLUGIN_DIR}/mod_chat_history.so "history_max=200 history_default=10 his
 # Parameters:
 # join: path/filename for the join message
 # leave: path/filename for the leave/quit/kick message
-# min_notify: minimum credentials able to see login messages (default: guest)
-#plugin ${PLUGIN_DIR}/mod_joins.so "join=${CONFIG_DIR}/join.txt leave=${CONFIG_DIR}/leave.txt"
+# min_notify: minimum credentials able to see login messages
+#plugin ${PLUGIN_DIR}/mod_joins.so "join=${CONFIG_DIR}/join.txt leave=${CONFIG_DIR}/leave.txt min_notify=guest"
 
 # No guest downloading.
 #

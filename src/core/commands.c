@@ -542,8 +542,7 @@ static int send_user_info(struct command_base* cbase, struct hub_user* user, str
 	struct cbuffer* buf = cbuf_create(128);
 	cbuf_append_format(buf, "User \"%s\" is a %s\n", target->id.nick, auth_cred_to_string(target->credentials));
 
-	if (all_info || user == target)
-		cbuf_append_format(buf, "Address: %s\n", user_get_address(target));
+	cbuf_append_format(buf, "Address: %s\n", user_get_address(target));
 
 	if (user_is_tls_connected(target))
 		cbuf_append(buf, "Connected securely with ADCS\n");
@@ -568,6 +567,7 @@ static int send_user_info(struct command_base* cbase, struct hub_user* user, str
 
 #ifdef DEBUG
 		// Show the full features and flags to supers and admins
+		// (only for debug builds)
 		if (user->credentials >= auth_cred_super)
 		{
 			char *tmp;
