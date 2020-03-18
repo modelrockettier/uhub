@@ -73,6 +73,9 @@ plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db exclusive=0
 
 # Log file writer
 #
+# If the log file exists when the plugin is loaded, it will read the existing
+# entries into memory for use with the !log and !findlog commands.
+#
 # Parameters:
 # file: path/filename for log file.
 # syslog: if true then syslog is used instead of writing to a file (Unix only)

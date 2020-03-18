@@ -65,6 +65,63 @@ static void set_error_message(struct plugin_handle* plugin, const char* msg)
 
 static int log_open_file(struct plugin_handle* plugin, struct log_data* data)
 {
+	// attempt to read in the existing log contents
+	data->fd = open(data->logfile, O_RDONLY);
+	if (data->fd >= 0)
+	{
+		size_t off = 0;
+		size_t len = 0;
+		ssize_t bytes_read = 0;
+		char buffer[MAX_MSG_SIZE*2];
+		char* endp;
+
+		bytes_read = read(data->fd, buffer, sizeof(buffer) - 1);
+
+		while (bytes_read > 0)
+		{
+			bytes_read += (ssize_t) off;
+
+			buffer[bytes_read] = '\0';
+			off = 0;
+
+			while ((endp = strchr(&buffer[off], '\n')) != NULL)
+			{
+				size_t len = (size_t) (endp - &buffer[off]);
+				if (len)
+					list_append(data->messages, hub_strndup(&buffer[off], len));
+				off += len + 1;
+			}
+			
+			while (list_size(data->messages) > data->max_log_entries)
+				list_remove_first(data->messages, hub_free);
+
+			len = strlen(&buffer[off]);
+			if (len >= (sizeof(buffer) - 1))
+			{
+				LOG_WARN("Line too long: " PRINTF_SIZE_T "/%d", len, MAX_MSG_SIZE);
+				list_append(data->messages, hub_strndup(&buffer[off], len));
+				len = 0;
+			}
+			else
+			{
+				memmove(buffer, &buffer[off], len + 1);
+			}
+
+			off = len;
+
+			bytes_read = read(data->fd, &buffer[off], sizeof(buffer) - off - 1);
+		}
+
+		if (len)
+			list_append(data->messages, hub_strdup(buffer));
+
+		while (list_size(data->messages) > data->max_log_entries)
+			list_remove_first(data->messages, hub_free);
+
+		close(data->fd);
+	}
+	// Ignore if the file couldn't be opened/read
+
 	int flags = O_CREAT | O_APPEND | O_WRONLY;
 	data->fd = open(data->logfile, flags, 0664);
 	return (data->fd != -1);
