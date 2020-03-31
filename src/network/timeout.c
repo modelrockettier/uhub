@@ -43,7 +43,7 @@ void timeout_queue_initialize(struct timeout_queue* t, time_t now, size_t max)
 	t->last = now;
 	t->max = max;
 	memset(&t->lock, 0, sizeof(t->lock));
-	t->events = hub_malloc_zero(max * sizeof(struct timeout_evt*));
+	t->events = hub_calloc(max, sizeof(struct timeout_evt*));
 }
 
 void timeout_queue_shutdown(struct timeout_queue* t)

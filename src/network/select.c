@@ -161,7 +161,7 @@ struct net_backend* net_backend_init_select(struct net_backend_handler* handler,
 	backend = hub_malloc_zero(sizeof(struct net_backend_select));
 	FD_ZERO(&backend->rfds);
 	FD_ZERO(&backend->wfds);
-	backend->conns = hub_malloc_zero(sizeof(struct net_connection_select*) * common->max);
+	backend->conns = hub_calloc(common->max, sizeof(struct net_connection_select*));
 	backend->common = common;
 	net_backend_set_handlers(handler);
 	return (struct net_backend*) backend;

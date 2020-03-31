@@ -164,7 +164,7 @@ struct net_backend* net_backend_init_epoll(struct net_backend_handler* handler, 
 		return 0;
 	}
 
-	backend->conns = hub_malloc_zero(sizeof(struct net_connection_epoll*) * common->max);
+	backend->conns = hub_calloc(common->max, sizeof(struct net_connection_epoll*));
 	backend->common = common;
 
 	net_backend_set_handlers(handler);

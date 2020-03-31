@@ -22,10 +22,12 @@
 
 #ifdef MEMORY_DEBUG
 
+#define hub_calloc     debug_mem_calloc
 #define hub_malloc     debug_mem_malloc
 #define hub_free       debug_mem_free
 #define hub_strdup     debug_mem_strdup
 #define hub_strndup    debug_mem_strndup
+extern void* debug_mem_calloc(size_t num, size_t size);
 extern void* debug_mem_malloc(size_t size);
 extern void  debug_mem_free(void* ptr);
 extern char* debug_mem_strdup(const char* s);
@@ -33,6 +35,7 @@ extern char* debug_mem_strndup(const char* s, size_t n);
 
 #else
 
+#define hub_calloc     calloc
 #define hub_malloc     malloc
 #define hub_free       free
 #define hub_realloc    realloc

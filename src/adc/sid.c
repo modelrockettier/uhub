@@ -94,7 +94,7 @@ struct sid_pool* sid_pool_create(sid_t max)
 	pool->min = 1;
 	pool->max = max + 1;
 	pool->count = 0;
-	pool->map = hub_malloc_zero(sizeof(struct hub_user*) * pool->max);
+	pool->map = hub_calloc(pool->max, sizeof(struct hub_user*));
 	if (!pool->map)
 	{
 		hub_free(pool);

@@ -192,7 +192,7 @@ struct net_cleanup_handler* net_cleanup_initialize(size_t max)
 	struct net_cleanup_handler* handler = (struct net_cleanup_handler*) hub_malloc(sizeof(struct net_cleanup_handler));
 	handler->num = 0;
 	handler->max = max;
-	handler->queue = hub_malloc_zero(sizeof(struct net_connection*) * max);
+	handler->queue = hub_calloc(max, sizeof(struct net_connection*));
 	return handler;
 }
 

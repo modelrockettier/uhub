@@ -186,9 +186,9 @@ struct net_backend* net_backend_init_kqueue(struct net_backend_handler* handler,
 		return 0;
 	}
 
-	backend->conns = hub_malloc_zero(sizeof(struct net_connection_kqueue*) * common->max);
-	backend->changes = hub_malloc_zero(sizeof(struct kevent) * common->max * 2);
-	backend->change_list = hub_malloc_zero(sizeof(int) * common->max);
+	backend->conns = hub_calloc(common->max, sizeof(struct net_connection_kqueue*));
+	backend->changes = hub_calloc(common->max * 2, sizeof(struct kevent));
+	backend->change_list = hub_calloc(common->max, sizeof(int));
 	backend->common = common;
 
 	net_backend_set_handlers(handler);

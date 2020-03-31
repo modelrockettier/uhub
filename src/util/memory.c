@@ -180,6 +180,16 @@ char* debug_mem_strndup(const char* s, size_t n)
 	return ptr;
 }
 
+void* debug_mem_calloc(size_t num, size_t size)
+{
+	// check for multiplication overflow
+	if (size != 0 && num > (SIZE_MAX / size))
+		return NULL;
+
+	void* ptr = internal_debug_mem_malloc(num * size, "calloc");
+	return ptr;
+}
+
 void* debug_mem_malloc(size_t size)
 {
 	void* ptr = internal_debug_mem_malloc(size, "malloc");
@@ -196,11 +206,7 @@ void debug_mem_free(void *ptr)
 
 void* hub_malloc_zero(size_t size)
 {
-	void* data = hub_malloc(size);
-	if (data)
-	{
-		memset(data, 0, size);
-	}
+	void* data = hub_calloc(1, size);
 	return data;
 }
 

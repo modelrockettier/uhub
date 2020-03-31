@@ -43,10 +43,10 @@ struct chat_only_data
 
 static struct chat_only_data* co_initialize()
 {
-	struct chat_only_data* data = (struct chat_only_data*) hub_malloc(sizeof(struct chat_only_data));
+	struct chat_only_data* data = (struct chat_only_data*) hub_malloc_zero(sizeof(struct chat_only_data));
 	data->num_users = 0;
 	data->max_users = 512;
-	data->users = hub_malloc_zero(sizeof(struct user_info) * data->max_users);
+	data->users = hub_calloc(data->max_users, sizeof(struct user_info));
 	return data;
 }
 
