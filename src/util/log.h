@@ -68,6 +68,22 @@ enum log_verbosity {
 extern void hub_set_log_verbosity(int log_verbosity);
 
 /**
+ * Retrieve the minimum log verbosity for what messages should
+ * be printed in the log.
+ */
+extern int hub_get_log_verbosity();
+
+/**
+ * Convert a log verbosity level into a string value.
+ */
+char const* hub_log_verbosity_to_string(int verbosity);
+
+/**
+ * Convert a string into a log verbosity level.
+ */
+int hub_log_string_to_verbosity(const char* str);
+
+/**
  * Print a message in the log.
  */
 extern void hub_log(int log_verbosity, const char *format, ...);

@@ -422,6 +422,41 @@ static int command_version(struct command_base* cbase, struct hub_user* user, st
 	return command_status(cbase, user, cmd, buf);
 }
 
+/**
+ * Get or set the log level.
+ */
+static int command_loglevel(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
+{
+	struct cbuffer* buf = cbuf_create(128);
+	struct hub_command_arg_data* arg = hub_command_arg_next(cmd, type_string);
+	char const* level = arg ? arg->data.string : NULL;
+	int verb = hub_get_log_verbosity();
+
+	if (level == NULL)
+	{
+		level = hub_log_verbosity_to_string(verb);
+
+		cbuf_append_format(buf, "The current log level is: %s (%d)", level, verb);
+	}
+	else
+	{
+		verb = hub_log_string_to_verbosity(level);
+
+		if (verb == -1)
+		{
+			cbuf_append_format(buf, "Unable to set the log level to: %s (%d)", level, verb);
+		}
+		else
+		{
+			level = hub_log_verbosity_to_string(verb);
+			cbuf_append_format(buf, "Set the log level to: %s (%d)", level, verb);
+			hub_set_log_verbosity(verb);
+		}
+	}
+
+	return command_status(cbase, user, cmd, buf);
+}
+
 static int command_myip(struct command_base* cbase, struct hub_user* user, struct hub_command* cmd)
 {
 	struct cbuffer* buf = cbuf_create(128);
@@ -625,23 +660,24 @@ static struct command_handle* add_builtin(struct command_base* cbase, const char
 
 void commands_builtin_add(struct command_base* cbase)
 {
-	ADD_COMMAND("broadcast", "+m",  auth_cred_operator, command_broadcast,    "Send a message to all users" );
-	ADD_COMMAND("getip",     "u",   auth_cred_operator, command_getip,        "Show IP address for a user"  );
-	ADD_COMMAND("help",      "?c",  auth_cred_guest,    command_help,         "Show this help message."     );
-	ADD_COMMAND("info",      "u",   auth_cred_operator, command_user_info,    "Show info about a user."     );
-	ADD_COMMAND("kick",      "u?m", auth_cred_operator, command_kick,         "Kick a user"                 );
-	ADD_COMMAND("me",        "",    auth_cred_guest,    command_me,           "Show info about you."        );
-	ADD_COMMAND("myip",      "",    auth_cred_guest,    command_myip,         "Show your own IP."           );
-	ADD_COMMAND("reload",    "",    auth_cred_admin,    command_reload,       "Reload configuration files." );
-	ADD_COMMAND("shutdown",  "",    auth_cred_admin,    command_shutdown_hub, "Shutdown hub."               );
-	ADD_COMMAND("stats",     "",    auth_cred_super,    command_stats,        "Show hub statistics."        );
-	ADD_COMMAND("uptime",    "",    auth_cred_guest,    command_uptime,       "Display hub uptime info."    );
-	ADD_COMMAND("version",   "",    auth_cred_guest,    command_version,      "Show hub version info."      );
-	ADD_COMMAND("whoip",     "r",   auth_cred_operator, command_whoip,        "Show users matching IP range");
+	ADD_COMMAND("broadcast", "+m",  auth_cred_operator, command_broadcast,    "Send a message to all users." );
+	ADD_COMMAND("getip",     "u",   auth_cred_operator, command_getip,        "Show IP address for a user."  );
+	ADD_COMMAND("help",      "?c",  auth_cred_guest,    command_help,         "Show this help message."      );
+	ADD_COMMAND("info",      "u",   auth_cred_operator, command_user_info,    "Show info about a user."      );
+	ADD_COMMAND("kick",      "u?m", auth_cred_operator, command_kick,         "Kick a user."                 );
+	ADD_COMMAND("loglevel",  "?m",  auth_cred_admin,    command_loglevel,     "Change the hub log level."    );
+	ADD_COMMAND("me",        "",    auth_cred_guest,    command_me,           "Show info about you."         );
+	ADD_COMMAND("myip",      "",    auth_cred_guest,    command_myip,         "Show your own IP."            );
+	ADD_COMMAND("reload",    "",    auth_cred_admin,    command_reload,       "Reload configuration files."  );
+	ADD_COMMAND("shutdown",  "",    auth_cred_admin,    command_shutdown_hub, "Shutdown hub."                );
+	ADD_COMMAND("stats",     "",    auth_cred_super,    command_stats,        "Show hub statistics."         );
+	ADD_COMMAND("uptime",    "",    auth_cred_guest,    command_uptime,       "Display hub uptime info."     );
+	ADD_COMMAND("version",   "",    auth_cred_guest,    command_version,      "Show hub version info."       );
+	ADD_COMMAND("whoip",     "r",   auth_cred_operator, command_whoip,        "Show users matching IP range.");
 
 #ifdef DEBUG_UNLOAD_PLUGINS
-	ADD_COMMAND("load",      "",    auth_cred_admin,    command_load,         "Load plugins."               );
-	ADD_COMMAND("unload",    "",    auth_cred_admin,    command_unload,       "Unload plugins."             );
+	ADD_COMMAND("load",      "",    auth_cred_admin,    command_load,         "Load plugins."                );
+	ADD_COMMAND("unload",    "",    auth_cred_admin,    command_unload,       "Unload plugins."              );
 #endif /* DEBUG_UNLOAD_PLUGINS */
 }
 

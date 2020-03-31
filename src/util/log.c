@@ -155,6 +155,62 @@ void hub_set_log_verbosity(int verb)
 	verbosity = verb;
 }
 
+int hub_get_log_verbosity()
+{
+	return verbosity;
+}
+
+
+struct log_info {
+	int verb;
+	char* str;
+};
+
+const struct log_info log_levels[] = {
+	{ .verb = log_fatal,    .str = "fatal"    },
+	{ .verb = log_error,    .str = "error"    },
+	{ .verb = log_warning,  .str = "warning"  },
+	{ .verb = log_user,     .str = "user"     },
+	{ .verb = log_info,     .str = "info"     },
+	{ .verb = log_debug,    .str = "debug"    },
+	{ .verb = log_trace,    .str = "trace"    },
+	{ .verb = log_dump,     .str = "dump"     },
+	{ .verb = log_memory,   .str = "memory"   },
+	{ .verb = log_protocol, .str = "protocol" },
+	{ .verb = log_plugin,   .str = "plugin"   },
+};
+#define NUM_LOG_LEVELS (sizeof(log_levels) / sizeof(log_levels[0]))
+
+char const* hub_log_verbosity_to_string(int verb)
+{
+	int i;
+
+	for (i = 0; i < NUM_LOG_LEVELS; i++)
+	{
+		if (log_levels[i].verb == verb)
+			return log_levels[i].str;
+	}
+
+	return "unknown";
+}
+
+int hub_log_string_to_verbosity(const char* str)
+{
+	int i;
+
+	for (i = 0; i < NUM_LOG_LEVELS; i++)
+	{
+		if (strcasecmp(str, log_levels[i].str) == 0)
+			return log_levels[i].verb;
+	}
+
+	if (is_number(str, &i))
+		return i;
+
+	return -1;
+}
+
+
 void hub_log(int log_verbosity, const char *format, ...)
 {
 	static char logmsg[1024];
