@@ -7,8 +7,7 @@
 # work with (CentOS 7).
 cmake_minimum_required(VERSION 2.8.12)
 
-project(uhub NONE)
-enable_language(C)
+project(uhub C)
 
 set(UHUB_VERSION_MAJOR 0)
 set(UHUB_VERSION_MINOR 5)
@@ -75,14 +74,17 @@ set(CPACK_GENERATOR "TGZ")
 set(CPACK_INSTALL_CMAKE_PROJECTS "${PROJECT_BINARY_DIR};uhub;ALL;/")
 set(CPACK_PACKAGE_CONTACT "Jan Vidar Krey <janvidar@extatic.org>")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/doc/description.txt")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "uHub ADC hub (server)")
-set(CPACK_PACKAGE_HOMEPAGE_URL "https://uhub.org/")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "High performance ADC p2p hub.")
+set(CPACK_PACKAGE_HOMEPAGE_URL ${CMAKE_PROJECT_HOMEPAGE_URL})
 set(CPACK_PACKAGE_RELOCATABLE False)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
 #set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
 #set(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_SOURCE_DIR}/doc/motd.txt")
 set(CPACK_RPM_BUILDREQUIRES "cmake, gcc, make, openssl-devel, sqlite-devel") # pkgconfig systemd-devel
+#set(CPACK_RPM_CHANGELOG_FILE "${CMAKE_SOURCE_DIR}/ChangeLog")
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv3+")
+set(CPACK_RPM_PACKAGE_RELEASE 3)
+set(CPACK_RPM_PACKAGE_URL ${CMAKE_PROJECT_HOMEPAGE_URL})
 set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_SOURCE_IGNORE_FILES "~$;[.]swp$;/[.]svn/;/[.]git/;.gitignore;/build/;tags;cscope.*")
 set(CPACK_SOURCE_RPM "OFF")
@@ -205,10 +207,11 @@ set(PLUGINS
 )
 
 set(CONFIG_FILES
-	${PROJECT_BINARY_DIR}/uhub.conf
-	${PROJECT_BINARY_DIR}/plugins.conf
 	${CMAKE_SOURCE_DIR}/doc/rules.txt
 	${CMAKE_SOURCE_DIR}/doc/motd.txt
+	# These are generated from their .in counterparts
+	${PROJECT_BINARY_DIR}/uhub.conf
+	${PROJECT_BINARY_DIR}/plugins.conf
 )
 
 set(MAN_PAGES

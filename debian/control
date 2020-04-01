@@ -9,16 +9,18 @@ Package: uhub
 Architecture: any
 Depends: ${shlibs:Depends}
 Description: High performance ADC p2p hub
- uhub is a high performance peer-to-peer hub for the ADC network.
+ Uhub is a high performance peer-to-peer hub for the ADC network.
  Its low memory footprint allows it to handle several thousand users on
  high-end servers, or a small private hub on embedded hardware.
+ .
+ Uhub uses the ADC protocol, and is compatible with DC++ and other ADC clients.
  .
  Key features:
   - High performance and low memory usage
   - IPv4 and IPv6 support
-  - Experimental SSL support (optional)
-  - Advanced access control support
+  - SSL/TLS support (optional)
   - Easy configuration
+  - Plugin support
  .
 Homepage: https://www.uhub.org/
 
