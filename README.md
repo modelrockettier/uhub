@@ -1,6 +1,7 @@
 # uHub
 
 Uhub is a high performance peer-to-peer hub for the ADC network.
+
 Its low memory footprint allows it to handle several thousand users on
 high-end servers, or a small private hub on embedded hardware.
 
@@ -16,41 +17,56 @@ Uhub uses the ADC protocol, and is compatible with DC++ and other ADC clients.
 
 ## Download
 
-You can also use git to use the last up-to-date version:
-```
-git clone https://github.com/janvidar/uhub.git
-```
-
-You can also find zip / tar.gz files of different uHub versions on
+You can find zip / tar.gz files of different uHub versions on
 https://github.com/janvidar/uhub/releases
+
+You can also use git to use the last up-to-date version:
+```shell
+git clone https://github.com/modelrockettier/uhub.git
+```
 
 ### Ubuntu and Debian packages
 
 Tehnick has provided an up to date uHub PPA for Debian and Ubuntu based
 distributions: https://tehnick.github.io/uhub/
 
+## Docker
+
+See the [doc/docker.md](doc/docker.md) document
+([permalink](https://github.com/modelrockettier/uhub/blob/master/doc/docker.md))
+for more information and examples.
+
+```shell
+docker run -v /uhub:/conf -p 1511:1511 modelrockettier/uhub
+```
+
 ## Documentation
 
 ### Compile
 
-See [doc/compile.md](doc/compile.md) document
+See the [doc/compile.md](doc/compile.md) document
+([permalink](https://github.com/modelrockettier/uhub/blob/master/doc/compile.md))
 
 ### Getting started
 
-See [doc/getstarted.md](doc/getstarted.md) document
+See the [doc/getstarted.md](doc/getstarted.md) document
+([permalink](https://github.com/modelrockettier/uhub/blob/master/doc/getstarted.md))
 
 ### Use TLS/SSL
 
-See [doc/tls-documentation.md](doc/tls-documentation.md) document
+See the [doc/tls-documentation.md](doc/tls-documentation.md) document
+([permalink](https://github.com/modelrockettier/uhub/blob/master/doc/tls-documentation.md))
 
 ## Compatible clients
 
 For a list of compatible ADC clients, see:
-https://en.wikipedia.org/wiki/Comparison\_of\_ADC\_software#Client\_software
+https://en.wikipedia.org/wiki/Comparison_of_ADC_software#Client_software
 
 ## License
 
 Uhub is free and open source software, licensed under the
 GNU General Public License version 3 or later.
 
-See [COPYING](COPYING) document or https://www.gnu.org/licenses/gpl-3.0.txt
+See [COPYING](COPYING) document
+([permalink](https://github.com/janvidar/uhub/blob/master/COPYING))
+or https://www.gnu.org/licenses/gpl-3.0.txt
