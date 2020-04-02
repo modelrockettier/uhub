@@ -66,7 +66,7 @@ FROM alpine:latest
 # Add symlinks to /app/lib and /conf to work with existing configs
 RUN \
 echo "**** install dependencies ****" && \
-apk add --no-cache bash pwgen util-linux openssl-dev sqlite-dev && \
+apk add --no-cache bash man pwgen util-linux openssl-dev sqlite-dev && \
 echo "**** remove unnecessary header files ****" && \
 rm -rf /usr/include /usr/lib/pkgconfig && \
 echo "**** create config directory ****" && \
