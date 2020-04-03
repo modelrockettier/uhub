@@ -7,7 +7,6 @@ task:
       - CONFIG: full
     matrix:
       - RELEASEVER: 12-1
-      - RELEASEVER: 11-3-snap
   freebsd_instance:
     image_family: freebsd-$RELEASEVER
   install_bash_script: pkg install -y bash
