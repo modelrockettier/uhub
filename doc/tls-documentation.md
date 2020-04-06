@@ -43,7 +43,7 @@ openssl req -new -x509 -nodes -sha256 -days 365 -key domainname.key > domainname
 At this point point you will be prompted a few questions,
 see [Certificate data](#certificate-data) below.
 
-## Creating a certificate with a CA
+### Creating a certificate with a CA
 
 Create a 2048-bit RSA private key:
 ```shell
@@ -63,7 +63,7 @@ signing, and when the transaction is done you get the certificate from the CA.
 
 Save the certificate as `dommainname.crt`.
 
-## Certificate data
+### Certificate data
 
 When creating a certificate, you are asked a series of questions, follow this
 guide:
