@@ -195,6 +195,7 @@ set(PLUGINS
 	mod_auth_sqlite
 	mod_chat_history
 	mod_chat_history_sqlite
+	mod_chat_is_privileged
 	mod_chat_only
 	mod_example
 	mod_guest_passwd

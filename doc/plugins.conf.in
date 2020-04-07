@@ -174,6 +174,19 @@ plugin ${PLUGIN_DIR}/mod_chat_history.so "file=${LOG_DIR}/uhub_chat.log history_
 # This plugins takes no parameters.
 #plugin ${PLUGIN_DIR}/mod_no_guest_downloads.so
 
+# Privileged chat hub.
+#
+# Restrict who can send chat messages, private messages, or contact operators.
+#
+# Parameters:
+# main_chat:  Permission level needed to send messages to the main chat.
+# op_contact: Permission level needed to private message operators and admins.
+# priv_chat:  Permission level needed to send private messages to non- operators/admins.
+#
+# Acceptable values are: none, guest, user, bot, operator, opbot, super, admin
+# If a parameter is missing, it will default to "guest"
+#plugin ${PLUGIN_DIR}/mod_chat_is_privileged.so "main_chat=user priv_chat=user"
+
 # Turn uhub into a chat-only hub.
 #
 # Disables connection setup, search and results.

@@ -325,6 +325,11 @@ int hub_handle_chat_message(struct hub_info* hub, struct hub_user* u, struct adc
 		}
 	}
 
+	if (relay && broadcast && user_flag_get(u, flag_muted))
+	{
+		relay = 0;
+	}
+
 	if (relay)
 	{
 		plugin_st status = st_default;

@@ -18,12 +18,21 @@
  */
 
 #include "plugin_api/handle.h"
+#include "util/cbuffer.h"
+#include "util/config_token.h"
 #include "util/memory.h"
+
+enum chat_warnings {
+	warn_none = 0,
+	warn_mainchat = 1,
+	warn_privchat = 2,
+	warn_opcontact = 4,
+};
 
 struct user_info
 {
 	sid_t sid;
-	int warnings;
+	enum chat_warnings warnings;
 };
 
 struct chat_restrictions_data
@@ -37,10 +46,16 @@ struct chat_restrictions_data
 	enum auth_credentials allow_mainchat;   // minimum credentials to allow using main chat
 };
 
-static struct chat_data* parse_config(struct plugin_handle* plugin, const char* line)
+static void set_error_message(struct plugin_handle* plugin, const char* msg)
 {
-	struct chat_data* data = (struct chat_data*) hub_malloc(sizeof(struct chat_data));
-	struct cfg_tokens* tokens = cfg_tokenize(line);
+	plugin->error_msg = msg;
+}
+
+static struct chat_restrictions_data* parse_config(struct plugin_handle* plugin, const char* config)
+{
+	enum auth_credentials *cred;
+	struct chat_restrictions_data* data = (struct chat_restrictions_data*) hub_malloc(sizeof(struct chat_restrictions_data));
+	struct cfg_tokens* tokens = cfg_tokenize(config);
 	char* token = cfg_token_get_first(tokens);
 
 	// defaults
@@ -63,19 +78,33 @@ static struct chat_data* parse_config(struct plugin_handle* plugin, const char* 
 			return 0;
 		}
 
-		if (strcmp(cfg_settings_get_key(setting), "allow_privchat") == 0)
+		cred = NULL;
+
+		if (strcmp(cfg_settings_get_key(setting), "priv_chat") == 0)
 		{
-			if (!string_to_boolean(cfg_settings_get_value(setting), &data->allow_privchat))
-				data->allow_privchat = 0;
+			cred = &data->allow_privchat;
 		}
-		else if (strcmp(cfg_settings_get_key(setting), "minimum_access") == 0)
+		else if (strcmp(cfg_settings_get_key(setting), "main_chat") == 0)
 		{
+			cred = &data->allow_mainchat;
+		}
+		else if (strcmp(cfg_settings_get_key(setting), "op_contact") == 0)
+		{
+			cred = &data->allow_op_contact;
 		}
 		else
 		{
 			set_error_message(plugin, "Unknown startup parameters given");
 			cfg_tokens_free(tokens);
 			cfg_settings_free(setting);
+			hub_free(data);
+			return 0;
+		}
+
+		if (!auth_string_to_cred(cfg_settings_get_value(setting), cred))
+		{
+			set_error_message(plugin, "Unknown credential value");
+			cfg_tokens_free(tokens);
 			hub_free(data);
 			return 0;
 		}
@@ -88,7 +117,7 @@ static struct chat_data* parse_config(struct plugin_handle* plugin, const char* 
 	return data;
 }
 
-static struct user_info* get_user_info(struct chat_data* data, sid_t sid)
+static struct user_info* get_user_info(struct chat_restrictions_data* data, sid_t sid)
 {
 	struct user_info* u;
 
@@ -109,58 +138,116 @@ static struct user_info* get_user_info(struct chat_data* data, sid_t sid)
 	if (!u->sid)
 	{
 		u->sid = sid;
-		u->warnings = 0;
+		u->warnings = warn_none;
 		data->num_users++;
 	}
 	return u;
 }
 
+static void send_warning(struct plugin_handle* plugin, struct plugin_user* user, enum chat_warnings warning)
+{
+	struct chat_restrictions_data* data = (struct chat_restrictions_data*) plugin->ptr;
+	struct cbuffer* buf = NULL;
+	struct user_info* info = get_user_info(data, user->sid);
+
+	warning &= ~info->warnings;
+	if (!warning)
+		return;
+
+	buf = cbuf_create(128);
+	if (warning & warn_mainchat)
+		cbuf_append(buf, "You are not allowed to chat.");
+	else if (warning & warn_opcontact)
+		cbuf_append(buf, "You are not allowed to contact operators or admins.");
+	else if (warning & warn_privchat)
+		cbuf_append(buf, "You are not allowed to send private messages.");
+
+	plugin->hub.send_message(plugin, user, cbuf_get(buf));
+	cbuf_destroy(buf);
+
+	info->warnings |= warning;
+}
+
 static void on_user_login(struct plugin_handle* plugin, struct plugin_user* user)
 {
-	struct chat_data* data = (struct chat_data*) plugin->ptr;
+	struct chat_restrictions_data* data = (struct chat_restrictions_data*) plugin->ptr;
 	/*struct user_info* info = */
 	get_user_info(data, user->sid);
 }
 
 static void on_user_logout(struct plugin_handle* plugin, struct plugin_user* user, const char* reason)
 {
-	struct chat_data* data = (struct chat_data*) plugin->ptr;
+	struct chat_restrictions_data* data = (struct chat_restrictions_data*) plugin->ptr;
 	struct user_info* info = get_user_info(data, user->sid);
 	if (info->sid)
 		data->num_users--;
-	info->warnings = 0;
+	info->warnings = warn_none;
 	info->sid = 0;
 }
 
 plugin_st on_chat_msg(struct plugin_handle* plugin, struct plugin_user* from, const char* message)
 {
-	struct chat_data* data = (struct chat_data*) plugin->ptr;
-	if (from->credentials >=
-	return st_default;
+	struct chat_restrictions_data* data = (struct chat_restrictions_data*) plugin->ptr;
+
+	if (from->credentials >= data->allow_mainchat)
+		return st_default;
+
+	send_warning(plugin, from, warn_mainchat);
+	return st_deny;
 }
 
 plugin_st on_private_msg(struct plugin_handle* plugin, struct plugin_user* from, struct plugin_user* to, const char* message)
 {
-	return st_default;
+	struct chat_restrictions_data* data = (struct chat_restrictions_data*) plugin->ptr;
+	if (to->credentials >= auth_cred_operator)
+	{
+		if (from->credentials >= data->allow_op_contact)
+			return st_default;
+
+		send_warning(plugin, from, warn_opcontact);
+		return st_deny;
+	}
+
+	if (from->credentials >= data->allow_privchat)
+		return st_default;
+
+	send_warning(plugin, from, warn_privchat);
+	return st_deny;
 }
 
 
 int plugin_register(struct plugin_handle* plugin, const char* config)
 {
-	PLUGIN_INITIALIZE(plugin, "Privileged chat hub", "1.0", "Only registered users can send messages on the main chat.");
-	plugin->ptr = cip_initialize();
+	struct chat_restrictions_data* data;
+	PLUGIN_INITIALIZE(plugin, "Privileged chat hub", "1.0", "Restrict who can send chat messages, private messages, or contact operators.");
+
+	data = parse_config(plugin, config);
+	plugin->ptr = data;
+
+	if (!data)
+		return -1;
 
 	plugin->funcs.on_user_login = on_user_login;
 	plugin->funcs.on_user_logout = on_user_logout;
 	plugin->funcs.on_chat_msg = on_chat_msg;
 	plugin->funcs.on_private_msg = on_private_msg;
 
-	return 0;
+	if (data->allow_mainchat > auth_cred_guest)
+		return 0;
+	else if (data->allow_op_contact > auth_cred_guest)
+		return 0;
+	else if (data->allow_privchat > auth_cred_guest)
+		return 0;
+
+	// guests are allowed in all chats, no use enabling this plugin
+	hub_free(data->users);
+	hub_free(data);
+	return -1;
 }
 
 int plugin_unregister(struct plugin_handle* plugin)
 {
-	struct chat_data* data = (struct chat_data*) plugin->ptr;
+	struct chat_restrictions_data* data = (struct chat_restrictions_data*) plugin->ptr;
 	if (data)
 	{
 		hub_free(data->users);
