@@ -104,11 +104,9 @@ static void history_add(struct plugin_handle* plugin, struct plugin_user* from, 
 static int get_messages_callback(void* ptr, int argc, char **argv, char **colName)
 {
 	struct linked_list* messages = (struct linked_list*) ptr;
-	struct chat_history_line* line = hub_malloc(sizeof(struct chat_history_line));
+	struct chat_history_line* line = hub_malloc_zero(sizeof(struct chat_history_line));
 	int i = 0;
 	int message_found = 0;
-
-	memset(line, 0, sizeof(struct chat_history_line));
 
 	for (; i < argc; i++) {
 		if (strcmp(colName[i], "from_nick") == 0)

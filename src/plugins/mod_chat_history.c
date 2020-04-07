@@ -20,6 +20,7 @@
 #include "plugin_api/handle.h"
 #include "plugin_api/command_api.h"
 #include "util/config_token.h"
+#include "util/log.h"
 #include "util/memory.h"
 #include "util/misc.h"
 #include "util/list.h"
@@ -29,6 +30,8 @@
 
 struct chat_history_data
 {
+	char* logfile;
+	int fd;
 	size_t history_max;      ///<<< "the maximum number of chat messages kept in history."
 	size_t history_default;  ///<<< "the default number of chat messages returned if no limit was provided"
 	size_t history_connect;  ///<<< "the number of chat messages provided when users connect to the hub."
@@ -52,6 +55,29 @@ static void history_add(struct plugin_handle* plugin, struct plugin_user* from, 
 	{
 		list_remove_first(data->chat_history, hub_free);
 	}
+
+	loglen = strlen(log);
+	if (data->fd >= 0)
+	{
+		if (write(data->fd, log, loglen) < loglen)
+		{
+			fprintf(stderr, "Unable to write full log. Error=%d: %s\n", errno, strerror(errno));
+		}
+		else
+		{
+#ifdef WIN32
+			_commit(data->fd);
+#else
+#if defined _POSIX_SYNCHRONIZED_IO && _POSIX_SYNCHRONIZED_IO > 0
+			fdatasync(data->fd);
+#else
+			fsync(data->fd);
+#endif
+#endif
+		}
+	}
+
+	log[loglen - 1] = '\0'; // remove ending newline
 }
 
 /**
@@ -76,16 +102,15 @@ static size_t get_messages(struct chat_history_data* data, size_t num, struct cb
 	if (num != total)
 		skiplines = total - num;
 
-	cbuf_append(outbuf, "\n");
 	LIST_FOREACH(char*, message, messages,
 	{
 		if (--skiplines < 0)
 		{
 			cbuf_append(outbuf, message);
+			cbuf_append(outbuf, "\n");
 			lines++;
 		}
 	});
-	cbuf_append(outbuf, "\n");
 	return lines;
 }
 
@@ -137,7 +162,7 @@ static int command_history(struct plugin_handle* plugin, struct plugin_user* use
 		maxlines = data->history_default;
 
 	buf = cbuf_create(MAX_HISTORY_SIZE);
-	cbuf_append_format(buf, "*** %s: Chat History:\n", cmd->prefix);
+	cbuf_append_format(buf, "*** %s: Chat History:\n\n", cmd->prefix);
 	get_messages(data, maxlines, buf);
 
 	plugin->hub.send_message(plugin, user, cbuf_get(buf));
@@ -150,6 +175,76 @@ static void set_error_message(struct plugin_handle* plugin, const char* msg)
 	plugin->error_msg = msg;
 }
 
+static int open_log_file(struct plugin_handle* plugin, struct chat_history_data* data)
+{
+	// attempt to read in the existing log contents
+	int read_fd = open(data->logfile, O_RDONLY);
+	if (read_fd >= 0)
+	{
+		size_t off = 0;
+		size_t len = 0;
+		ssize_t bytes_read = 0;
+		size_t buflen = MAX_HISTORY_SIZE * 2;
+		char* buffer;
+		char* endp;
+
+		buffer = hub_malloc(buflen + 1);
+		if (!buffer)
+			return 0;
+
+		bytes_read = read(read_fd, buffer, buflen);
+
+		while (bytes_read > 0)
+		{
+			bytes_read += (ssize_t) off;
+
+			buffer[bytes_read] = '\0';
+			off = 0;
+
+			while ((endp = strchr(&buffer[off], '\n')) != NULL)
+			{
+				size_t len = (size_t) (endp - &buffer[off]);
+				if (len)
+					list_append(data->chat_history, hub_strndup(&buffer[off], len));
+				off += len + 1;
+			}
+
+			while (list_size(data->chat_history) > data->history_max)
+				list_remove_first(data->chat_history, hub_free);
+
+			len = strlen(&buffer[off]);
+			if (len >= buflen)
+			{
+				LOG_WARN("Line too long: " PRINTF_SIZE_T "/" PRINTF_SIZE_T, len, buflen);
+				list_append(data->chat_history, hub_strndup(&buffer[off], len));
+				len = 0;
+			}
+			else
+			{
+				memmove(buffer, &buffer[off], len + 1);
+			}
+
+			off = len;
+
+			bytes_read = read(read_fd, &buffer[off], buflen - off);
+		}
+
+		if (len)
+			list_append(data->chat_history, hub_strdup(buffer));
+
+		while (list_size(data->chat_history) > data->history_max)
+			list_remove_first(data->chat_history, hub_free);
+
+		close(read_fd);
+		hub_free(buffer);
+	}
+	// Ignore if the file couldn't be opened/read
+
+	int flags = O_CREAT | O_APPEND | O_WRONLY;
+	data->fd = open(data->logfile, flags, 0664);
+	return (data->fd >= 0);
+}
+
 static struct chat_history_data* parse_config(const char* line, struct plugin_handle* plugin)
 {
 	struct chat_history_data* data = (struct chat_history_data*) hub_malloc_zero(sizeof(struct chat_history_data));
@@ -158,6 +253,8 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 
 	uhub_assert(data != NULL);
 
+	data->logfile = NULL;
+	data->fd = -1;
 	data->history_max = 200;
 	data->history_default = 10;
 	data->history_connect = 5;
@@ -171,11 +268,18 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 		{
 			set_error_message(plugin, "Unable to parse startup parameters");
 			cfg_tokens_free(tokens);
+			list_destroy(data->chat_history);
+			hub_free(data->logfile);
 			hub_free(data);
 			return 0;
 		}
 
-		if (strcmp(cfg_settings_get_key(setting), "history_max") == 0)
+		if (strcmp(cfg_settings_get_key(setting), "file") == 0)
+		{
+			hub_free(data->logfile);
+			data->logfile = hub_strdup(cfg_settings_get_value(setting));
+		}
+		else if (strcmp(cfg_settings_get_key(setting), "history_max") == 0)
 		{
 			data->history_max = (size_t) uhub_atoi(cfg_settings_get_value(setting));
 		}
@@ -192,6 +296,8 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 			set_error_message(plugin, "Unknown startup parameters given");
 			cfg_tokens_free(tokens);
 			cfg_settings_free(setting);
+			list_destroy(data->chat_history);
+			hub_free(data->logfile);
 			hub_free(data);
 			return 0;
 		}
@@ -199,7 +305,19 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 		cfg_settings_free(setting);
 		token = cfg_token_get_next(tokens);
 	}
+
 	cfg_tokens_free(tokens);
+
+	if (data->logfile && !open_log_file(plugin, data))
+	{
+		list_clear(data->chat_history, &hub_free);
+		list_destroy(data->chat_history);
+		hub_free(data->logfile);
+		hub_free(data);
+		set_error_message(plugin, "Unable to open chat history file");
+		return 0;
+	}
+
 	return data;
 }
 
@@ -231,6 +349,10 @@ int plugin_unregister(struct plugin_handle* plugin)
 	{
 		list_clear(data->chat_history, &hub_free);
 		list_destroy(data->chat_history);
+
+		hub_free(data->logfile);
+		if (data->fd >= 0)
+			close(data->fd);
 
 		plugin->hub.command_del(plugin, data->command_history_handle);
 		hub_free(data->command_history_handle);

@@ -77,7 +77,7 @@ plugin ${PLUGIN_DIR}/mod_auth_sqlite.so "file=${CONFIG_DIR}/users.db exclusive=0
 # entries into memory for use with the !log and !findlog commands.
 #
 # Parameters:
-# file: path/filename for log file.
+# file: path/filename for the log file (needs to be writable by the hub).
 # syslog: if true then syslog is used instead of writing to a file (Unix only)
 # max_log_entries: how many log entries to keep in memory for commands
 plugin ${PLUGIN_DIR}/mod_logging.so "file=${LOG_DIR}/uhub.log max_log_entries=200"
@@ -117,21 +117,22 @@ plugin ${PLUGIN_DIR}/mod_welcome.so "motd=${CONFIG_DIR}/motd.txt rules=${CONFIG_
 
 # Simple chat history plugin.
 #
-# This plugin provides temporary chat history functionality.
+# This plugin provides chat history functionality.
 # The chat history will be displayed when a user connects or when a user requests
 # the chat history with the !history command.
 #
-# NOTE: The chat history will be deleted when uhub is restarted see
-#   mod_chat_history_sqlite if you want the chat history to be kept after restarts.
+# NOTE: If no log file is set, the chat history will be deleted when uhub
+#       is restarted.
 #
 # Hub commands:
 # !history - Show chat message history (optionally, how many lines to show)
 #
 # Parameters:
-# history_max:     the maximum number of messages to keep in history
+# file:            Path/filename for the chat history log file (needs to be writable by the hub).
+# history_max:     the maximum number of messages to keep in memory
 # history_default: How many messages to show when the history command is called without arguments.
 # history_connect: the number of chat history messages to send when users connect (0 = do not send any history)
-plugin ${PLUGIN_DIR}/mod_chat_history.so "history_max=200 history_default=10 history_connect=5"
+plugin ${PLUGIN_DIR}/mod_chat_history.so "file=${LOG_DIR}/uhub_chat.log history_max=200 history_default=10 history_connect=5"
 
 # Provides a persistent chat history at login and request
 #

@@ -66,16 +66,21 @@ static void set_error_message(struct plugin_handle* plugin, const char* msg)
 static int log_open_file(struct plugin_handle* plugin, struct log_data* data)
 {
 	// attempt to read in the existing log contents
-	data->fd = open(data->logfile, O_RDONLY);
-	if (data->fd >= 0)
+	int read_fd = open(data->logfile, O_RDONLY);
+	if (read_fd >= 0)
 	{
 		size_t off = 0;
 		size_t len = 0;
 		ssize_t bytes_read = 0;
-		char buffer[MAX_MSG_SIZE*2];
+		size_t buflen = MAX_MSG_SIZE * 2;
+		char* buffer;
 		char* endp;
 
-		bytes_read = read(data->fd, buffer, sizeof(buffer) - 1);
+		buffer = hub_malloc(buflen + 1);
+		if (!buffer)
+			return 0;
+
+		bytes_read = read(read_fd, buffer, buflen);
 
 		while (bytes_read > 0)
 		{
@@ -91,14 +96,14 @@ static int log_open_file(struct plugin_handle* plugin, struct log_data* data)
 					list_append(data->messages, hub_strndup(&buffer[off], len));
 				off += len + 1;
 			}
-			
+
 			while (list_size(data->messages) > data->max_log_entries)
 				list_remove_first(data->messages, hub_free);
 
 			len = strlen(&buffer[off]);
-			if (len >= (sizeof(buffer) - 1))
+			if (len >= buflen)
 			{
-				LOG_WARN("Line too long: " PRINTF_SIZE_T "/%d", len, MAX_MSG_SIZE);
+				LOG_WARN("Line too long: " PRINTF_SIZE_T "/" PRINTF_SIZE_T, len, buflen);
 				list_append(data->messages, hub_strndup(&buffer[off], len));
 				len = 0;
 			}
@@ -109,7 +114,7 @@ static int log_open_file(struct plugin_handle* plugin, struct log_data* data)
 
 			off = len;
 
-			bytes_read = read(data->fd, &buffer[off], sizeof(buffer) - off - 1);
+			bytes_read = read(read_fd, &buffer[off], buflen - off);
 		}
 
 		if (len)
@@ -118,13 +123,14 @@ static int log_open_file(struct plugin_handle* plugin, struct log_data* data)
 		while (list_size(data->messages) > data->max_log_entries)
 			list_remove_first(data->messages, hub_free);
 
-		close(data->fd);
+		close(read_fd);
+		hub_free(buffer);
 	}
 	// Ignore if the file couldn't be opened/read
 
 	int flags = O_CREAT | O_APPEND | O_WRONLY;
 	data->fd = open(data->logfile, flags, 0664);
-	return (data->fd != -1);
+	return (data->fd >= 0);
 }
 
 #ifndef WIN32
@@ -154,13 +160,16 @@ static struct log_data* parse_config(const char* line, struct plugin_handle* plu
 		{
 			set_error_message(plugin, "Unable to parse startup parameters");
 			cfg_tokens_free(tokens);
+			list_destroy(data->messages);
+			hub_free(data->logfile);
 			hub_free(data);
 			return 0;
 		}
 
 		if (strcmp(cfg_settings_get_key(setting), "file") == 0)
 		{
-			data->logfile = strdup(cfg_settings_get_value(setting));
+			hub_free(data->logfile);
+			data->logfile = hub_strdup(cfg_settings_get_value(setting));
 			data->logmode = mode_file;
 		}
 #ifndef WIN32
@@ -170,18 +179,34 @@ static struct log_data* parse_config(const char* line, struct plugin_handle* plu
 			if (string_to_boolean(cfg_settings_get_value(setting), &use_syslog))
 			{
 				data->logmode = (use_syslog) ? mode_syslog : mode_file;
+
+				if (use_syslog && data->logfile)
+				{
+					set_error_message(plugin, "Can't log to both a file and syslog");
+					cfg_tokens_free(tokens);
+					cfg_settings_free(setting);
+					list_destroy(data->messages);
+					hub_free(data->logfile);
+					hub_free(data);
+					return 0;
+				}
 			}
 		}
 #endif
 		else if (strcmp(cfg_settings_get_key(setting), "max_log_entries") == 0)
 		{
 			data->max_log_entries = (size_t) uhub_atoi(cfg_settings_get_value(setting));
+			// 0 -> unlimited entries
+			if (data->max_log_entries == 0)
+				data->max_log_entries = SIZE_MAX;
 		}
 		else
 		{
 			set_error_message(plugin, "Unknown startup parameters given");
 			cfg_tokens_free(tokens);
 			cfg_settings_free(setting);
+			list_destroy(data->messages);
+			hub_free(data->logfile);
 			hub_free(data);
 			return 0;
 		}
@@ -197,12 +222,15 @@ static struct log_data* parse_config(const char* line, struct plugin_handle* plu
 		if (!data->logfile)
 		{
 			set_error_message(plugin, "No log file is given, use file=<path>");
+			list_destroy(data->messages);
 			hub_free(data);
 			return 0;
 		}
 
 		if (!log_open_file(plugin, data))
 		{
+			list_clear(data->messages, &hub_free);
+			list_destroy(data->messages);
 			hub_free(data->logfile);
 			hub_free(data);
 			set_error_message(plugin, "Unable to open log file");
@@ -214,6 +242,7 @@ static struct log_data* parse_config(const char* line, struct plugin_handle* plu
 	{
 		if (!log_open_syslog(plugin))
 		{
+			list_destroy(data->messages);
 			hub_free(data->logfile);
 			hub_free(data);
 			set_error_message(plugin, "Unable to open syslog");
@@ -336,6 +365,7 @@ static void log_user_login_error(struct plugin_handle* plugin, struct plugin_use
 {
 	const char* addr = plugin->hub.ip_to_string(plugin, &user->addr);
 	const char* sid = plugin->hub.sid_to_string(plugin, user->sid);
+
 	log_message(plugin->ptr, "LoginError  %s/%s %s \"%s\" (%s) \"%s\"",
 		sid, user->cid, addr, user->nick, reason, user->user_agent);
 }
@@ -344,6 +374,7 @@ static void log_user_logout(struct plugin_handle* plugin, struct plugin_user* us
 {
 	const char* addr = plugin->hub.ip_to_string(plugin, &user->addr);
 	const char* sid = plugin->hub.sid_to_string(plugin, user->sid);
+
 	log_message(plugin->ptr, "Logout      %s/%s %s \"%s\" (%s) \"%s\"",
 		sid, user->cid, addr, user->nick, reason, user->user_agent);
 }
@@ -352,6 +383,7 @@ static void log_change_nick(struct plugin_handle* plugin, struct plugin_user* us
 {
 	const char* addr = plugin->hub.ip_to_string(plugin, &user->addr);
 	const char* sid = plugin->hub.sid_to_string(plugin, user->sid);
+
 	log_message(plugin->ptr, "NickChange  %s/%s %s \"%s\" -> \"%s\"",
 		sid, user->cid, addr, user->nick, new_nick);
 }
@@ -403,7 +435,7 @@ static int command_log(struct plugin_handle* plugin, struct plugin_user* user, s
 	// Offset is past the end
 	if (offset >= list_size(data->messages))
 		return 0;
-	
+
 	// list is from oldest to newest but offset is from newest to oldest
 	last_entry = list_size(data->messages) - offset - 1;
 	// make sure first_entry doesn't go negative (or wrap around)
