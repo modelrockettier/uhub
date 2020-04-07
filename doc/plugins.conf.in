@@ -164,28 +164,22 @@ plugin ${PLUGIN_DIR}/mod_chat_history.so "file=${LOG_DIR}/uhub_chat.log history_
 # Parameters:
 # join: path/filename for the join message
 # leave: path/filename for the leave/quit/kick message
-# min_notify: minimum credentials able to see login messages
+# min_notify: minimum credentials able to see login messages (default: guest)
 #plugin ${PLUGIN_DIR}/mod_joins.so "join=${CONFIG_DIR}/join.txt leave=${CONFIG_DIR}/leave.txt min_notify=guest"
 
-# No guest downloading.
+# Privileged hub restrictions.
 #
-# This plugin only allows registered users to search and initiate transfers.
-#
-# This plugins takes no parameters.
-#plugin ${PLUGIN_DIR}/mod_no_guest_downloads.so
-
-# Privileged chat hub.
-#
-# Restrict who can send chat messages, private messages, or contact operators.
+# Restrict who can send chat messages, private messages, contact operators, or download/search.
 #
 # Parameters:
-# main_chat:  Permission level needed to send messages to the main chat.
-# op_contact: Permission level needed to private message operators and admins.
-# priv_chat:  Permission level needed to send private messages to non- operators/admins.
+# chat:     Permission level needed to send messages to the main chat.
+# op_msg:   Permission level needed to private message operators and admins.
+# priv_msg: Permission level needed to send private messages to non- operators/admins.
+# download: Permission level needed to search or download files.
 #
 # Acceptable values are: none, guest, user, bot, operator, opbot, super, admin
 # If a parameter is missing, it will default to "guest"
-#plugin ${PLUGIN_DIR}/mod_chat_is_privileged.so "main_chat=user priv_chat=user"
+#plugin ${PLUGIN_DIR}/mod_restrict.so "chat=user priv_msg=user op_msg=guest download=user"
 
 # Turn uhub into a chat-only hub.
 #
