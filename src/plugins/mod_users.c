@@ -39,13 +39,13 @@ struct user_manager
 	int notify; ///<<< "Notify ops about attempts to self-register and notify admins about failed permission checks"
 	size_t password_length; ///<<< "The minimum password length"
 
-	struct plugin_command_handle cmd_password; ///<<< "A handle to the !password command."
-	struct plugin_command_handle cmd_register; ///<<< "A handle to the !register command."
-	struct plugin_command_handle cmd_useradd;  ///<<< "A handle to the !useradd command."
-	struct plugin_command_handle cmd_userdel;  ///<<< "A handle to the !userdel command."
-	struct plugin_command_handle cmd_userlist; ///<<< "A handle to the !userlist command."
-	struct plugin_command_handle cmd_usermod;  ///<<< "A handle to the !usermod command."
-	struct plugin_command_handle cmd_userpass; ///<<< "A handle to the !userpass command."
+	struct plugin_command_handle* cmd_password; ///<<< "A handle to the !password command."
+	struct plugin_command_handle* cmd_register; ///<<< "A handle to the !register command."
+	struct plugin_command_handle* cmd_useradd;  ///<<< "A handle to the !useradd command."
+	struct plugin_command_handle* cmd_userdel;  ///<<< "A handle to the !userdel command."
+	struct plugin_command_handle* cmd_userlist; ///<<< "A handle to the !userlist command."
+	struct plugin_command_handle* cmd_usermod;  ///<<< "A handle to the !usermod command."
+	struct plugin_command_handle* cmd_userpass; ///<<< "A handle to the !userpass command."
 };
 
 static struct user_manager* parse_config(const char* line, struct plugin_handle* plugin)
@@ -566,15 +566,20 @@ static int command_userlist(struct plugin_handle* plugin, struct plugin_user* us
 	return 0;
 }
 
-#define CMD_ADD(PLUGIN, HANDLE, PREFIX, ...) \
+// Visual Studio can't handle variadic macros here for some reason
+#define CMD_ADD(HANDLE, PLUGIN, PREFIX, ARGS, CRED, CALLBACK, DESC) \
 	do { \
-		PLUGIN_COMMAND_INITIALIZE((HANDLE), PLUGIN, PREFIX, __VA_ARGS__); \
+		(HANDLE) = (struct plugin_command_handle*) hub_malloc(sizeof(struct plugin_command_handle)); \
+		PLUGIN_COMMAND_INITIALIZE((HANDLE), PLUGIN, PREFIX, ARGS, CRED, CALLBACK, DESC); \
 		if ((PLUGIN)->hub.command_add(PLUGIN, HANDLE) != 0) \
 			LOG_ERROR("Failed to add command: %s", PREFIX); \
 	} while (0)
 
 #define CMD_DEL(PLUGIN, HANDLE) \
-		(PLUGIN)->hub.command_del(PLUGIN, HANDLE)
+	do { \
+		(PLUGIN)->hub.command_del(PLUGIN, HANDLE); \
+		hub_free(HANDLE); \
+	} while (0)
 
 int plugin_register(struct plugin_handle* plugin, const char* config)
 {
@@ -585,15 +590,15 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	if (!manager)
 		return -1;
 
-	CMD_ADD(plugin, &manager->cmd_password, "password", "+p",   auth_cred_user,     &command_password, "Change your own password.");
-	CMD_ADD(plugin, &manager->cmd_useradd,  "useradd",  "np?C", auth_cred_operator, &command_useradd,  "Register a new user.");
-	CMD_ADD(plugin, &manager->cmd_userdel,  "userdel",  "+n",   auth_cred_operator, &command_userdel,  "Delete a registered user.");
-	CMD_ADD(plugin, &manager->cmd_userlist, "userlist", "?+n",  auth_cred_operator, &command_userlist, "List all registered users or search for users by nick.");
-	CMD_ADD(plugin, &manager->cmd_usermod,  "usermod",  "nC",   auth_cred_super,    &command_usermod,  "Modify registered user credentials.");
-	CMD_ADD(plugin, &manager->cmd_userpass, "userpass", "n+p",  auth_cred_operator, &command_userpass, "Change password for a registered user.");
+	CMD_ADD(manager->cmd_password, plugin, "password", "+p",   auth_cred_user,     &command_password, "Change your own password.");
+	CMD_ADD(manager->cmd_useradd,  plugin, "useradd",  "np?C", auth_cred_operator, &command_useradd,  "Register a new user.");
+	CMD_ADD(manager->cmd_userdel,  plugin, "userdel",  "+n",   auth_cred_operator, &command_userdel,  "Delete a registered user.");
+	CMD_ADD(manager->cmd_userlist, plugin, "userlist", "?+n",  auth_cred_operator, &command_userlist, "List all registered users or search for users by nick.");
+	CMD_ADD(manager->cmd_usermod,  plugin, "usermod",  "nC",   auth_cred_super,    &command_usermod,  "Modify registered user credentials.");
+	CMD_ADD(manager->cmd_userpass, plugin, "userpass", "n+p",  auth_cred_operator, &command_userpass, "Change password for a registered user.");
 
 	if (manager->register_self)
-		CMD_ADD(plugin, &manager->cmd_register, "register", "p", auth_cred_guest,   &command_register, "Register your username.");
+		CMD_ADD(manager->cmd_register, plugin, "register", "p", auth_cred_guest,   &command_register, "Register your username.");
 
 	plugin->ptr = manager;
 
@@ -607,13 +612,13 @@ int plugin_unregister(struct plugin_handle* plugin)
 
 	if (manager)
 	{
-		CMD_DEL(plugin, &manager->cmd_register);
-		CMD_DEL(plugin, &manager->cmd_password);
-		CMD_DEL(plugin, &manager->cmd_useradd);
-		CMD_DEL(plugin, &manager->cmd_userdel);
-		CMD_DEL(plugin, &manager->cmd_userlist);
-		CMD_DEL(plugin, &manager->cmd_usermod);
-		CMD_DEL(plugin, &manager->cmd_userpass);
+		CMD_DEL(plugin, manager->cmd_register);
+		CMD_DEL(plugin, manager->cmd_password);
+		CMD_DEL(plugin, manager->cmd_useradd);
+		CMD_DEL(plugin, manager->cmd_userdel);
+		CMD_DEL(plugin, manager->cmd_userlist);
+		CMD_DEL(plugin, manager->cmd_usermod);
+		CMD_DEL(plugin, manager->cmd_userpass);
 
 		hub_free(manager);
 		plugin->ptr = NULL;

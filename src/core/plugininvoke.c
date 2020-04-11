@@ -22,8 +22,20 @@
 
 #define PLUGIN_DEBUG(hub, name) LOG_PLUGIN("Invoke %s on %d plugins", name, (int) (hub->plugins ? list_size(hub->plugins->loaded) : -1));
 
+/* Workaround for broken visual studio variadic macros */
+#ifdef _MSC_VER
+#define PASS(x) x
+#define INVOKE(...)               PASS(INVOKE_(__VA_ARGS__))
+#define PLUGIN_INVOKE_STATUS(...) PASS(PLUGIN_INVOKE_STATUS_(__VA_ARGS__))
+#define PLUGIN_INVOKE(...)        PASS(PLUGIN_INVOKE_(__VA_ARGS__))
 
-#define INVOKE(HUB, FUNCNAME, CODE) \
+#else /* Functioning preprocessor */
+#define INVOKE               INVOKE_
+#define PLUGIN_INVOKE_STATUS PLUGIN_INVOKE_STATUS_
+#define PLUGIN_INVOKE        PLUGIN_INVOKE_
+#endif
+
+#define INVOKE_(HUB, FUNCNAME, CODE) \
 	PLUGIN_DEBUG(HUB, # FUNCNAME) \
 	if (HUB->plugins && HUB->plugins->loaded) \
 	{ \
@@ -35,7 +47,7 @@
 		}); \
 	}
 
-#define PLUGIN_INVOKE_STATUS(HUB, FUNCNAME, ARGS...) \
+#define PLUGIN_INVOKE_STATUS_(HUB, FUNCNAME, ARGS...) \
 	do { \
 		plugin_st status = st_default; \
 		INVOKE(HUB, FUNCNAME, { \
@@ -46,7 +58,8 @@
 		return status; \
 	} while(0)
 
-#define PLUGIN_INVOKE(HUB, FUNCNAME, ARGS...) INVOKE(HUB, FUNCNAME, { plugin->funcs.FUNCNAME(plugin, ARGS); })
+#define PLUGIN_INVOKE_(HUB, FUNCNAME, ARGS...) \
+	INVOKE(HUB, FUNCNAME, { plugin->funcs.FUNCNAME(plugin, ARGS); })
 
 
 static struct plugin_user* convert_user_type(struct hub_user* user)
