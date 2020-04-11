@@ -10,4 +10,8 @@ include /usr/share/dpkg/buildflags.mk
 	dh $@
 
 override_dh_auto_configure:
-	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release -DSYSTEMD_SUPPORT=OFF
+	dh_auto_configure -- \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DHARDENING=ON \
+		-DSSL_SUPPORT=ON \
+		-DSYSTEMD_SUPPORT=OFF

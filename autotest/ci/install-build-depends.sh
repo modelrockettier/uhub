@@ -73,7 +73,7 @@ if [ "$OS_NAME" = "linux" ]; then
 		PACKAGES="cmake libsqlite3-dev make"
 
 		case "${CONFIG}" in
-			deb)  PACKAGES="$PACKAGES build-essential debhelper fakeroot git libssl-dev pkg-config" ;; # libsystemd-dev
+			deb)  PACKAGES="$PACKAGES build-essential debhelper fakeroot git libssl-dev" ;;
 			full) PACKAGES="$PACKAGES git libssl-dev libsystemd-dev pkg-config" ;;
 			minimal) ;;
 			docker) exit 0 ;;

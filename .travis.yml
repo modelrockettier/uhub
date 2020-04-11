@@ -1,6 +1,6 @@
 language: c
 os: linux
-dist: bionic
+dist: xenial
 arch: amd64
 compiler:
   - gcc
@@ -16,41 +16,47 @@ jobs:
 
   # Additional builds to do (outside the build matrix)
   include:
-    # SSL builds are currently broken on openssl < 1.1 (xenial has 1.0.2),
-    # so only build the minimal config
-    - os: linux
-      dist: xenial
-      arch: amd64
-      env: CONFIG=minimal OLD=1
+    # Bionic builds
+    - name: bionic full
+      dist: bionic
+      env: CONFIG=full
+    - name: bionic minimal
+      dist: bionic
+      env: CONFIG=minimal
     # ARM builds
-    - os: linux
+    - name: arm64 full
       arch: arm64
       env: CONFIG=full
-    - os: linux
+    - name: arm64 minimal
       arch: arm64
       env: CONFIG=minimal
     # Debian package builds
-    - os: linux
-      arch: amd64
+    - name: debian package
+      env: CONFIG=deb
+    - name: bionic debian package
+      dist: bionic
       env: CONFIG=deb
     # Docker build
-    - language: minimal
-      os: linux
-      arch: amd64
+    - name: docker
+      language: minimal
       services: docker
       env: CONFIG=docker
     # Mac OS X builds
-    - os: osx
+    - name: Mac OSX full
+      os: osx
       env: CONFIG=full
-    - os: osx
+    - name: Mac OSX minimal
+      os: osx
       env: CONFIG=minimal
-#    # Windows build
-#    - os: windows
+#    # Windows builds
+#    - name: Windows full
+#      os: windows
 #      env: CONFIG=full
 #      cache:
 #        directories:
 #          - $HOME/vcpkg-full
-#    - os: windows
+#    - name: Windows minimal
+#      os: windows
 #      env: CONFIG=minimal
 #      cache:
 #        directories:
