@@ -90,7 +90,7 @@ if [ "$OS_NAME" = "linux" ]; then
 		sudo apt-get update -q
 		sudo apt-get install -y --no-install-suggests --no-install-recommends $PACKAGES
 
-	elif exists yum || exists dnf; then
+	elif exists dnf || exists yum; then
 		PACKAGES="cmake make sqlite-devel"
 
 		case "${CONFIG}" in
@@ -108,10 +108,10 @@ if [ "$OS_NAME" = "linux" ]; then
 			PACKAGES="$PACKAGES gcc"
 		fi
 
-		if exists yum; then
-			sudo yum install -y $PACKAGES
+		if exists dnf; then
+			sudo dnf install -y --setopt=install_weak_deps=False $PACKAGES
 		else
-			sudo dnf install -y $PACKAGES
+			sudo yum install -y $PACKAGES
 		fi
 
 	elif exists apk; then

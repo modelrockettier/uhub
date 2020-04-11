@@ -96,8 +96,7 @@ elif [ "${CONFIG}" = "rpm" ]; then
 	cd build
 
 	CMAKEOPTS=".. -DCMAKE_BUILD_TYPE=Release
-	           -DSSL_SUPPORT=ON -DUSE_OPENSSL=ON
-	           -DHARDENING=ON -DSYSTEMD_SUPPORT=ON
+	           -DSSL_SUPPORT=ON -DHARDENING=ON -DSYSTEMD_SUPPORT=ON
 	           -DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
 
 	# If the tests fail, print the test output to the logs to help debugging
@@ -134,7 +133,7 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	                   -DSSL_SUPPORT=OFF -DADC_STRESS=OFF"
 
 	CMAKEOPTS_full="-DCMAKE_BUILD_TYPE=Debug -DLOWLEVEL_DEBUG=ON
-	                -DSSL_SUPPORT=ON -DUSE_OPENSSL=ON -DADC_STRESS=ON"
+	                -DSSL_SUPPORT=ON -DADC_STRESS=ON"
 
 	# OS-specific cmake options
 	CMAKEOPTS_freebsd="-DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
