@@ -1,5 +1,22 @@
 # uHub
 
+[![Cirrus CI build status][cirrus-img]](https://cirrus-ci.com/github/modelrockettier/uhub)
+[![Travis CI build status][travis-img]](https://travis-ci.com/modelrockettier/uhub)
+[![Docker Hub build status][docker-img]](https://hub.docker.com/r/modelrockettier/uhub)
+[![Quay container build status][quay-img]](https://quay.io/repository/modelrockettier/uhub)
+[![Latest GitHub release][release-img]](https://github.com/modelrockettier/uhub/releases)
+[![GitHub commits since latest release][commits-img]](https://github.com/modelrockettier/uhub/commits/master)
+[![License: GPL v3][license-img]](https://www.gnu.org/licenses/gpl-3.0)
+
+[cirrus-img]:  https://img.shields.io/cirrus/github/modelrockettier/uhub/master?label=cirrus%20build&logo=cirrus-ci "Cirrus CI build status"
+[travis-img]:  https://img.shields.io/travis/com/modelrockettier/uhub/master?label=travis%20build&logo=travis "Travis CI build status"
+[docker-img]:  https://img.shields.io/docker/cloud/build/modelrockettier/uhub?label=docker%20hub&logo=docker "Docker Hub build status"
+[quay-img]:    https://quay.io/repository/modelrockettier/uhub/status "Quay container build status"
+[release-img]: https://img.shields.io/github/v/release/moderockettier/uhub "Latest GitHub release"
+[commits-img]: https://img.shields.io/github/commits-since/modelrockettier/uhub/latest/master?sort=semver "GitHub commits since latest release"
+[license-img]: https://img.shields.io/badge/License-GPLv3-blue.svg "License"
+
+
 Uhub is a high performance peer-to-peer hub for the ADC network.
 
 Its low memory footprint allows it to handle several thousand users on
@@ -60,7 +77,7 @@ See the [doc/tls-documentation.md](doc/tls-documentation.md) document
 ## Compatible clients
 
 For a list of compatible ADC clients, see:
-https://en.wikipedia.org/wiki/Comparison_of_ADC_software#Client_software
+<https://en.wikipedia.org/wiki/Comparison_of_ADC_software#Client_software>
 
 ## License
 
@@ -69,4 +86,4 @@ GNU General Public License version 3 or later.
 
 See [COPYING](COPYING) document
 ([permalink](https://github.com/janvidar/uhub/blob/master/COPYING))
-or https://www.gnu.org/licenses/gpl-3.0.txt
+or <https://www.gnu.org/licenses/gpl-3.0>
