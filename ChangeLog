@@ -1,3 +1,39 @@
+master:
+- Added guest password plugin
+- Added simple joins plugin (similar to mimicmod)
+- Added user manager plugin
+- mod_restrict replaces the mod_chat_is_privileged and mod_no_guest_downloads plugins
+- Added RPM generation via cpack
+- Improve ghost user detection
+- Add aarch64 to supported architectures
+- Advertise ADC protocol with TLS+ALPN
+- Improved documentation
+- Add Dockerfile
+- Use localtime instead of UTC
+- Add better TLS protocol negotiation for OpenSSL >1.0.1
+- Fix CPU spikes with some TLS errors
+- Added more informative error messages for the configuration file parser.
+- Added hardening compiler options to cmake and debian builds
+- Add 'limit_min_hubs' config option
+- Added options to redirect NMDC and HTTP connection attempts
+- Added failover redirect option
+- Update activity in sqlite auth plugin
+- Added chat and user management plugin functions
+- Added !info, !log, and !me commands
+- Moved !log command into mod_logging plugin and added !findlog command
+
+0.5.1:
+- Add support for 4 byte UTF-8 characters and stricter character checking
+- Add bots to uhub-passwd
+- Make config parser python 3 compatible
+- Added simple tool to import PtokaX (< 0.5.0.0) users
+- Added simple tool to import FlexHub users
+- Fix chat history sqlite truncating long messages
+- Allow unrestricted users on uhub
+- Fixed compilation on systemd > 210
+- Make error message if sqlite3 is not found!
+- Add support for OpenSSL 1.1
+
 0.5.0:
 - Use TLS 1.2 and strong ciphers by default, but made this configurable.
 - Fix TLS event handling which caused some busy loops
@@ -16,7 +52,7 @@
 - Compile fixes for OpenBSD, including warnings about strcat.
 - Fix crashing autotest due to wrong initialization of the usermanager.
 - mod_topic: check argument for NULL
-- rename !cleartopic to !resettopic
+- Rename !cleartopic to !resettopic
 
 0.4.1:
 - Converted to CMake which replaces Visual Studio project files and GNU makefiles
