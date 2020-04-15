@@ -4,6 +4,7 @@
 *.lib
 *.manifest
 *~
+.*.swp
 CMakeCache.txt
 CMakeFiles/*
 CTestTestfile.cmake

@@ -1,3 +1,6 @@
+# Copyright (c) 2014-2019, Kitware, Inc.
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Set a default build type if none was specified
 set(default_build_type "Release")
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")

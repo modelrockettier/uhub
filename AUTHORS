@@ -9,3 +9,7 @@ Boris Pek (tehnick), Debian/Ubuntu packaging
 Tillmann Karras (Tilka), Misc. bug fixes
 Yoran Heling (Yorhel), TLS/SSL handshake detection bugfixes
 Blair Bonnett, Misc. bug fixes
+Francisco Blas (klondike), tests
+Kcchouette, Documentation improvements
+Tantrix, limit_min_hubs config option
+Tim Schlueter (ModelRockettier), Plugins, bug fixes, misc.

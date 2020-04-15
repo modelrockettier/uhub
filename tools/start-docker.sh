@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# Copyright (c) 2020, Tim Schlueter
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 die() {
     echo "$2" >&2

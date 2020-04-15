@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# Copyright (c) 2019, Kcchouette
+# Copyright (c) 2020, Tim Schlueter
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 OPENSSL=/usr/bin/openssl
 NAME=certificate

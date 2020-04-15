@@ -1,3 +1,7 @@
+# Copyright (c) 2018, Felix Brucker
+# Copyright (c) 2020, Tim Schlueter
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Transient build container
 FROM alpine:latest AS builder
 

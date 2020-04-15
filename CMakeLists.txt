@@ -1,6 +1,8 @@
 ##
 ## Makefile for uhub
-## Copyright (C) 2007-2013, Jan Vidar Krey <janvidar@extatic.org>
+## Copyright (C) 2007-2018, Jan Vidar Krey <janvidar@extatic.org>
+## Copyright (c) 2020, Tim Schlueter
+## SPDX-License-Identifier: GPL-3.0-or-later
 ##
 
 # May work on older versions, but 2.8.12 is the oldest it's tested to

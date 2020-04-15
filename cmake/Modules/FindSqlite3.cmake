@@ -10,9 +10,7 @@
 # Copyright (c) 2007 Daniel Gollub <gollub@b1-systems.de>
 # Copyright (c) 2007 Alban Browaeys <prahal@yahoo.com>
 #
-#  Redistribution and use is allowed according to the terms of the New
-#  BSD license.
-#  For details see the accompanying COPYING-CMAKE-SCRIPTS file.
+# SPDX-License-Identifier: BSD-3-Clause
 #
 
 INCLUDE( FindPkgConfig )

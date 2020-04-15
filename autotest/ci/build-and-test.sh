@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# Copyright (C) 2007-2014, Jan Vidar Krey
+# Copyright (C) 2020, Tim Schlueter
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # Exit codes
 # 0: Success
