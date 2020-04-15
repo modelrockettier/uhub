@@ -8,9 +8,9 @@
 [![Commits][commits-img]](https://github.com/modelrockettier/uhub/commits/master)
 [![GPLv3+][license-img]](https://www.gnu.org/licenses/gpl-3.0)
 
-[cirrus-img]:  https://img.shields.io/cirrus/github/modelrockettier/uhub/master?label=cirrus%20build&cacheSeconds=300 "Cirrus CI build status"
-[travis-img]:  https://img.shields.io/travis/com/modelrockettier/uhub/master?label=travis%20build&cacheSeconds=300 "Travis CI build status"
-[docker-img]:  https://img.shields.io/docker/cloud/build/modelrockettier/uhub?cacheSeconds=300 "Docker Hub build status"
+[cirrus-img]:  https://api.cirrus-ci.com/github/modelrockettier/uhub.svg?branch=master "Cirrus CI build status"
+[travis-img]:  https://api.travis-ci.com/modelrockettier/uhub.svg?branch=master "Travis CI build status"
+[docker-img]:  https://img.shields.io/docker/cloud/build/modelrockettier/uhub?label=docker&cacheSeconds=300 "Docker Hub build status"
 [quay-img]:    https://quay.io/repository/modelrockettier/uhub/status "Quay.io build status"
 [release-img]: https://img.shields.io/github/v/release/modelrockettier/uhub?cacheSeconds=3600 "Latest GitHub release"
 [commits-img]: https://img.shields.io/github/commits-since/modelrockettier/uhub/latest/master?cacheSeconds=1800 "GitHub commits since latest release"
