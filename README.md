@@ -1,18 +1,18 @@
 # uHub
 
-[![Cirrus status][cirrus-img]](https://cirrus-ci.com/github/modelrockettier/uhub)
-[![Travis status][travis-img]](https://travis-ci.com/modelrockettier/uhub)
-[![Docker Hub status][docker-img]](https://hub.docker.com/r/modelrockettier/uhub)
-[![Quay container status][quay-img]](https://quay.io/repository/modelrockettier/uhub)
-[![Latest release][release-img]](https://github.com/modelrockettier/uhub/releases)
-[![Commits since latest release][commits-img]](https://github.com/modelrockettier/uhub/commits/master)
-[![License: GPL v3][license-img]](https://www.gnu.org/licenses/gpl-3.0)
+[![Cirrus][cirrus-img]](https://cirrus-ci.com/github/modelrockettier/uhub)
+[![Travis][travis-img]](https://travis-ci.com/modelrockettier/uhub)
+[![Docker Hub][docker-img]](https://hub.docker.com/r/modelrockettier/uhub)
+[![Quay.io][quay-img]](https://quay.io/repository/modelrockettier/uhub)
+[![Releases][release-img]](https://github.com/modelrockettier/uhub/releases)
+[![Commits][commits-img]](https://github.com/modelrockettier/uhub/commits/master)
+[![GPLv3+][license-img]](https://www.gnu.org/licenses/gpl-3.0)
 
 [cirrus-img]:  https://img.shields.io/cirrus/github/modelrockettier/uhub/master?label=cirrus%20build&cacheSeconds=300 "Cirrus CI build status"
 [travis-img]:  https://img.shields.io/travis/com/modelrockettier/uhub/master?label=travis%20build&cacheSeconds=300 "Travis CI build status"
-[docker-img]:  https://img.shields.io/docker/cloud/build/modelrockettier/uhub?label=docker%20hub&cacheSeconds=300 "Docker Hub build status"
-[quay-img]:    https://quay.io/repository/modelrockettier/uhub/status "Quay container build status"
-[release-img]: https://img.shields.io/github/v/release/modelrockettier/uhub?cacheSeconds=1800 "Latest GitHub release"
+[docker-img]:  https://img.shields.io/docker/cloud/build/modelrockettier/uhub?cacheSeconds=300 "Docker Hub build status"
+[quay-img]:    https://quay.io/repository/modelrockettier/uhub/status "Quay.io build status"
+[release-img]: https://img.shields.io/github/v/release/modelrockettier/uhub?cacheSeconds=3600 "Latest GitHub release"
 [commits-img]: https://img.shields.io/github/commits-since/modelrockettier/uhub/latest/master?cacheSeconds=1800 "GitHub commits since latest release"
 [license-img]: https://img.shields.io/badge/License-GPLv3-blue.svg?label=license&cacheSeconds=3600 "License"
 
