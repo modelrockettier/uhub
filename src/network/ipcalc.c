@@ -169,34 +169,45 @@ int ip_convert_address(const char* text_address, int port, struct sockaddr* addr
 int ip_mask_create_left(int af, int bits, struct ip_addr_encap* result)
 {
 	uint32_t mask;
-	int fill, remain_bits, n;
 
 	memset(result, 0, sizeof(struct ip_addr_encap));
 	result->af = af;
 
-	if (bits < 0) bits = 0;
-
 	if (af == AF_INET)
 	{
-		if (bits > 32) bits = 32;
-		mask = (0xffffffff << (32 - bits));
-		if (bits == 0) mask = 0;
+		if (bits <= 0)
+			mask = 0;
+		else if (bits >= 32)
+			mask = 0xffffffffu;
+		else
+			mask = (0xffffffffu << (32 - bits));
 
-		result->internal_ip_data.in.s_addr = (((uint8_t*) &mask)[0] << 24) | (((uint8_t*) &mask)[1] << 16) | (((uint8_t*) &mask)[2] << 8) | (((uint8_t*) &mask)[3] << 0);
+		result->internal_ip_data.in.s_addr = htonl(mask);
 	}
 	else if (af == AF_INET6)
 	{
-		if (bits > 128) bits = 128;
+		if (bits >= 128)
+		{
+			memset(&result->internal_ip_data.in6, 0xff, 16);
+		}
+		// The data is already 0 if bits <= 0
+		else if (bits > 0)
+		{
+			int n = 0;
+			uint8_t* addr6 = (uint8_t*) &result->internal_ip_data.in6;
 
-		fill = (128-bits) / 8;
-		remain_bits = (128-bits) % 8;
-		mask = (0xff << (8 - remain_bits));
+			while (bits >= 8)
+			{
+				addr6[n++] = 0xff;
+				bits -= 8;
+			}
 
-		for (n = 0; n < fill; n++)
-			((uint8_t*) &result->internal_ip_data.in6)[n] = (uint8_t) 0xff;
-
-		if (fill < 16)
-			((uint8_t*) &result->internal_ip_data.in6)[fill] = (uint8_t) mask;
+			if (bits > 0)
+			{
+				mask = (0xffu << (8 - bits));
+				addr6[n] = (uint8_t) mask;
+			}
+		}
 	}
 	else
 	{
@@ -216,39 +227,45 @@ int ip_mask_create_left(int af, int bits, struct ip_addr_encap* result)
 int ip_mask_create_right(int af, int bits, struct ip_addr_encap* result)
 {
 	uint32_t mask;
-	int fill, remain_bits, n, start;
-	uint8_t mask8;
 
 	memset(result, 0, sizeof(struct ip_addr_encap));
 	result->af = af;
 
-	if (bits < 0) bits = 0;
-
 	if (af == AF_INET)
 	{
-		if (bits > 32) bits = 32;
-		mask = (0xffffffff >> (32-bits));
-		if (bits == 0) mask = 0;
-		result->internal_ip_data.in.s_addr = (((uint8_t*) &mask)[0] << 24) | (((uint8_t*) &mask)[1] << 16) | (((uint8_t*) &mask)[2] << 8) | (((uint8_t*) &mask)[3] << 0);
+		if (bits <= 0)
+			mask = 0;
+		else if (bits >= 32)
+			mask = 0xffffffffu;
+		else
+			mask = (0xffffffffu >> (32 - bits));
 
+		result->internal_ip_data.in.s_addr = htonl(mask);
 	}
 	else if (af == AF_INET6)
 	{
-		if (bits > 128) bits = 128;
+		if (bits >= 128)
+		{
+			memset(&result->internal_ip_data.in6, 0xff, 16);
+		}
+		// The data is already 0 if bits <= 0
+		else if (bits > 0)
+		{
+			int n = 15;
+			uint8_t* addr6 = (uint8_t*) &result->internal_ip_data.in6;
 
-		fill = (128-bits) / 8;
-		remain_bits = (128-bits) % 8;
-		mask8 = (0xff >> (8 - remain_bits));
-		start = 16-fill;
+			while (bits >= 8)
+			{
+				addr6[n--] = 0xff;
+				bits -= 8;
+			}
 
-		for (n = 0; n < start; n++)
-			((uint8_t*) &result->internal_ip_data.in6)[n] = (uint8_t) 0x00;
-
-		for (n = start; n < 16; n++)
-			((uint8_t*) &result->internal_ip_data.in6)[n] = (uint8_t) 0xff;
-
-		if (start > 0)
-			((uint8_t*) &result->internal_ip_data.in6)[start-1] = (uint8_t) mask8;
+			if (bits > 0)
+			{
+				mask = (0xffu >> (8 - bits));
+				addr6[n] = mask;
+			}
+		}
 	}
 	else
 	{
