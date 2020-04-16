@@ -20,6 +20,8 @@ EXO_TEST(prepare_network, {
 
 EXO_TEST(check_ipv6, {
 	ipv6 = net_is_ipv6_supported();
+	if (ipv6 == 0)
+		fprintf(stderr, "WARNING: IPv6 is not supported\n");
 	return ipv6 != -1;
 });
 

@@ -31,6 +31,7 @@ static struct net_statistics stats_total;
 #define SOCK_DUAL_STACK_OPT IPV6_V6ONLY
 #endif
 
+static int is_ipv4_mapped(char const* dst);
 
 int net_initialize()
 {
@@ -392,7 +393,7 @@ int net_accept(int fd, struct ip_addr_encap* ipaddr)
 			{
 				char address[INET6_ADDRSTRLEN+1] = { 0, };
 				net_address_to_string(AF_INET6, (void*) &addr6->sin6_addr, address, INET6_ADDRSTRLEN+1);
-				if (strchr(address, '.'))
+				if (is_ipv4_mapped(address))
 				{
 					/* Hack to convert IPv6 mapped IPv4 addresses to true IPv4 addresses */
 					ipaddr->af = AF_INET;
@@ -500,7 +501,39 @@ int net_socket_create(int af, int type, int protocol)
 	return sd;
 }
 
-const char* net_address_to_string(int af, void const* src, char* dst, socklen_t cnt)
+static int is_ipv4_mapped(char const* dst)
+{
+	int start = 0;
+	if (strncmp(dst, "::ffff:", 7) == 0)
+	{
+		/* Skip over the ::ffff: prefix */
+		dst += 7;
+		start = 7;
+	}
+	else
+	{
+		/* Different prefix = regular IPv6 address */
+		return 0;
+	}
+
+
+	/* Check if the address is /::ffff:\d+.\d+.\d+.\d+/ */
+	int periods = 0;
+	for (; *dst; dst++)
+	{
+		if (*dst == '.')
+			periods++;
+		else if (!is_num(*dst))
+			return 0;
+	}
+
+	if (periods != 3)
+		return 0;
+
+	return start;
+}
+
+const char* net_address_to_string(int af, const void* src, char* dst, socklen_t cnt)
 {
 	/* ::ffff:0:0/96 */
 	const uint8_t ipv4_mapped[12] = {
@@ -555,6 +588,14 @@ const char* net_address_to_string(int af, void const* src, char* dst, socklen_t 
 #else
 	if (!inet_ntop(af, src, dst, cnt))
 		return NULL;
+
+	/* IPv6 mapped IPv4 address. */
+	if (af == AF_INET6)
+	{
+		int offset = is_ipv4_mapped(dst);
+		if (offset > 0)
+			memmove(dst, dst + offset, cnt - offset);
+	}
 #endif
 
 	return dst;

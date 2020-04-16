@@ -108,12 +108,12 @@ extern int net_accept(int fd, struct ip_addr_encap* ipaddr);
 /**
  * A wrapper for the connect() call.
  */
-extern int net_connect(int fd, const struct sockaddr *serv_addr, socklen_t addrlen);
+extern int net_connect(int fd, const struct sockaddr* serv_addr, socklen_t addrlen);
 
 /**
  * A wrapper for the bind() function call.
  */
-extern int net_bind(int fd, const struct sockaddr *my_addr, socklen_t addrlen);
+extern int net_bind(int fd, const struct sockaddr* my_addr, socklen_t addrlen);
 
 /**
  * A wrapper for the listen() function call.
@@ -232,7 +232,7 @@ extern const char* net_get_local_address(int fd);
 /**
  * See man(3) inet_ntop.
  */
-extern const char* net_address_to_string(int af, void const* src, char* dst, socklen_t cnt);
+extern const char* net_address_to_string(int af, const void* src, char* dst, socklen_t cnt);
 
 /**
  * See man(3) inet_pton.
