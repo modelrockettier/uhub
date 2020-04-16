@@ -23,13 +23,13 @@ jobs:
     - name: bionic minimal
       dist: bionic
       env: CONFIG=minimal
-    # ARM builds
+    # 64-bit ARM builds
     - name: arm64 full
       arch: arm64
-      env: CONFIG=full
+      env: config=full
     - name: arm64 minimal
       arch: arm64
-      env: CONFIG=minimal
+      env: config=minimal
     # Debian package builds
     - name: debian package
       env: CONFIG=deb
@@ -61,6 +61,20 @@ jobs:
       cache:
         directories:
           - $HOME/vcpkg-minimal
+    # 64-bit Little-Endian PPC builds
+    - name: ppc64le full
+      arch: ppc64le
+      env: config=full
+    - name: ppc64le minimal
+      arch: ppc64le
+      env: config=minimal
+    # s390x (big-endian) builds
+    - name: s390x full
+      arch: s390x
+      env: config=full
+    - name: s390x minimal
+      arch: s390x
+      env: config=minimal
 
 addons:
   homebrew:
