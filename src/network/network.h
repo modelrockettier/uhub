@@ -232,12 +232,12 @@ extern const char* net_get_local_address(int fd);
 /**
  * See man(3) inet_ntop.
  */
-extern const char* net_address_to_string(int af, const void *src, char *dst, socklen_t cnt);
+extern const char* net_address_to_string(int af, void const* src, char* dst, socklen_t cnt);
 
 /**
  * See man(3) inet_pton.
  */
-extern int net_string_to_address(int af, const char *src, void *dst);
+extern int net_string_to_address(int af, const char* src, void* dst);
 
 
 /**

@@ -67,21 +67,13 @@ int ip_is_valid_ipv6(const char* address)
 
 int ip_convert_to_binary(const char* taddr, struct ip_addr_encap* raw)
 {
-	if (ip_is_valid_ipv6(taddr))
+	if (net_string_to_address(AF_INET6, taddr, &raw->internal_ip_data.in6) > 0)
 	{
-		if (net_string_to_address(AF_INET6, taddr, &raw->internal_ip_data.in6) <= 0)
-		{
-			return -1;
-		}
 		raw->af = AF_INET6;
 		return AF_INET6;
 	}
-	else if (ip_is_valid_ipv4(taddr))
+	else if (net_string_to_address(AF_INET, taddr, &raw->internal_ip_data.in) > 0)
 	{
-		if (net_string_to_address(AF_INET, taddr, &raw->internal_ip_data.in) <= 0)
-		{
-			return -1;
-		}
 		raw->af = AF_INET;
 		return AF_INET;
 	}
@@ -94,10 +86,6 @@ const char* ip_convert_to_string(struct ip_addr_encap* raw)
 	static char address[INET6_ADDRSTRLEN+1];
 	memset(address, 0, INET6_ADDRSTRLEN);
 	net_address_to_string(raw->af, (void*) &raw->internal_ip_data, address, INET6_ADDRSTRLEN+1);
-	if (strncmp(address, "::ffff:", 7) == 0) /* IPv6 mapped IPv4 address. */
-	{
-		return &address[7];
-	}
 	return address;
 }
 

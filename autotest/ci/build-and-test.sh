@@ -137,6 +137,7 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	CMAKEOPTS_all=".."
 
 	if [ "$CONFIG" = "minimal" ]; then
+		export CFLAGS="-DDEBUG_TESTS"
 		BUILD_TYPE=Release
 	else
 		BUILD_TYPE=Debug

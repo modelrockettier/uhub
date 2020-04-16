@@ -498,13 +498,28 @@ int net_socket_create(int af, int type, int protocol)
 	return sd;
 }
 
-const char* net_address_to_string(int af, const void* src, char* dst, socklen_t cnt)
+const char* net_address_to_string(int af, void const* src, char* dst, socklen_t cnt)
 {
+	/* ::ffff:0:0/96 */
+	const uint8_t ipv4_mapped[12] = {
+		0, 0,    0, 0,
+		0, 0,    0, 0,
+		0, 0, 0xff, 0xff
+	};
+	struct in_addr tmp;
+
+	/* IPv4-mapped IPv6 address, print it like a normal IPv4 address */
+	if (af == AF_INET6 && memcmp(src, ipv4_mapped, 12) == 0)
+	{
+		/* Copy the last 32-bits to the temporary ipv4 address struct */
+		memcpy(&tmp, ((char*) src) + 12, 4);
+		src = &tmp;
+		af = AF_INET;
+	}
+
 #ifdef WINSOCK
 	struct sockaddr_in  sin4;
 	struct sockaddr_in6 sin6;
-	struct in_addr*  addr4 = (struct in_addr*)  src;
-	struct in6_addr* addr6 = (struct in6_addr*) src;
 	size_t size;
 	LPSOCKADDR addr;
 	DWORD len = cnt;
@@ -514,7 +529,7 @@ const char* net_address_to_string(int af, const void* src, char* dst, socklen_t 
 		case AF_INET:
 			sin4.sin_family  = AF_INET;
 			sin4.sin_port    = 0;
-			sin4.sin_addr    = *addr4;
+			sin4.sin_addr    = *((struct in_addr*) src);
 			size             = sizeof(sin4);
 			addr             = (LPSOCKADDR) &sin4;
 			break;
@@ -522,7 +537,7 @@ const char* net_address_to_string(int af, const void* src, char* dst, socklen_t 
 		case AF_INET6:
 			sin6.sin6_family = AF_INET6;
 			sin6.sin6_port   = 0;
-			sin6.sin6_addr   = *addr6;
+			sin6.sin6_addr   = *((struct in6_addr*) src);
 			sin6.sin6_scope_id = 0;
 			size             = sizeof(sin6);
 			addr             = (LPSOCKADDR) &sin6;
@@ -532,23 +547,15 @@ const char* net_address_to_string(int af, const void* src, char* dst, socklen_t 
 			return NULL;
 	}
 
-	if (WSAAddressToStringA(addr, size, NULL, dst, &len) == 0)
-	{
-		return dst;
-	}
+	if (WSAAddressToStringA(addr, size, NULL, dst, &len) != 0)
+		return NULL;
 
-	return NULL;
 #else
-	if (inet_ntop(af, src, dst, cnt))
-	{
-		if (af == AF_INET6 && strncmp(dst, "::ffff:", 7) == 0) /* IPv6 mapped IPv4 address. */
-		{
-			memmove(dst, dst + 7, cnt - 7);
-		}
-		return dst;
-	}
-	return NULL;
+	if (!inet_ntop(af, src, dst, cnt))
+		return NULL;
 #endif
+
+	return dst;
 }
 
 int net_string_to_address(int af, const char* src, void* dst)

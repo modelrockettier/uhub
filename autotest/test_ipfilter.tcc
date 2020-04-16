@@ -12,6 +12,18 @@ static struct ip_addr_encap mask;
 static struct ip_range ban6;
 static struct ip_range ban4;
 
+static int compare_str(const char* s1, const char* s2)
+{
+	int ok = strcmp(s1, s2);
+#ifdef DEBUG_TESTS
+	if (ok)
+	{
+		printf("compare_str fail: s1='%s', s2='%s'\n", s1, s2);
+	}
+#endif
+	return ok;
+}
+
 EXO_TEST(prepare_network, {
     return net_initialize() == 0;
 });
@@ -141,17 +153,129 @@ EXO_TEST(ip6_compare_6, {
 	return ip_compare(&ip6_c, &ip6_c) == 0;
 });
 
-static int compare_str(const char* s1, const char* s2)
+static int ip4_convert(const char* src)
 {
-	int ok = strcmp(s1, s2);
-#ifdef DEBUG_TESTS
-	if (ok)
-	{
-		printf("compare_str fail: s1='%s', s2='%s'\n", s1, s2);
-	}
-#endif
-	return ok;
+	char const* result;
+	return
+		ip_convert_to_binary(src, &ip4_a) &&
+		(result = ip_convert_to_string(&ip4_a)) &&
+		!compare_str(result, src);
 }
+
+/* Test converting IPv4 addresses to and from strings */
+EXO_TEST(ip4_convert_to_string_1,  { return ip4_convert("0.0.0.0"); });
+EXO_TEST(ip4_convert_to_string_2,  { return ip4_convert("0.0.0.1"); });
+EXO_TEST(ip4_convert_to_string_3,  { return ip4_convert("0.0.0.255"); });
+EXO_TEST(ip4_convert_to_string_4,  { return ip4_convert("0.0.255.0"); });
+EXO_TEST(ip4_convert_to_string_5,  { return ip4_convert("127.0.0.0"); });
+EXO_TEST(ip4_convert_to_string_6,  { return ip4_convert("127.0.0.1"); });
+EXO_TEST(ip4_convert_to_string_7,  { return ip4_convert("192.168.0.0"); });
+EXO_TEST(ip4_convert_to_string_8,  { return ip4_convert("192.168.0.1"); });
+EXO_TEST(ip4_convert_to_string_9,  { return ip4_convert("224.0.0.0"); });
+EXO_TEST(ip4_convert_to_string_10, { return ip4_convert("224.0.0.1"); });
+EXO_TEST(ip4_convert_to_string_11, { return ip4_convert("239.0.0.1"); });
+EXO_TEST(ip4_convert_to_string_12, { return ip4_convert("255.255.255.254"); });
+EXO_TEST(ip4_convert_to_string_13, { return ip4_convert("255.255.255.255"); });
+
+/* Test converting IPv6 addresses to and from strings */
+static int ip6_convert_expect(const char* src, const char* expect)
+{
+	if (!ipv6) return 1;
+	char const* result;
+	return
+		ip_convert_to_binary(src, &ip6_a) &&
+		(result = ip_convert_to_string(&ip6_a)) &&
+		!compare_str(result, expect);
+}
+
+/* Expect the resulting IPv6 address string to be either the src or alt strings */
+static int ip6_convert_alt(const char* src, const char* alt)
+{
+	if (!ipv6) return 1;
+	char const* result;
+	return
+		ip_convert_to_binary(src, &ip6_a) &&
+		(result = ip_convert_to_string(&ip6_a)) &&
+		(!compare_str(result, src) || !compare_str(result, alt));
+}
+
+/* Expect the resulting IPv6 address string to be the same as the src string */
+static inline int ip6_convert_simple(const char* src)
+{
+	return ip6_convert_expect(src, src);
+}
+
+/* Low-numbered IPv6 addresses */
+EXO_TEST(ip6_convert_to_string_1_1,  { return ip6_convert_simple("::"); });
+EXO_TEST(ip6_convert_to_string_1_2,  { return ip6_convert_expect("0::", "::"); });
+EXO_TEST(ip6_convert_to_string_1_3,  { return ip6_convert_expect("::0", "::"); });
+EXO_TEST(ip6_convert_to_string_1_4,  { return ip6_convert_expect("0:0:0:0:0:0:0:0", "::"); });
+EXO_TEST(ip6_convert_to_string_1_5,  { return ip6_convert_expect("0000:0000:0000:0000:0000:0000:0000:0000", "::"); });
+
+EXO_TEST(ip6_convert_to_string_2_1,  { return ip6_convert_simple("::1"); });
+EXO_TEST(ip6_convert_to_string_2_2,  { return ip6_convert_expect("0::1", "::1"); });
+EXO_TEST(ip6_convert_to_string_2_3,  { return ip6_convert_expect("::0:1", "::1"); });
+EXO_TEST(ip6_convert_to_string_2_4,  { return ip6_convert_expect("0:0:0:0:0:0:0:1", "::1"); });
+EXO_TEST(ip6_convert_to_string_2_5,  { return ip6_convert_expect("0000:0000:0000:0000:0000:0000:0000:0001", "::1"); });
+
+EXO_TEST(ip6_convert_to_string_3_1,  { return ip6_convert_alt("::0.0.255.255", "::ffff"); });
+EXO_TEST(ip6_convert_to_string_3_2,  { return ip6_convert_alt("::ffff", "::0.0.255.255"); });
+
+EXO_TEST(ip6_convert_to_string_4_1,  { return ip6_convert_alt("::127.0.0.0", "::7f00:0"); });
+EXO_TEST(ip6_convert_to_string_4_2,  { return ip6_convert_alt("::7f00:0", "::127.0.0.0"); });
+
+EXO_TEST(ip6_convert_to_string_5_1,  { return ip6_convert_alt("::127.0.0.1", "::7f00:1"); });
+EXO_TEST(ip6_convert_to_string_5_2,  { return ip6_convert_alt("::7f00:1", "::127.0.0.1"); });
+
+EXO_TEST(ip6_convert_to_string_6_1,  { return ip6_convert_alt("::255.255.255.255", "::ffff:ffff"); });
+EXO_TEST(ip6_convert_to_string_6_2,  { return ip6_convert_alt("::ffff:ffff", "::255.255.255.255"); });
+
+/* IPv4 mapped addresses */
+EXO_TEST(ip6_convert_to_string_7_1,  { return ip6_convert_expect("::ffff:0.0.0.0", "0.0.0.0"); });
+EXO_TEST(ip6_convert_to_string_7_2,  { return ip6_convert_expect("::ffff:0:0",     "0.0.0.0"); });
+
+EXO_TEST(ip6_convert_to_string_8_1,  { return ip6_convert_expect("::ffff:127.0.0.1", "127.0.0.1"); });
+EXO_TEST(ip6_convert_to_string_8_2,  { return ip6_convert_expect("::ffff:7f00:1",    "127.0.0.1"); });
+
+EXO_TEST(ip6_convert_to_string_9_1,  { return ip6_convert_expect("::ffff:255.255.255.255", "255.255.255.255"); });
+EXO_TEST(ip6_convert_to_string_9_2,  { return ip6_convert_expect("::ffff:ffff:ffff",       "255.255.255.255"); });
+
+/* IPv4 translated addresses */
+EXO_TEST(ip6_convert_to_string_10_1, { return ip6_convert_alt("::ffff:0:0:0", "::ffff:0:0.0.0.0"); });
+EXO_TEST(ip6_convert_to_string_10_2, { return ip6_convert_alt("::ffff:0:0.0.0.0", "::ffff:0:0:0"); });
+
+EXO_TEST(ip6_convert_to_string_11_1, { return ip6_convert_alt("::ffff:0:7f00:1", "::ffff:0:127.0.0.1"); });
+EXO_TEST(ip6_convert_to_string_11_2, { return ip6_convert_alt("::ffff:0:127.0.0.1", "::ffff:0:7f00:1"); });
+
+EXO_TEST(ip6_convert_to_string_12_1, { return ip6_convert_alt("::ffff:0:ffff:ffff", "::ffff:0:255.255.255.255"); });
+EXO_TEST(ip6_convert_to_string_12_2, { return ip6_convert_alt("::ffff:0:255.255.255.255", "::ffff:0:ffff:ffff"); });
+
+/* Global IPv4/IPv6 translation */
+EXO_TEST(ip6_convert_to_string_13_1, { return ip6_convert_alt("64:ff9b::", "64:ff9b::0.0.0.0"); });
+EXO_TEST(ip6_convert_to_string_13_2, { return ip6_convert_alt("64:ff9b::0.0.0.0", "64:ff9b::"); });
+
+EXO_TEST(ip6_convert_to_string_14_1, { return ip6_convert_alt("64:ff9b::7f00:1", "64:ff9b::127.0.0.1"); });
+EXO_TEST(ip6_convert_to_string_14_2, { return ip6_convert_alt("64:ff9b::127.0.0.1", "64:ff9b::7f00:1"); });
+
+EXO_TEST(ip6_convert_to_string_15_1, { return ip6_convert_alt("64:ff9b::ffff:ffff", "64:ff9b::255.255.255.255"); });
+EXO_TEST(ip6_convert_to_string_15_2, { return ip6_convert_alt("64:ff9b::255.255.255.255", "64:ff9b::ffff:ffff"); });
+
+/* Regular IPv6 addresses */
+EXO_TEST(ip6_convert_to_string_16_1, { return ip6_convert_alt("0:1:2:3:4:5:6:7", "::1:2:3:4:5:6:7"); });
+EXO_TEST(ip6_convert_to_string_16_2, { return ip6_convert_alt("::1:2:3:4:5:6:7", "0:1:2:3:4:5:6:7"); });
+EXO_TEST(ip6_convert_to_string_17_1, { return ip6_convert_alt("7:6:5:4:3:2:1:0", "7:6:5:4:3:2:1::"); });
+EXO_TEST(ip6_convert_to_string_17_2, { return ip6_convert_alt("7:6:5:4:3:2:1::", "7:6:5:4:3:2:1:0"); });
+EXO_TEST(ip6_convert_to_string_18_1, { return ip6_convert_alt("2001:db8:0:1:1:1:1:1", "2001:db8::1:1:1:1:1"); });
+EXO_TEST(ip6_convert_to_string_18_2, { return ip6_convert_alt("2001:db8::1:1:1:1:1", "2001:db8:0:1:1:1:1:1"); });
+
+EXO_TEST(ip6_convert_to_string_19,   { return ip6_convert_simple("2001:db8:1:1:1:1:1:1"); });
+EXO_TEST(ip6_convert_to_string_20,   { return ip6_convert_simple("2001:db8::1"); });
+EXO_TEST(ip6_convert_to_string_21,   { return ip6_convert_simple("2001::201:2ff:fefa:0"); });
+EXO_TEST(ip6_convert_to_string_22,   { return ip6_convert_simple("2001:db8::1:0:0:1"); });
+EXO_TEST(ip6_convert_to_string_23,   { return ip6_convert_simple("1:2:3:4:5:6:7:8"); });
+EXO_TEST(ip6_convert_to_string_24,   { return ip6_convert_simple("1234:5678:9abc:def0:fedc:ba98:7654:3210"); });
+EXO_TEST(ip6_convert_to_string_25,   { return ip6_convert_simple("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+
 
 #define LMASK4(bits)    !ip_mask_create_left (AF_INET,  bits, &mask)
 #define LMASK6(bits)    (ipv6 ? !ip_mask_create_left (AF_INET6, bits, &mask) : 1)
