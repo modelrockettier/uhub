@@ -39,7 +39,9 @@ int ip_is_valid_ipv4(const char* address)
 		}
 		else if (address[i] == '.')
 		{
-			if (n == 0 || n > 3 || o > 255) return 0;
+			if (n == 0 || n > 3 || o > 255)
+				return 0;
+
 			n = 0;
 			o = 0;
 			d++;
@@ -50,8 +52,8 @@ int ip_is_valid_ipv4(const char* address)
 		}
 	}
 
-	if (n == 0 || n > 3 || o > 255 || d != 3) return 0;
-
+	if (n == 0 || n > 3 || o > 255 || d != 3)
+		return 0;
 	return 1;
 }
 
@@ -60,7 +62,8 @@ int ip_is_valid_ipv6(const char* address)
 {
 	unsigned char buf[16];
 	int ret = net_string_to_address(AF_INET6, address, buf);
-	if (ret <= 0) return 0;
+	if (ret <= 0)
+		return 0;
 	return 1;
 }
 
@@ -77,15 +80,16 @@ int ip_convert_to_binary(const char* taddr, struct ip_addr_encap* raw)
 		raw->af = AF_INET;
 		return AF_INET;
 	}
+
 	return -1;
 }
 
 
 const char* ip_convert_to_string(struct ip_addr_encap* raw)
 {
-	static char address[INET6_ADDRSTRLEN+1];
+	static char address[INET6_ADDRSTRLEN + 1];
 	memset(address, 0, INET6_ADDRSTRLEN);
-	net_address_to_string(raw->af, (void*) &raw->internal_ip_data, address, INET6_ADDRSTRLEN+1);
+	net_address_to_string(raw->af, (void*) &raw->internal_ip_data, address, INET6_ADDRSTRLEN + 1);
 	return address;
 }
 
@@ -101,24 +105,16 @@ int ip_convert_address(const char* text_address, int port, struct sockaddr* addr
 	if (strcmp(text_address, "any") == 0)
 	{
 		if (ipv6sup)
-		{
 			taddr = "::";
-		}
 		else
-		{
 			taddr = "0.0.0.0";
-		}
 	}
 	else if (strcmp(text_address, "loopback") == 0)
 	{
 		if (ipv6sup)
-		{
 			taddr = "::1";
-		}
 		else
-		{
 			taddr = "127.0.0.1";
-		}
 	}
 	else
 	{
@@ -140,7 +136,6 @@ int ip_convert_address(const char* text_address, int port, struct sockaddr* addr
 
 		memcpy(addr, &addr6, sockaddr_size);
 		*addr_len = sockaddr_size;
-
 	}
 	else if (ip_is_valid_ipv4(taddr))
 	{
@@ -162,9 +157,9 @@ int ip_convert_address(const char* text_address, int port, struct sockaddr* addr
 		*addr_len = 0;
 		return -1;
 	}
+
 	return 0;
 }
-
 
 int ip_mask_create_left(int af, int bits, struct ip_addr_encap* result)
 {
@@ -293,34 +288,17 @@ void ip_mask_apply_AND(struct ip_addr_encap* addr, struct ip_addr_encap* mask, s
 	}
 	else if (addr->af == AF_INET6)
 	{
-		uint32_t A, B, C, D;
-		int n = 0;
-		int offset = 0;
-		for (n = 0; n < 4; n++)
+		uint8_t* addr6   = (uint8_t*) &addr->internal_ip_data.in6;
+		uint8_t* mask6   = (uint8_t*) &mask->internal_ip_data.in6;
+		uint8_t* result6 = (uint8_t*) &result->internal_ip_data.in6;
+
+		int n;
+		for (n = 0; n < 16; n++)
 		{
-			offset = n * 4;
-
-			A =	(((uint8_t*) &addr->internal_ip_data.in6)[offset+0] << 24) |
-				(((uint8_t*) &addr->internal_ip_data.in6)[offset+1] << 16) |
-				(((uint8_t*) &addr->internal_ip_data.in6)[offset+2] <<  8) |
-				(((uint8_t*) &addr->internal_ip_data.in6)[offset+3] <<  0);
-
-			B =	(((uint8_t*) &mask->internal_ip_data.in6)[offset+0] << 24) |
-				(((uint8_t*) &mask->internal_ip_data.in6)[offset+1] << 16) |
-				(((uint8_t*) &mask->internal_ip_data.in6)[offset+2] <<  8) |
-				(((uint8_t*) &mask->internal_ip_data.in6)[offset+3] <<  0);
-
-			C = A & B;
-
-			D =	(((uint8_t*) &C)[0] << 24) |
-				(((uint8_t*) &C)[1] << 16) |
-				(((uint8_t*) &C)[2] <<  8) |
-				(((uint8_t*) &C)[3] <<  0);
-			((uint32_t*) &result->internal_ip_data.in6)[n] = D;
+			result6[n] = addr6[n] & mask6[n];
 		}
 	}
 }
-
 
 void ip_mask_apply_OR(struct ip_addr_encap* addr, struct ip_addr_encap* mask, struct ip_addr_encap* result)
 {
@@ -333,34 +311,17 @@ void ip_mask_apply_OR(struct ip_addr_encap* addr, struct ip_addr_encap* mask, st
 	}
 	else if (addr->af == AF_INET6)
 	{
-		uint32_t A, B, C, D;
-		int n = 0;
-		int offset = 0;
-		for (n = 0; n < 4; n++)
+		uint8_t* addr6   = (uint8_t*) &addr->internal_ip_data.in6;
+		uint8_t* mask6   = (uint8_t*) &mask->internal_ip_data.in6;
+		uint8_t* result6 = (uint8_t*) &result->internal_ip_data.in6;
+
+		int n;
+		for (n = 0; n < 16; n++)
 		{
-			offset = n * 4;
-
-			A =	(((uint8_t*) &addr->internal_ip_data.in6)[offset+0] << 24) |
-				(((uint8_t*) &addr->internal_ip_data.in6)[offset+1] << 16) |
-				(((uint8_t*) &addr->internal_ip_data.in6)[offset+2] <<  8) |
-				(((uint8_t*) &addr->internal_ip_data.in6)[offset+3] <<  0);
-
-			B =	(((uint8_t*) &mask->internal_ip_data.in6)[offset+0] << 24) |
-				(((uint8_t*) &mask->internal_ip_data.in6)[offset+1] << 16) |
-				(((uint8_t*) &mask->internal_ip_data.in6)[offset+2] <<  8) |
-				(((uint8_t*) &mask->internal_ip_data.in6)[offset+3] <<  0);
-
-			C = A | B;
-
-			D =	(((uint8_t*) &C)[0] << 24) |
-				(((uint8_t*) &C)[1] << 16) |
-				(((uint8_t*) &C)[2] <<  8) |
-				(((uint8_t*) &C)[3] <<  0);
-			((uint32_t*) &result->internal_ip_data.in6)[n] = D;
+			result6[n] = addr6[n] | mask6[n];
 		}
 	}
 }
-
 
 int ip_compare(struct ip_addr_encap* a, struct ip_addr_encap* b)
 {
@@ -369,39 +330,13 @@ int ip_compare(struct ip_addr_encap* a, struct ip_addr_encap* b)
 
 	if (a->af == AF_INET)
 	{
-		A =	(((uint8_t*) &a->internal_ip_data.in.s_addr)[0] << 24) |
-			(((uint8_t*) &a->internal_ip_data.in.s_addr)[1] << 16) |
-			(((uint8_t*) &a->internal_ip_data.in.s_addr)[2] <<  8) |
-			(((uint8_t*) &a->internal_ip_data.in.s_addr)[3] <<  0);
-
-		B =	(((uint8_t*) &b->internal_ip_data.in.s_addr)[0] << 24) |
-			(((uint8_t*) &b->internal_ip_data.in.s_addr)[1] << 16) |
-			(((uint8_t*) &b->internal_ip_data.in.s_addr)[2] <<  8) |
-			(((uint8_t*) &b->internal_ip_data.in.s_addr)[3] <<  0);
+		A = ntohl(a->internal_ip_data.in.s_addr);
+		B = ntohl(b->internal_ip_data.in.s_addr);
 		ret = A - B;
 	}
 	else if (a->af == AF_INET6)
 	{
-		int n = 0;
-		int offset = 0;
-		for (n = 0; n < 4; n++)
-		{
-			offset = n * 4;
-			A =	(((uint8_t*) &a->internal_ip_data.in6)[offset+0] << 24) |
-				(((uint8_t*) &a->internal_ip_data.in6)[offset+1] << 16) |
-				(((uint8_t*) &a->internal_ip_data.in6)[offset+2] <<  8) |
-				(((uint8_t*) &a->internal_ip_data.in6)[offset+3] <<  0);
-
-			B =	(((uint8_t*) &b->internal_ip_data.in6)[offset+0] << 24) |
-				(((uint8_t*) &b->internal_ip_data.in6)[offset+1] << 16) |
-				(((uint8_t*) &b->internal_ip_data.in6)[offset+2] <<  8) |
-				(((uint8_t*) &b->internal_ip_data.in6)[offset+3] <<  0);
-
-			if (A == B) continue;
-
-			return A - B;
-		}
-		return 0;
+		ret = memcmp(&a->internal_ip_data.in6, &b->internal_ip_data.in6, 16);
 	}
 
 #ifdef IP_CALC_DEBUG
@@ -422,13 +357,13 @@ static int check_ip_mask(const char* text_addr, int bits, struct ip_range* range
 		struct ip_addr_encap addr;
 		struct ip_addr_encap mask1;
 		struct ip_addr_encap mask2;
-		int af = ip_convert_to_binary(text_addr, &addr);  /* 192.168.1.2 */
+		int af = ip_convert_to_binary(text_addr, &addr);        /* 192.168.1.2 */
 		int maxbits = (af == AF_INET6 ? 128 : 32);
 		bits = MIN(MAX(bits, 0), maxbits);
-		ip_mask_create_left(af, bits, &mask1);            /* 255.255.255.0 */
-		ip_mask_create_right(af, maxbits - bits, &mask2); /* 0.0.0.255 */
-		ip_mask_apply_AND(&addr, &mask1, &range->lo);     /* 192.168.1.0 */
-		ip_mask_apply_OR(&range->lo, &mask2, &range->hi); /* 192.168.1.255 */
+		(void)ip_mask_create_left(af, bits, &mask1);            /* 255.255.255.0 */
+		(void)ip_mask_create_right(af, maxbits - bits, &mask2); /* 0.0.0.255 */
+		ip_mask_apply_AND(&addr, &mask1, &range->lo);           /* 192.168.1.0 */
+		ip_mask_apply_OR(&range->lo, &mask2, &range->hi);       /* 192.168.1.255 */
 		return 1;
 	}
 	return 0;
@@ -462,8 +397,9 @@ int ip_convert_address_to_range(const char* address, struct ip_range* range)
 	split = strrchr(address, '/');
 	if (split)
 	{
-		int mask = uhub_atoi(split+1);
-		if (mask == 0 && split[1] != '0') return 0;
+		int mask = uhub_atoi(split + 1);
+		if (mask == 0 && split[1] != '0')
+			return 0;
 		addr = hub_strndup(address, split - address);
 		ret = check_ip_mask(addr, mask, range);
 		hub_free(addr);
@@ -474,7 +410,7 @@ int ip_convert_address_to_range(const char* address, struct ip_range* range)
 	if (split)
 	{
 		addr = hub_strndup(address, split - address);
-		ret = check_ip_range(addr, split+1, range);
+		ret = check_ip_range(addr, split + 1, range);
 		hub_free(addr);
 		return ret;
 	}
