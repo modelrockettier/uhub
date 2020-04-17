@@ -247,7 +247,12 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 	struct cfg_tokens* tokens = cfg_tokenize(line);
 	char* token = cfg_token_get_first(tokens);
 
-	uhub_assert(data != NULL);
+	if (!data)
+	{
+		set_error_message(plugin, "OOM");
+		cfg_tokens_free(tokens);
+		return NULL;
+	}
 
 	data->history_max = 200;
 	data->history_default = 10;

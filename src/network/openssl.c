@@ -135,64 +135,49 @@ static void add_io_stats(struct net_ssl_openssl* handle)
 
 static const SSL_METHOD* get_ssl_method(const char* tls_version, long* flags)
 {
-        if (!flags)
-        {
-            LOG_ERROR("flags is null");
-            return 0;
-        }
+	if (!flags)
+	{
+		LOG_ERROR("flags is null");
+		return NULL;
+	}
 
 	if (!tls_version || !*tls_version)
 	{
-            LOG_ERROR("tls_version is not set.");
-            return 0;
+		LOG_ERROR("tls_version is not set.");
+		return NULL;
 	}
 
-	*flags = 0;
-	*flags |= SSL_OP_NO_SSLv2;
-        *flags |= SSL_OP_NO_SSLv3;
+	*flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	if (!strcmp(tls_version, "1.0"))
-        {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-            return TLSv1_method();
-#endif
-        }
-        else if (!strcmp(tls_version, "1.1"))
-        {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-            return TLSv1_1_method();
+		return TLSv1_method();
+	else if (!strcmp(tls_version, "1.1"))
+		return TLSv1_1_method();
+	else if (!strcmp(tls_version, "1.2"))
+		return TLSv1_2_method();
+	else if (!strcmp(tls_version, "1.3"))
+		LOG_ERROR("TLS 1.3 is not supported by this version of OpenSSL");
+	else
+		LOG_ERROR("Unable to recognize tls_version: %s", tls_version);
+
+	return NULL;
+
 #else
-            *flags |= SSL_OP_NO_TLSv1;
-#endif
-        }
-        else if (!strcmp(tls_version, "1.2"))
-        {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-            return TLSv1_2_method();
-#else
-            *flags |= SSL_OP_NO_TLSv1;
-            *flags |= SSL_OP_NO_TLSv1_1;
-#endif
-        }
-        else if (!strcmp(tls_version, "1.3"))
-        {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-            LOG_ERROR("TLS 1.3 is not supported by this version of OpenSSL");
-            return 0;
-#else
-            *flags |= SSL_OP_NO_TLSv1;
-            *flags |= SSL_OP_NO_TLSv1_1;
-            *flags |= SSL_OP_NO_TLSv1_2;
-#endif
-        }
-        else
-        {
-            LOG_ERROR("Unable to recognize tls_version: %s", tls_version);
-            return 0;
-        }
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-        // never gets here!
-#else
+	if (!strcmp(tls_version, "1.0"))
+		; /* do nothing */
+	else if (!strcmp(tls_version, "1.1"))
+		*flags |= SSL_OP_NO_TLSv1;
+	else if (!strcmp(tls_version, "1.2"))
+		*flags |= SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
+	else if (!strcmp(tls_version, "1.3"))
+		*flags |= SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2;
+	else
+	{
+		LOG_ERROR("Unable to recognize tls_version: %s", tls_version);
+		return NULL;
+	}
+
 	return TLS_method();
 #endif
 }
@@ -202,7 +187,7 @@ static const SSL_METHOD* get_ssl_method(const char* tls_version, long* flags)
  * We only support "adc" protocol.
  */
 unsigned char alpn_protocols[] = {
-     3, 'a', 'd', 'c',
+	3, 'a', 'd', 'c',
 };
 
 /**
@@ -210,17 +195,18 @@ unsigned char alpn_protocols[] = {
  * sent by the client via ALPN.
  */
 static int alpn_server_select_protocol(SSL *ssl, const unsigned char **out, unsigned char *outlen,
-                                 const unsigned char *in, unsigned int inlen, void *arg)
+	const unsigned char *in, unsigned int inlen, void *arg)
 {
-    int res = SSL_select_next_proto((unsigned char **)out, outlen,
-                    alpn_protocols, sizeof(alpn_protocols), in, inlen);
-    if (res == OPENSSL_NPN_NO_OVERLAP)
-    {
-        // set default protocol
-        *out = alpn_protocols;
-        *outlen = 1+alpn_protocols[0];
-    }
-    return SSL_TLSEXT_ERR_OK;
+	int res = SSL_select_next_proto((unsigned char **)out, outlen,
+					alpn_protocols, sizeof(alpn_protocols), in, inlen);
+
+	if (res == OPENSSL_NPN_NO_OVERLAP)
+	{
+		// set default protocol
+		*out = alpn_protocols;
+		*outlen = 1+alpn_protocols[0];
+	}
+	return SSL_TLSEXT_ERR_OK;
 }
 
 /**
@@ -229,7 +215,7 @@ static int alpn_server_select_protocol(SSL *ssl, const unsigned char **out, unsi
 struct ssl_context_handle* net_ssl_context_create(const char* tls_version, const char* tls_ciphersuite)
 {
 	struct net_context_openssl* ctx = (struct net_context_openssl*) hub_malloc_zero(sizeof(struct net_context_openssl));
-        long flags = 0;
+	long flags = 0;
 	const SSL_METHOD* ssl_method = get_ssl_method(tls_version, &flags);
 
 	if (!ssl_method)
@@ -249,8 +235,8 @@ struct ssl_context_handle* net_ssl_context_create(const char* tls_version, const
 	flags |= SSL_OP_NO_COMPRESSION;
 #endif
 
-        // Set flags
-        SSL_CTX_set_options(ctx->ssl, flags);
+	// Set flags
+	SSL_CTX_set_options(ctx->ssl, flags);
 
 	/* Set preferred cipher suite */
 	if (SSL_CTX_set_cipher_list(ctx->ssl, tls_ciphersuite) != 1)
@@ -353,12 +339,12 @@ ssize_t net_con_ssl_accept(struct net_connection* con)
 	net_ssl_set_state(handle, tls_st_accepting);
 
 	ret = SSL_accept(handle->ssl);
-	LOG_PROTO("SSL_accept() ret=%d", ret);
+	LOG_PROTO("SSL_accept() ret=%d", (int) ret);
 	if (ret > 0)
 	{
 		net_con_update(con, NET_EVENT_READ);
 		net_ssl_set_state(handle, tls_st_connected);
-                net_stats_tls_add_accept();
+		net_stats_tls_add_accept();
 		return ret;
 	}
 	return handle_openssl_error(con, ret, tls_st_accepting);
@@ -371,20 +357,20 @@ ssize_t net_con_ssl_connect(struct net_connection* con)
 	net_ssl_set_state(handle, tls_st_connecting);
 
 	ret = SSL_connect(handle->ssl);
-	LOG_PROTO("SSL_connect() ret=%d", ret);
+	LOG_PROTO("SSL_connect() ret=%d", (int) ret);
 
 	if (ret > 0)
 	{
 		net_con_update(con, NET_EVENT_READ);
 		net_ssl_set_state(handle, tls_st_connected);
-                net_stats_tls_add_connect();
+		net_stats_tls_add_connect();
 		return ret;
 	}
 	
 	ret = handle_openssl_error(con, ret, tls_st_connecting);
 	
-        if (ret != 0)
-            LOG_ERROR("net_con_ssl_connect: ret=%d", ret);
+	if (ret != 0)
+		LOG_ERROR("net_con_ssl_connect: ret=%d", (int) ret);
 	return ret;
 }
 
@@ -395,6 +381,11 @@ ssize_t net_con_ssl_handshake(struct net_connection* con, enum net_con_ssl_mode 
 
 	struct net_context_openssl* ctx = (struct net_context_openssl*) ssl_ctx;
 	struct net_ssl_openssl* handle = (struct net_ssl_openssl*) hub_malloc_zero(sizeof(struct net_ssl_openssl));
+	if (!handle)
+	{
+		LOG_ERROR("Failed to allocate SSL connection handle");
+		return -1;
+	}
 
 	if (ssl_mode == net_con_ssl_mode_server)
 	{
@@ -402,6 +393,7 @@ ssize_t net_con_ssl_handshake(struct net_connection* con, enum net_con_ssl_mode 
 		if (!handle->ssl)
 		{
 			LOG_ERROR("Unable to create new SSL stream\n");
+			hub_free(handle);
 			return -1;
 		}
 		SSL_set_fd(handle->ssl, con->sd);
@@ -434,13 +426,13 @@ ssize_t net_ssl_send(struct net_connection* con, const void* buf, size_t len)
 	ERR_clear_error();
 	ssize_t ret = SSL_write(handle->ssl, buf, len);
 	add_io_stats(handle);
-	LOG_PROTO("SSL_write(con=%p, buf=%p, len=" PRINTF_SIZE_T ") => %d", con, buf, len, ret);
+	LOG_PROTO("SSL_write(con=%p, buf=%p, len=" PRINTF_SIZE_T ") => %d", con, buf, len, (int) ret);
 	if (ret > 0)
 		handle->ssl_write_events = 0;
 	else
 		ret = handle_openssl_error(con, ret, 0);
 
-	net_ssl_update(con, handle->events);  // Update backend only
+	net_ssl_update(con, handle->events); // Update backend only
 	return ret;
 }
 
@@ -461,13 +453,13 @@ ssize_t net_ssl_recv(struct net_connection* con, void* buf, size_t len)
 
 	ret = SSL_read(handle->ssl, buf, len);
 	add_io_stats(handle);
-	LOG_PROTO("SSL_read(con=%p, buf=%p, len=" PRINTF_SIZE_T ") => %d", con, buf, len, ret);
+	LOG_PROTO("SSL_read(con=%p, buf=%p, len=" PRINTF_SIZE_T ") => %d", con, buf, len, (int) ret);
 	if (ret > 0)
 		handle->ssl_read_events = 0;
 	else
 		ret = handle_openssl_error(con, ret, 1);
 
-	net_ssl_update(con, handle->events);  // Update backend only
+	net_ssl_update(con, handle->events); // Update backend only
 	return ret;
 }
 

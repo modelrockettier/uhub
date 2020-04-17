@@ -24,7 +24,7 @@
 
 struct cfg_tokens
 {
-    struct linked_list* list;
+	struct linked_list* list;
 };
 
 struct cfg_tokens* cfg_tokenize(const char* line)
@@ -37,6 +37,14 @@ struct cfg_tokens* cfg_tokenize(const char* line)
 	char quote = 0;
 	size_t token_count = 0;
 	size_t token_size = 0;
+
+	if (!tokens || !buffer)
+	{
+		hub_free(tokens);
+		hub_free(buffer);
+		return NULL;
+	}
+
 	tokens->list = list_create();
 
 	for (; *p; p++)
@@ -172,15 +180,16 @@ struct cfg_settings* cfg_settings_split(const char* line)
 	struct cfg_tokens* tok = NULL;
 	char* pos = NULL;
 
-	if (   !line
-		|| !*line
-		|| ((pos = (char*) strchr(line, '=')) == NULL)
-		|| ((s = hub_malloc_zero(sizeof(struct cfg_settings))) == NULL)
-		|| ((tok = cfg_tokenize(line)) == NULL)
-		|| (cfg_token_count(tok) < 1)
-		|| (cfg_token_count(tok) > 3)
-		|| (cfg_token_count(tok) == 3 && strcmp(cfg_token_get(tok, 1), "="))
-		)
+	if (!line)
+		return NULL;
+
+	pos = (char*) strchr(line, '=');
+	if (pos == NULL)
+		return NULL;
+
+	s = hub_malloc_zero(sizeof(struct cfg_settings));
+	tok = cfg_tokenize(line);
+	if (s == NULL || tok == NULL)
 	{
 		cfg_tokens_free(tok);
 		cfg_settings_free(s);
@@ -190,6 +199,9 @@ struct cfg_settings* cfg_settings_split(const char* line)
 	if (cfg_token_count(tok) == 1)
 	{
 		char* key = cfg_token_get_first(tok);
+
+		uhub_assert(key);
+
 		pos = strchr(key, '=');
 		if (!pos)
 		{
@@ -216,23 +228,21 @@ struct cfg_settings* cfg_settings_split(const char* line)
 		char* key = cfg_token_get_first(tok);
 		char* val = cfg_token_get_next(tok);
 
-                if ((pos = strchr(key, '=')))
+		uhub_assert(key);
+		uhub_assert(val);
+
+		pos = strchr(key, '=');
+		if (pos)
 		{
 			pos[0] = 0;
 			key = strip_white_space(key);
 		}
 		else if ((pos = strchr(val, '=')))
 		{
-			val = strip_white_space(pos+1);
-		}
-		else
-		{
-			cfg_tokens_free(tok);
-			cfg_settings_free(s);
-			return NULL;
+			val = strip_white_space(pos + 1);
 		}
 
-		if (!*key)
+		if (!pos || !*key)
 		{
 			cfg_tokens_free(tok);
 			cfg_settings_free(s);
@@ -242,11 +252,17 @@ struct cfg_settings* cfg_settings_split(const char* line)
 		s->key = strdup(key);
 		s->value = strdup(val);
 	}
-	else
+	else if (cfg_token_count(tok) == 3 && !strcmp(cfg_token_get(tok, 1), "="))
 	{
 		s->key = strdup(strip_white_space(cfg_token_get(tok, 0)));
 		s->value = strdup(strip_white_space(cfg_token_get(tok, 2)));
 	}
+	else
+	{
+		cfg_settings_free(s);
+		s = NULL;
+	}
+
 	cfg_tokens_free(tok);
 	return s;
 }

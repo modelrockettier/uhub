@@ -59,7 +59,7 @@ static void history_add(struct plugin_handle* plugin, struct plugin_user* from, 
 	loglen = strlen(log);
 	if (data->fd >= 0)
 	{
-		if (write(data->fd, log, loglen) < loglen)
+		if (write(data->fd, log, loglen) < (ssize_t) loglen)
 		{
 			fprintf(stderr, "Unable to write full log. Error=%d: %s\n", errno, strerror(errno));
 		}
@@ -175,70 +175,77 @@ static void set_error_message(struct plugin_handle* plugin, const char* msg)
 	plugin->error_msg = msg;
 }
 
-static int open_log_file(struct plugin_handle* plugin, struct chat_history_data* data)
+static void read_log_file(struct plugin_handle* plugin, struct chat_history_data* data)
 {
+	size_t buflen = MAX_HISTORY_SIZE * 2;
+	size_t off = 0;
+	size_t len = 0;
+	ssize_t bytes_read = 0;
+	char* endp;
+
 	// attempt to read in the existing log contents
 	int read_fd = open(data->logfile, O_RDONLY);
-	if (read_fd >= 0)
+	if (read_fd == -1)
+		return;
+
+	char* buffer = hub_malloc(buflen + 1);
+	if (!buffer)
 	{
-		size_t off = 0;
-		size_t len = 0;
-		ssize_t bytes_read = 0;
-		size_t buflen = MAX_HISTORY_SIZE * 2;
-		char* buffer;
-		char* endp;
+		close(read_fd);
+		return;
+	}
 
-		buffer = hub_malloc(buflen + 1);
-		if (!buffer)
-			return 0;
+	buffer[buflen] = '\0';
+	bytes_read = read(read_fd, buffer, buflen);
 
-		bytes_read = read(read_fd, buffer, buflen);
+	while (bytes_read > 0)
+	{
+		bytes_read += (ssize_t) off;
 
-		while (bytes_read > 0)
+		buffer[bytes_read] = '\0';
+		off = 0;
+
+		while ((endp = strchr(&buffer[off], '\n')) != NULL)
 		{
-			bytes_read += (ssize_t) off;
-
-			buffer[bytes_read] = '\0';
-			off = 0;
-
-			while ((endp = strchr(&buffer[off], '\n')) != NULL)
-			{
-				size_t len = (size_t) (endp - &buffer[off]);
-				if (len)
-					list_append(data->chat_history, hub_strndup(&buffer[off], len));
-				off += len + 1;
-			}
-
-			while (list_size(data->chat_history) > data->history_max)
-				list_remove_first(data->chat_history, hub_free);
-
-			len = strlen(&buffer[off]);
-			if (len >= buflen)
-			{
-				LOG_WARN("Line too long: " PRINTF_SIZE_T "/" PRINTF_SIZE_T, len, buflen);
+			size_t len = (size_t) (endp - &buffer[off]);
+			if (len)
 				list_append(data->chat_history, hub_strndup(&buffer[off], len));
-				len = 0;
-			}
-			else
-			{
-				memmove(buffer, &buffer[off], len + 1);
-			}
-
-			off = len;
-
-			bytes_read = read(read_fd, &buffer[off], buflen - off);
+			off += len + 1;
 		}
-
-		if (len)
-			list_append(data->chat_history, hub_strdup(buffer));
 
 		while (list_size(data->chat_history) > data->history_max)
 			list_remove_first(data->chat_history, hub_free);
 
-		close(read_fd);
-		hub_free(buffer);
+		len = strlen(&buffer[off]);
+		if (len >= buflen)
+		{
+			LOG_WARN("Line too long: " PRINTF_SIZE_T "/" PRINTF_SIZE_T, len, buflen);
+			list_append(data->chat_history, hub_strndup(&buffer[off], len));
+			len = 0;
+		}
+		else
+		{
+			memmove(buffer, &buffer[off], len + 1);
+		}
+
+		off = len;
+
+		bytes_read = read(read_fd, &buffer[off], buflen - off);
 	}
-	// Ignore if the file couldn't be opened/read
+
+	if (len)
+		list_append(data->chat_history, hub_strdup(buffer));
+
+	while (list_size(data->chat_history) > data->history_max)
+		list_remove_first(data->chat_history, hub_free);
+
+	close(read_fd);
+	hub_free(buffer);
+}
+
+static int open_log_file(struct plugin_handle* plugin, struct chat_history_data* data)
+{
+	read_log_file(plugin, data);
 
 	int flags = O_CREAT | O_APPEND | O_WRONLY;
 	data->fd = open(data->logfile, flags, 0664);
@@ -251,7 +258,12 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 	struct cfg_tokens* tokens = cfg_tokenize(line);
 	char* token = cfg_token_get_first(tokens);
 
-	uhub_assert(data != NULL);
+	if (!data)
+	{
+		set_error_message(plugin, "OOM");
+		cfg_tokens_free(tokens);
+		return NULL;
+	}
 
 	data->logfile = NULL;
 	data->fd = -1;

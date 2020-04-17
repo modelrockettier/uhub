@@ -67,6 +67,7 @@ static struct restrict_data* parse_config(struct plugin_handle* plugin, const ch
 	if (!data)
 	{
 		set_error_message(plugin, "OOM");
+		cfg_tokens_free(tokens);
 		return 0;
 	}
 
@@ -89,7 +90,6 @@ static struct restrict_data* parse_config(struct plugin_handle* plugin, const ch
 	while (token)
 	{
 		struct cfg_settings* setting = cfg_settings_split(token);
-
 		if (!setting)
 		{
 			set_error_message(plugin, "Unable to parse startup parameters");
@@ -100,7 +100,6 @@ static struct restrict_data* parse_config(struct plugin_handle* plugin, const ch
 		}
 
 		cred = NULL;
-
 		if (strcmp(cfg_settings_get_key(setting), "download") == 0)
 		{
 			cred = &data->min_download;
@@ -154,7 +153,6 @@ static struct restrict_data* parse_config(struct plugin_handle* plugin, const ch
 static void restrict_shutdown(struct plugin_handle* plugin)
 {
 	struct restrict_data* data = (struct restrict_data*) plugin->ptr;
-
 	if (data)
 	{
 		hub_free(data->users);
@@ -353,12 +351,10 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	PLUGIN_INITIALIZE(plugin, "Restricted hub", "1.0", "Restrict who can send chat messages, private messages, contact operators, search, or download files.");
 
 	data = parse_config(plugin, config);
-
 	if (!data)
 		return -1;
 
 	plugin->ptr = data;
-
 	if (data->min_download > auth_cred_guest)
 	{
 		restrictions = 1;

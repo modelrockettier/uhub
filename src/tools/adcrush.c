@@ -402,7 +402,7 @@ void p_status()
 	static char rxbuf[64] = { "0 B" };
 	static char txbuf[64] = { "0 B" };
 	int logged_in = 0;
-	size_t n;
+	int n;
 	static size_t rx = 0, tx = 0;
 
 	for (n = 0; n < cfg_clients; n++)
@@ -422,9 +422,9 @@ void p_status()
 	}
 
 	n = blank;
-	blank = printf("Connected bots: %d/%d, network: rx=%s/s, tx=%s/s", logged_in, cfg_clients, rxbuf, txbuf);
+	blank = printf("Connected bots: %d/%d, network: rx=%s/s, tx=%s/s", logged_in, (int) cfg_clients, rxbuf, txbuf);
 	if (n > blank)
-		do_blank(n-blank);
+		do_blank(n - blank);
 	printf("\r");
 }
 

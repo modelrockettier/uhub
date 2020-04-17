@@ -98,14 +98,14 @@ static void timeout_queue_unlock(struct timeout_queue* t)
 
 size_t timeout_queue_process(struct timeout_queue* t, time_t now)
 {
-	size_t pos = (size_t) t->last;
+	time_t pos = t->last;
 	size_t events = 0;
 	struct timeout_evt* evt = 0;
 	t->last = now;
 	timeout_queue_lock(t);
 	for (; pos <= now; pos++)
 	{
-		while ((evt = t->events[pos % t->max]))
+		while ((evt = t->events[((size_t) pos) % t->max]))
 		{
 			timeout_queue_remove(t, evt);
 			evt->callback(evt);

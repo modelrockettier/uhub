@@ -56,7 +56,11 @@ static struct user_manager* parse_config(const char* line, struct plugin_handle*
 	char* token = cfg_token_get_first(tokens);
 
 	if (!manager)
+	{
+		set_error_message(plugin, "OOM");
+		cfg_tokens_free(tokens);
 		return 0;
+	}
 
 	manager->register_self = 0;
 	manager->allow_spaces = 0;
@@ -533,21 +537,16 @@ static int command_userlist(struct plugin_handle* plugin, struct plugin_user* us
 
 	rc = plugin->hub.auth_get_user_list(plugin, search, users);
 	if (rc == 0)
-	{
 		cbuf_append_format(buf, "*** %s: Failed to get user list.", cmd->prefix);
-		return 0;
-	}
-
-	size_t user_count = list_size(users);
-	if (!user_count)
+	else if (!list_size(users))
 		cbuf_append_format(buf, "*** %s: No users found.", cmd->prefix);
 	else
 	{
-		cbuf_append_format(buf, "*** %s: %d user%s\n",
+		size_t user_count = list_size(users);
+		cbuf_append_format(buf, "*** %s: " PRINTF_SIZE_T " user%s\n",
 			cmd->prefix, user_count, user_count != 1 ? "s" : "");
 
-		struct auth_info* list_item;
-		list_item = (struct auth_info*) list_get_first(users);
+		struct auth_info* list_item = (struct auth_info*) list_get_first(users);
 
 		while (list_item)
 		{

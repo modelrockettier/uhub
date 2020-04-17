@@ -728,7 +728,6 @@ void adc_msg_terminate(struct adc_message* cmd)
 	ADC_MSG_ASSERT(cmd);
 }
 
-/* FIXME: this looks bogus */
 void adc_msg_unterminate(struct adc_message* cmd)
 {
 	ADC_MSG_ASSERT(cmd);

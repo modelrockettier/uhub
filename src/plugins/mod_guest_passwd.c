@@ -32,7 +32,7 @@ static inline void set_error_message(struct plugin_handle* plugin, const char* m
 
 struct guest_pass_data
 {
-	char password[MAX_PASS_LEN+1];
+	char password[MAX_PASS_LEN + 1];
 };
 
 static struct guest_pass_data* parse_config(const char* line, struct plugin_handle* plugin)
@@ -42,7 +42,11 @@ static struct guest_pass_data* parse_config(const char* line, struct plugin_hand
 	char* token = cfg_token_get_first(tokens);
 
 	if (!data)
+	{
+		set_error_message(plugin, "OOM");
+		cfg_tokens_free(tokens);
 		return NULL;
+	}
 
 	while (token)
 	{
@@ -59,7 +63,7 @@ static struct guest_pass_data* parse_config(const char* line, struct plugin_hand
 		if (strcmp(cfg_settings_get_key(setting), "password") == 0)
 		{
 			// Make sure it's possible to actually use the guest password
-			if (strlen(cfg_settings_get_value(setting)) >= MAX_PASS_LEN+1)
+			if (strlen(cfg_settings_get_value(setting)) > MAX_PASS_LEN)
 			{
 				set_error_message(plugin, "Guest password too long");
 				cfg_tokens_free(tokens);
@@ -100,9 +104,8 @@ static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, st
 
 	//printf("Guest auth attempt: nick '%s'\n", nickname);
 
-	// nickname and data->password will fit here (both have been checked before this call)
-	strcpy(auth_data->nickname, nickname);
-	strcpy(auth_data->password, data->password);
+	strlcpy(auth_data->nickname, nickname, MAX_NICK_LEN + 1);
+	strlcpy(auth_data->password, data->password, MAX_PASS_LEN + 1);
 
 	auth_data->credentials = auth_cred_guest;
 

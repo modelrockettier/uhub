@@ -185,7 +185,7 @@ char const* hub_log_verbosity_to_string(int verb)
 {
 	int i;
 
-	for (i = 0; i < NUM_LOG_LEVELS; i++)
+	for (i = 0; (size_t) i < NUM_LOG_LEVELS; i++)
 	{
 		if (log_levels[i].verb == verb)
 			return log_levels[i].str;
@@ -198,7 +198,7 @@ int hub_log_string_to_verbosity(const char* str)
 {
 	int i;
 
-	for (i = 0; i < NUM_LOG_LEVELS; i++)
+	for (i = 0; (size_t) i < NUM_LOG_LEVELS; i++)
 	{
 		if (strcasecmp(str, log_levels[i].str) == 0)
 			return log_levels[i].verb;

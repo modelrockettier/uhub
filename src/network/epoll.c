@@ -113,7 +113,7 @@ void net_con_backend_mod_epoll(struct net_backend* data, struct net_connection* 
 	struct net_backend_epoll* backend = (struct net_backend_epoll*) data;
 	struct net_connection_epoll* con = (struct net_connection_epoll*) con_;
 
-	int newev = 0;
+	uint32_t newev = 0;
 	if (events & NET_EVENT_READ)  newev |= EPOLLIN;
 	if (events & NET_EVENT_WRITE) newev |= EPOLLOUT;
 

@@ -104,7 +104,10 @@ struct plugin_handle* plugin_load(const char* filename, const char* config, stru
 	struct uhub_plugin* plugin = plugin_open(filename);
 
 	if (!plugin)
+	{
+		hub_free(handle);
 		return NULL;
+	}
 
 	if (!handle)
 	{

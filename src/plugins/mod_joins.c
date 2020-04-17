@@ -42,22 +42,32 @@ static void set_error_message(struct plugin_handle* plugin, const char* msg)
 
 static char* read_file(const char* filename)
 {
-	char buf[MAX_FILE_SIZE];
+	char buf[MAX_FILE_SIZE + 1];
 	int fd = open(filename, O_RDONLY);
 	int ret;
 
 	if (fd == -1)
 		return NULL;
 
-	buf[0] = '\0';
-
 	ret = read(fd, buf, MAX_FILE_SIZE);
 	close(fd);
 
-	if (ret > 0)
-		buf[ret] = '\0';
+	if (ret < 0)
+		return NULL;
 
-	return hub_strdup(buf);
+	buf[ret] = '\0';
+	return strdup(buf);
+}
+
+static void join_cleanup(struct joins_data* data)
+{
+	if (data)
+	{
+		hub_free(data->join_message);
+		hub_free(data->leave_message);
+	}
+
+	hub_free(data);
 }
 
 static struct joins_data* parse_config(const char* line, struct plugin_handle* plugin)
@@ -67,7 +77,11 @@ static struct joins_data* parse_config(const char* line, struct plugin_handle* p
 	char* token = cfg_token_get_first(tokens);
 
 	if (!data)
+	{
+		set_error_message(plugin, "OOM");
+		cfg_tokens_free(tokens);
 		return NULL;
+	}
 
 	data->min_notify = auth_cred_guest;
 
@@ -79,9 +93,7 @@ static struct joins_data* parse_config(const char* line, struct plugin_handle* p
 		{
 			set_error_message(plugin, "Unable to parse startup parameters");
 			cfg_tokens_free(tokens);
-			hub_free(data->join_message);
-			hub_free(data->leave_message);
-			hub_free(data);
+			join_cleanup(data);
 			return NULL;
 		}
 
@@ -98,9 +110,7 @@ static struct joins_data* parse_config(const char* line, struct plugin_handle* p
 			{
 				cfg_tokens_free(tokens);
 				cfg_settings_free(setting);
-				hub_free(data->join_message);
-				hub_free(data->leave_message);
-				hub_free(data);
+				join_cleanup(data);
 				set_error_message(plugin, "Unable to open join message file");
 				return NULL;
 			}
@@ -118,25 +128,28 @@ static struct joins_data* parse_config(const char* line, struct plugin_handle* p
 			{
 				cfg_tokens_free(tokens);
 				cfg_settings_free(setting);
-				hub_free(data->join_message);
-				hub_free(data->leave_message);
-				hub_free(data);
+				join_cleanup(data);
 				set_error_message(plugin, "Unable to open leave message file");
 				return NULL;
 			}
 		}
 		else if (strcmp(cfg_settings_get_key(setting), "min_notify") == 0)
 		{
-			auth_string_to_cred(cfg_settings_get_value(setting), &data->min_notify);
+			if (!auth_string_to_cred(cfg_settings_get_value(setting), &data->min_notify))
+			{
+				set_error_message(plugin, "Unknown credential value");
+				cfg_settings_free(setting);
+				cfg_tokens_free(tokens);
+				join_cleanup(data);
+				return 0;
+			}
 		}
 		else
 		{
 			set_error_message(plugin, "Unknown startup parameters given");
 			cfg_tokens_free(tokens);
 			cfg_settings_free(setting);
-			hub_free(data->join_message);
-			hub_free(data->leave_message);
-			hub_free(data);
+			join_cleanup(data);
 			return NULL;
 		}
 
@@ -225,7 +238,7 @@ static struct cbuffer* parse_message(struct plugin_handle* plugin, struct plugin
 
 	if (*start)
 		cbuf_append(buf, start);
-	
+
 	cbuf_chomp(buf, NULL);
 
 	return buf;
@@ -273,7 +286,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 
 	if (data->leave_message)
 		plugin->funcs.on_user_logout = user_logout;
-	
+
 	return 0;
 }
 
@@ -282,12 +295,7 @@ int plugin_unregister(struct plugin_handle* plugin)
 	struct joins_data* data = (struct joins_data*) plugin->ptr;
 	set_error_message(plugin, 0);
 
-	if (data)
-	{
-		hub_free(data->join_message);
-		hub_free(data->leave_message);
-	}
-    
-	hub_free(data);
+	join_cleanup(data);
+
 	return 0;
 }

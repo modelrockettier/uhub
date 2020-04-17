@@ -43,8 +43,7 @@ static int command_handler_rules(struct plugin_handle* plugin, struct plugin_use
 
 static char* read_file(const char* filename)
 {
-	char* str;
-	char buf[MAX_WELCOME_SIZE];
+	char buf[MAX_WELCOME_SIZE + 1];
 	int fd = open(filename, O_RDONLY);
 	int ret;
 
@@ -54,10 +53,11 @@ static char* read_file(const char* filename)
 	ret = read(fd, buf, MAX_WELCOME_SIZE);
 	close(fd);
 
-	buf[ret > 0 ? ret : 0] = 0;
-	str = strdup(buf);
+	if (ret < 0)
+		return NULL;
 
-	return str;
+	buf[ret] = '\0';
+	return strdup(buf);
 }
 
 int read_motd(struct welcome_data* data)
@@ -99,7 +99,11 @@ static struct welcome_data* parse_config(const char* line, struct plugin_handle*
 	char* token = cfg_token_get_first(tokens);
 
 	if (!data)
+	{
+		set_error_message(plugin, "OOM");
+		cfg_tokens_free(tokens);
 		return 0;
+	}
 
 	while (token)
 	{

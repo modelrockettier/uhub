@@ -204,17 +204,17 @@ static void event_callback(struct net_connection* con, int events, void *arg)
 #endif
 
 		default:
+			if (events & NET_EVENT_WRITE)
+			{
+				ADC_client_send_queue(client);
+			}
+
 			if (events & NET_EVENT_READ)
 			{
 				if (ADC_client_recv(client) == -1)
 				{
 					ADC_client_on_disconnected(client);
 				}
-			}
-
-			if (events & NET_EVENT_WRITE)
-			{
-				ADC_client_send_queue(client);
 			}
 	}
 }

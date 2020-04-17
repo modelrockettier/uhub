@@ -141,9 +141,8 @@ static int check_cid(struct hub_info* hub, struct hub_user* user, struct adc_mes
 		return status_msg_inf_error_cid_invalid;
 	}
 
-	/* Set the cid in the user object */
-	memcpy(user->id.cid, cid, MAX_CID_LEN);
-	user->id.cid[MAX_CID_LEN] = 0;
+	/* Set the cid in the user object (have already validated the length) */
+	memcpy(user->id.cid, cid, MAX_CID_LEN + 1);
 
 	hub_free(cid);
 	hub_free(pid);
@@ -282,10 +281,15 @@ static int check_nick(struct hub_info* hub, struct hub_user* user, struct adc_me
 	enum nick_status status;
 
 	tmp = adc_msg_get_named_argument(cmd, ADC_INF_FLAG_NICK);
-	if (!tmp) return 0;
+	if (!tmp)
+		return 0;
+
 	nick = adc_msg_unescape(tmp);
-	free(tmp); tmp = 0;
-	if (!nick) return 0;
+	hub_free(tmp);
+	tmp = NULL;
+
+	if (!nick)
+		return 0;
 
 	status = nick_length_ok(nick);
 	if (status != nick_ok)
@@ -314,8 +318,8 @@ static int check_nick(struct hub_info* hub, struct hub_user* user, struct adc_me
 
 	if (user_is_connecting(user))
 	{
-		memcpy(user->id.nick, nick, strlen(nick));
-		user->id.nick[strlen(nick)] = 0;
+		/* nick_length_ok() above ensures we don't overrun the nick buffer */
+		strcpy(user->id.nick, nick);
 	}
 
 	hub_free(nick);
@@ -376,10 +380,16 @@ static int check_logged_in(struct hub_info* hub, struct hub_user* user, struct a
  */
 static int check_user_agent(struct hub_info* hub, struct hub_user* user, struct adc_message* cmd)
 {
-	char* ua_name_encoded = 0;
-	char* ua_version_encoded = 0;
-	char* str = 0;
+	char* ua_name_encoded;
+	char* ua_version_encoded;
+	char* str;
 	size_t offset = 0;
+	size_t len = MAX_UA_LEN + 1;
+
+	uhub_assert(len == sizeof(user->id.user_agent));
+
+	/* Clear the user agent in case the user didn't supply 1 */
+	user->id.user_agent[0] = '\0';
 
 	/* Get client user agent version */
 	ua_name_encoded = adc_msg_get_named_argument(cmd, ADC_INF_FLAG_USER_AGENT_PRODUCT);
@@ -389,8 +399,15 @@ static int check_user_agent(struct hub_info* hub, struct hub_user* user, struct 
 		str = adc_msg_unescape(ua_name_encoded);
 		if (str)
 		{
-			offset = strlen(str);
-			memcpy(user->id.user_agent, str, MIN(offset, MAX_UA_LEN));
+			offset = strlcpy(user->id.user_agent, str, MAX_UA_LEN + 1);
+
+			/*
+			 * If the ua name is too long for a version, set the offset to len
+			 * so we don't go out of bounds adding the ua version below.
+			 */
+			if (offset > len)
+				offset = len;
+
 			hub_free(str);
 		}
 	}
@@ -400,7 +417,9 @@ static int check_user_agent(struct hub_info* hub, struct hub_user* user, struct 
 		str = adc_msg_unescape(ua_version_encoded);
 		if (str)
 		{
-			memcpy(user->id.user_agent + offset, str, MIN(strlen(str), MAX_UA_LEN - offset));
+			/* if product and version aren't empty, add a space before the version */
+			const char *sp = offset ? " " : "";
+			snprintf(&user->id.user_agent[offset], len - offset, "%s%s", sp, str);
 			hub_free(str);
 		}
 	}

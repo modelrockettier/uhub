@@ -92,7 +92,14 @@ static void sqlite_setup(struct plugin_handle* plugin)
 		");";
 
 	if (!pdata->readonly)
-		sql_execute(pdata, NULL, NULL, table_create);
+	{
+		rc = sql_execute(pdata, NULL, NULL, table_create);
+		if (rc < 0)
+		{
+			LOG_ERROR("mod_auth_sqlite: failed to create the users table: %s",
+				sqlite3_errstr(-rc));
+		}
+	}
 
 	// set the sqlite journal mode if it's not an empty string, see:
 	// https://www.sqlite.org/pragma.html#pragma_journal_mode
@@ -123,7 +130,11 @@ static struct auth_sqlite* parse_config(const char* line, struct plugin_handle* 
 	int rc;
 
 	if (!pdata)
+	{
+		set_error_message(plugin, "OOM");
+		cfg_tokens_free(tokens);
 		return NULL;
+	}
 
 	pdata->exclusive = 0;
 	pdata->readonly = 0;
@@ -174,6 +185,7 @@ static struct auth_sqlite* parse_config(const char* line, struct plugin_handle* 
 			{
 				cfg_tokens_free(tokens);
 				cfg_settings_free(setting);
+				hub_free(file);
 				hub_free(pdata);
 				set_error_message(plugin, "Invalid journal setting");
 				return NULL;
@@ -252,8 +264,8 @@ static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
 	struct data_record* rec = (struct data_record*) ptr;
 	struct auth_info* data;
 	int i = 0;
-	size_t len;
 	size_t max;
+	size_t len;
 
 	if (!ptr)
 		return 0;
@@ -274,36 +286,46 @@ static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
 	uhub_assert(((size_t) -1) > ((size_t) 0));
 
 	for (; i < argc; i++) {
+		/* Length overrun warnings are only for columns that opt-in below */
 		len = 0;
+		max = 1;
+
 		if (strcmp(colName[i], "activity") == 0)
 		{
-			max = MAX_ACTIVITY_LEN+1;
+			max = MAX_ACTIVITY_LEN + 1;
 			len = strlcpy(data->activity, argv[i], max);
 			uhub_assert(sizeof(data->activity) == max);
 		}
 		else if (strcmp(colName[i], "credentials") == 0)
 		{
-			auth_string_to_cred(argv[i], &data->credentials);
-			uhub_assert(data->credentials >= auth_cred_user);
+			int ok = auth_string_to_cred(argv[i], &data->credentials);
+			if (!ok)
+			{
+				LOG_ERROR("Unknown credential level \"%s\" found in database", argv[i]);
+				data->credentials = auth_cred_user;
+			}
+			else if (data->credentials < auth_cred_user)
+				LOG_WARN("Found a guest in the database");
 		}
 		else if (strcmp(colName[i], "nickname") == 0)
 		{
-			max = MAX_NICK_LEN+1;
+			max = MAX_NICK_LEN + 1;
 			len = strlcpy(data->nickname, argv[i], max);
 			uhub_assert(sizeof(data->nickname) == max);
 		}
 		else if (strcmp(colName[i], "password") == 0)
 		{
-			max = MAX_PASS_LEN+1;
+			max = MAX_PASS_LEN + 1;
 			len = strlcpy(data->password, argv[i], max);
 			uhub_assert(sizeof(data->password) == max);
 		}
 		else
-			LOG_WARN("Unknown column \"%s\" in get_user results\n", colName[i]);
+			LOG_WARN("Unknown column \"%s\" in get_user results", colName[i]);
 
 		if (len >= max)
 		{
-			LOG_ERROR("Column \"%s\" data too long", colName[i]);
+			LOG_ERROR("Column \"%s\" data too long (%d/%d)", colName[i],
+				(int) len + 1, (int) max);
 			return -1;
 		}
 	}

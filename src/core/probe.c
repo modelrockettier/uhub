@@ -45,7 +45,7 @@ static void probe_net_event(struct net_connection* con, int events, void *arg)
 			{
 				LOG_WARN("Error %d while sending NMDC redirect", len);
 			}
-			else if (len >= sizeof(buf))
+			else if ((size_t) len >= sizeof(buf))
 			{
 				LOG_WARN("NMDC Redirect address is too long: %d", len);
 			}
@@ -99,8 +99,6 @@ static void probe_net_event(struct net_connection* con, int events, void *arg)
 				{
 					probe->connection = 0;
 				}
-				probe_destroy(probe);
-				return;
 			}
 			else if (bytes >= 11 &&
 				probe_recvbuf[0] == 22 &&
@@ -128,8 +126,6 @@ static void probe_net_event(struct net_connection* con, int events, void *arg)
 #else
 				LOG_TRACE("Probed TLS %d.%d connection. TLS not supported by hub.", (int) probe_recvbuf[9], (int) probe_recvbuf[10]);
 #endif
-				probe_destroy(probe);
-				return;
 			}
 			else if ((memcmp(probe_recvbuf, "GET ", 4) == 0) ||
 				 (memcmp(probe_recvbuf, "POST", 4) == 0) ||
@@ -139,13 +135,11 @@ static void probe_net_event(struct net_connection* con, int events, void *arg)
 				/* Looks like HTTP. */
 				LOG_TRACE("Probed HTTP connection. Not supported closing connection (%s)", ip_convert_to_string(&probe->addr));
 				probe_handle_http(con);
-				probe_destroy(probe);
 			}
 			else if (memcmp(probe_recvbuf, "NICK", 4) == 0)
 			{
 				/* Looks like IRC - Not supported, but we log it. */
 				LOG_TRACE("Probed IRC connection. Not supported closing connection (%s)", ip_convert_to_string(&probe->addr));
-				probe_destroy(probe);
 			}
 			else
 			{

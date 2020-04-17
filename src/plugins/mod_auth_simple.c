@@ -56,18 +56,23 @@ static void free_acl(struct acl_data* data)
 		list_clear(data->users, hub_free);
 		list_destroy(data->users);
 	}
+
 	hub_free(data->file);
 	hub_free(data);
 }
 
-static struct acl_data* parse_config(const char* line)
+static struct acl_data* parse_config(const char* line, struct plugin_handle* plugin)
 {
 	struct acl_data* data = (struct acl_data*) hub_malloc_zero(sizeof(struct acl_data));
 	struct cfg_tokens* tokens = cfg_tokenize(line);
 	char* token = cfg_token_get_first(tokens);
 
 	if (!data)
-		return 0;
+	{
+		set_error_message(plugin, "OOM");
+		cfg_tokens_free(tokens);
+		return NULL;
+	}
 
 	// set defaults
 	data->readonly = 1;
@@ -76,32 +81,48 @@ static struct acl_data* parse_config(const char* line)
 
 	while (token)
 	{
-		char* split = strchr(token, '=');
-		size_t len = strlen(token);
-		size_t key = split ? (split - token) : len;
-		if (key == 4 && strncmp(token, "file", 4) == 0)
+		struct cfg_settings* setting = cfg_settings_split(token);
+
+		if (!setting)
+		{
+			set_error_message(plugin, "Unable to parse startup parameters");
+			cfg_tokens_free(tokens);
+			free_acl(data);
+			return NULL;
+		}
+
+		if (strcmp(cfg_settings_get_key(setting), "file") == 0)
 		{
 			if (data->file)
-				hub_free(data->file);
-			data->file = strdup(split + 1);
+			{
+				set_error_message(plugin, "Only 1 acl file is allowed");
+				cfg_tokens_free(tokens);
+				cfg_settings_free(setting);
+				free_acl(data);
+				return NULL;
+			}
+
+			data->file = hub_strdup(cfg_settings_get_value(setting));
 		}
-		else if (key == 8 && strncmp(token, "readonly", 8) == 0)
+		else if (strcmp(cfg_settings_get_key(setting), "readonly") == 0)
 		{
-			if (!string_to_boolean(split + 1, &data->readonly))
+			if (!string_to_boolean(cfg_settings_get_value(setting), &data->readonly))
 				data->readonly = 1;
 		}
-		else if (key == 9 && strncmp(token, "exclusive", 9) == 0)
+		else if (strcmp(cfg_settings_get_key(setting), "exclusive") == 0)
 		{
-			if (!string_to_boolean(split + 1, &data->exclusive))
+			if (!string_to_boolean(cfg_settings_get_value(setting), &data->exclusive))
 				data->exclusive = 1;
 		}
 		else
 		{
 			cfg_tokens_free(tokens);
+			cfg_settings_free(setting);
 			free_acl(data);
 			return 0;
 		}
 
+		cfg_settings_free(setting);
 		token = cfg_token_get_next(tokens);
 	}
 
@@ -147,9 +168,7 @@ static int parse_line(char* line, int line_count, void* ptr_data)
 
 static struct acl_data* load_acl(const char* config, struct plugin_handle* handle)
 {
-
-	struct acl_data* data = parse_config(config);
-
+	struct acl_data* data = parse_config(config, handle);
 	if (!data)
 		return 0;
 

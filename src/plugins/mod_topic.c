@@ -82,7 +82,6 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	plugin->hub.command_add(plugin, data->showtopic);
 	plugin->ptr = data;
 
-
 	return 0;
 }
 

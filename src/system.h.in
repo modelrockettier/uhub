@@ -269,7 +269,7 @@
 #endif
 
 #ifndef HAVE_SSIZE_T
-typedef int ssize_t;
+typedef long ssize_t;
 #define HAVE_SSIZE_T
 #endif
 
