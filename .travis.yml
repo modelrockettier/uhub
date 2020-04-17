@@ -92,6 +92,34 @@ jobs:
       services: docker
       env: CONFIG=docker
 
+    # Coverity build
+    - name: Coverity scan
+      branches:
+        only:
+          - coverity_scan
+      env: CONFIG=full
+      # The COVERITY_SCAN_TOKEN env var is set in the travis repository settings
+      addons:
+        coverity_scan:
+          project:
+            name: "modelrockettier/uhub"
+            description: "Travis CI Build ${TRAVIS_COMMIT::8}"
+          notification_email: "modelrockettier@users.noreply.github.com"
+          build_command_prepend: "cmake . -DSSL_SUPPORT=1 -DSYSTEMD_SUPPORT=1 -DADC_STRESS=1"
+          build_command: "make -j2"
+          branch_pattern: coverity_scan
+      before_install:
+        - set -x; echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
+      # override the build script
+      script:
+        - |
+          set -x +e
+          head -150 "${TRAVIS_BUILD_DIR}/cov-int/build-log.txt"
+          tail -150 "${TRAVIS_BUILD_DIR}/cov-int/build-log.txt"
+          cat "${TRAVIS_BUILD_DIR}/cov-int/scm_log.txt"
+          true
+    # End Coverity build
+
 install:
   - autotest/ci/install-build-depends.sh
 script:
