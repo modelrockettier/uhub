@@ -721,7 +721,7 @@ int adc_msg_replace_named_argument(struct adc_message* cmd, const char prefix[2]
 
 void adc_msg_terminate(struct adc_message* cmd)
 {
-	if (cmd->cache[cmd->length - 1] != '\n')
+	if (cmd->length <= 0 || cmd->cache[cmd->length - 1] != '\n')
 	{
 		adc_msg_cache_append(cmd, "\n", 1);
 	}
@@ -849,35 +849,41 @@ char* adc_msg_get_argument(struct adc_message* cmd, int offset)
 	return 0;
 }
 
-/**
- * NOTE: Untested code.
- */
-int adc_msg_get_argument_index(struct adc_message* cmd, const char prefix[2])
+
+int adc_msg_get_named_argument_index(struct adc_message* cmd, const char prefix[2])
 {
 	char* start;
 	char* end;
 	int count = 0;
+	size_t len;
 
 	ADC_MSG_ASSERT(cmd);
 
 	adc_msg_unterminate(cmd);
 
-	start = strchr(&cmd->cache[adc_msg_get_arg_offset(cmd)-1], ' ');
-	while (start)
+	end = strchr(&cmd->cache[adc_msg_get_arg_offset(cmd)-1], ' ');
+
+	while (end)
 	{
-		end = strchr(&start[1], ' ');
-		if (((&end[0] - &start[1]) > 2) && ((start[1] == prefix[0]) && (start[2] == prefix[1])))
+		start = end + 1; /* Skip over the space */
+
+		end = strchr(start, ' ');
+		if (end)
+			len = end - start;
+		else
+			len = strlen(start);
+
+		if (len > 2 && strncmp(start, prefix, 2) == 0)
 		{
 			adc_msg_terminate(cmd);
 			return count;
 		}
 		count++;
-		start = end;
 	}
+
 	adc_msg_terminate(cmd);
 	return -1;
 }
-
 
 
 int adc_msg_escape_length(const char* str)

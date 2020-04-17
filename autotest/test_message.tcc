@@ -22,155 +22,47 @@ EXO_TEST(adc_message_first, {
 	return g_user != 0;
 });
 
-EXO_TEST(adc_message_parse_1, {
-	struct adc_message* msg = adc_msg_create("IMSG Hello\\sWorld!");
+
+static int create_msg(const char* string)
+{
+	struct adc_message* msg = adc_msg_create(string);
 	int ok = msg != NULL;
 	adc_msg_free(msg);
 	return ok;
-});
+}
 
-EXO_TEST(adc_message_parse_2, {
-	struct adc_message* msg = adc_msg_create(test_string2);
-	int ok = (msg != NULL);
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_3, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "BMSG AAAB Hello\\sWorld!", 23);
+static int verify_msg(const char* string, size_t len)
+{
+	struct adc_message* msg = adc_msg_parse_verify(g_user, string, len);
 	int ok = msg != NULL;
 	adc_msg_free(msg);
 	return ok;
-});
+}
 
-EXO_TEST(adc_message_parse_4, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "BMSG AAAC Hello\\sWorld!", 23);
-	return msg == NULL;
-});
-
-EXO_TEST(adc_message_parse_5, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "BMSG AAAB Hello\\sWorld!\n", 24);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_6, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "FMSG AAAB +TCP4 Hello\\sWorld!\n", 30);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_7, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "FMSG AAAB -TCP4 Hello\\sWorld!\n", 30);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_8, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "FMSG AAAB +TCP4+UDP4 Hello\\sWorld!\n", 35);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_9, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "FMSG AAAB +TCP4-UDP4 Hello\\sWorld!\n", 35);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_10, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "FMSG AAAB -TCP4-UDP4 Hello\\sWorld!\n", 35);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_11, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "FMSG AAAB Hello\\sWorld!\n", 24);
-	return msg == NULL;
-});
-
-EXO_TEST(adc_message_parse_12, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "FMSG AAAB  Hello\\sWorld!\n", 25);
-	return msg == NULL;
-});
-
-EXO_TEST(adc_message_parse_13, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "FMSG AAAB +jalla Hello\\sWorld!\n", 31);
-	return msg == NULL;
-});
-
-EXO_TEST(adc_message_parse_14, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "FMSG AAAB +jall Hello\\sWorld!\n", 30);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_15, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "FMSG AAAB +TCP4 Hello\\sWorld!\n", 30);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_16, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "BMSG AAAB Hello\\sWorld!\n", 24);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_17, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "BMSG aaab Hello\\sWorld!\n", 24);
-	return msg == NULL;
-});
-
-EXO_TEST(adc_message_parse_18, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "DMSG AAAB AAAC Hello\\sthere!\n", 29);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_19, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "DMSG AAAC AAAB Hello\\sthere!\n", 29);
-	return msg == NULL;
-});
-
-EXO_TEST(adc_message_parse_20, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "EMSG AAAB AAAC Hello\\sthere!\n", 29);
-	int ok = msg != NULL;
-	adc_msg_free(msg);
-	return ok;
-});
-
-EXO_TEST(adc_message_parse_21, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "EMSG AAAC AAAB Hello\\sthere!\n", 29);
-	return msg == NULL;
-});
-
-EXO_TEST(adc_message_parse_22, {
-	struct adc_message* msg = adc_msg_parse_verify(g_user, "\n", 0);
-	return msg == NULL;
-});
-
-EXO_TEST(adc_message_parse_23, {
-        struct adc_message* msg = adc_msg_parse_verify(g_user, "\r\n", 1);
-        return msg == NULL;
-});
-
-EXO_TEST(adc_message_parse_24, {
-        struct adc_message* msg = adc_msg_parse_verify(g_user, "EMSG AAAC\0AAAB Hello\\sthere!\n", 29);
-        return msg == NULL;
-});
-
-
+EXO_TEST(adc_message_parse_1,  { return  create_msg("IMSG Hello\\sWorld!"); });
+EXO_TEST(adc_message_parse_2,  { return  create_msg(test_string2); });
+EXO_TEST(adc_message_parse_3,  { return  verify_msg("BMSG AAAB Hello\\sWorld!", 23); });
+EXO_TEST(adc_message_parse_4,  { return !verify_msg("BMSG AAAC Hello\\sWorld!", 23); });
+EXO_TEST(adc_message_parse_5,  { return  verify_msg("BMSG AAAB Hello\\sWorld!\n", 24); });
+EXO_TEST(adc_message_parse_6,  { return  verify_msg("FMSG AAAB +TCP4 Hello\\sWorld!\n", 30); });
+EXO_TEST(adc_message_parse_7,  { return  verify_msg("FMSG AAAB -TCP4 Hello\\sWorld!\n", 30); });
+EXO_TEST(adc_message_parse_8,  { return  verify_msg("FMSG AAAB +TCP4+UDP4 Hello\\sWorld!\n", 35); });
+EXO_TEST(adc_message_parse_9,  { return  verify_msg("FMSG AAAB +TCP4-UDP4 Hello\\sWorld!\n", 35); });
+EXO_TEST(adc_message_parse_10, { return  verify_msg("FMSG AAAB -TCP4-UDP4 Hello\\sWorld!\n", 35); });
+EXO_TEST(adc_message_parse_11, { return !verify_msg("FMSG AAAB Hello\\sWorld!\n", 24); });
+EXO_TEST(adc_message_parse_12, { return !verify_msg("FMSG AAAB  Hello\\sWorld!\n", 25); });
+EXO_TEST(adc_message_parse_13, { return !verify_msg("FMSG AAAB +jalla Hello\\sWorld!\n", 31); });
+EXO_TEST(adc_message_parse_14, { return  verify_msg("FMSG AAAB +jall Hello\\sWorld!\n", 30); });
+EXO_TEST(adc_message_parse_15, { return  verify_msg("FMSG AAAB +TCP4 Hello\\sWorld!\n", 30); });
+EXO_TEST(adc_message_parse_16, { return  verify_msg("BMSG AAAB Hello\\sWorld!\n", 24); });
+EXO_TEST(adc_message_parse_17, { return !verify_msg("BMSG aaab Hello\\sWorld!\n", 24); });
+EXO_TEST(adc_message_parse_18, { return  verify_msg("DMSG AAAB AAAC Hello\\sthere!\n", 29); });
+EXO_TEST(adc_message_parse_19, { return !verify_msg("DMSG AAAC AAAB Hello\\sthere!\n", 29); });
+EXO_TEST(adc_message_parse_20, { return  verify_msg("EMSG AAAB AAAC Hello\\sthere!\n", 29); });
+EXO_TEST(adc_message_parse_21, { return !verify_msg("EMSG AAAC AAAB Hello\\sthere!\n", 29); });
+EXO_TEST(adc_message_parse_22, { return !verify_msg("\n", 0); });
+EXO_TEST(adc_message_parse_23, { return !verify_msg("\r\n", 1); });
+EXO_TEST(adc_message_parse_24, { return !verify_msg("EMSG AAAC\0AAAB Hello\\sthere!\n", 29); });
 
 
 EXO_TEST(adc_message_add_arg_1, {
@@ -387,6 +279,69 @@ EXO_TEST(adc_message_has_named_arg_7, {
 	return n == 1;
 });
 
+
+EXO_TEST(adc_message_get_named_arg_idx_1, {
+	struct adc_message* msg = adc_msg_create(test_string1);
+	int n = adc_msg_get_named_argument_index(msg, "AA");
+	adc_msg_free(msg);
+	return n == 0;
+});
+
+EXO_TEST(adc_message_get_named_arg_idx_2, {
+	struct adc_message* msg = adc_msg_create(test_string1);
+	int n = adc_msg_get_named_argument_index(msg, "BB");
+	adc_msg_free(msg);
+	return n == 1;
+});
+
+EXO_TEST(adc_message_get_named_arg_idx_3, {
+	struct adc_message* msg = adc_msg_create(test_string1);
+	int n = adc_msg_get_named_argument_index(msg, "CC");
+	adc_msg_free(msg);
+	return n == 2;
+});
+
+EXO_TEST(adc_message_get_named_arg_idx_4, {
+	struct adc_message* msg = adc_msg_create(test_string1);
+	int n = adc_msg_get_named_argument_index(msg, "DD");
+	adc_msg_free(msg);
+	return n == -1;
+});
+
+EXO_TEST(adc_message_get_named_arg_idx_5, {
+	struct adc_message* msg = adc_msg_create(test_string1);
+	int n = adc_msg_get_named_argument_index(msg, "II");
+	adc_msg_free(msg);
+	return n == -1;
+});
+
+EXO_TEST(adc_message_get_named_arg_idx_6, {
+	struct adc_message* msg = adc_msg_create(test_string1);
+	int n = adc_msg_get_named_argument_index(msg, "Af");
+	adc_msg_free(msg);
+	return n == -1;
+});
+
+EXO_TEST(adc_message_get_named_arg_idx_7, {
+	struct adc_message* msg = adc_msg_create(test_string1);
+	int n = adc_msg_get_named_argument_index(msg, "oo");
+	adc_msg_free(msg);
+	return n == -1;
+});
+
+/* Make sure it doesn't mangle the msg */
+EXO_TEST(adc_message_get_named_arg_idx_8, {
+	struct adc_message* msg = adc_msg_create(test_string1);
+	int a = adc_msg_get_named_argument_index(msg, "AA");
+	int b = adc_msg_get_named_argument_index(msg, "BB");
+	int c = adc_msg_get_named_argument_index(msg, "CC");
+	int d = adc_msg_get_named_argument_index(msg, "DD");
+	int i = adc_msg_get_named_argument_index(msg, "II");
+	int match = strcmp(msg->cache, test_string1);
+	adc_msg_free(msg);
+	return a == 0 && b == 1 && c == 2 && d == -1 && i == -1 && match == 0;
+});
+
 EXO_TEST(adc_message_terminate_1, {
 	int ok;
 	struct adc_message* msg = adc_msg_create("IINF AAfoo BBbar CCwhat");
@@ -401,7 +356,7 @@ EXO_TEST(adc_message_terminate_2, {
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_unterminate(msg);
 	adc_msg_terminate(msg);
-	ok = strcmp(msg->cache, "IINF AAfoo BBbar CCwhat\n") == 0;
+	ok = strcmp(msg->cache, test_string1) == 0;
 	adc_msg_free(msg);
 	return ok;
 });
@@ -423,7 +378,7 @@ EXO_TEST(adc_message_terminate_4, {
 	adc_msg_unterminate(msg);
 	adc_msg_terminate(msg);
 	adc_msg_terminate(msg);
-	ok = strcmp(msg->cache, "IINF AAfoo BBbar CCwhat\n") == 0;
+	ok = strcmp(msg->cache, test_string1) == 0;
 	adc_msg_free(msg);
 	return ok;
 });
@@ -433,7 +388,7 @@ EXO_TEST(adc_message_terminate_5, {
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_terminate(msg);
 	adc_msg_terminate(msg);
-	ok = strcmp(msg->cache, "IINF AAfoo BBbar CCwhat\n") == 0;
+	ok = strcmp(msg->cache, test_string1) == 0;
 	adc_msg_free(msg);
 	return ok;
 });
@@ -577,5 +532,4 @@ EXO_TEST(adc_message_last, {
 	g_user = 0;
 	return g_user == 0;
 });
-
 

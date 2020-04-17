@@ -772,6 +772,14 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_adc_message_has_named_arg_5, "adc_message_has_named_arg_5");
 	exotic_add_test(&handle, &exotic_test_adc_message_has_named_arg_6, "adc_message_has_named_arg_6");
 	exotic_add_test(&handle, &exotic_test_adc_message_has_named_arg_7, "adc_message_has_named_arg_7");
+	exotic_add_test(&handle, &exotic_test_adc_message_get_named_arg_idx_1, "adc_message_get_named_arg_idx_1");
+	exotic_add_test(&handle, &exotic_test_adc_message_get_named_arg_idx_2, "adc_message_get_named_arg_idx_2");
+	exotic_add_test(&handle, &exotic_test_adc_message_get_named_arg_idx_3, "adc_message_get_named_arg_idx_3");
+	exotic_add_test(&handle, &exotic_test_adc_message_get_named_arg_idx_4, "adc_message_get_named_arg_idx_4");
+	exotic_add_test(&handle, &exotic_test_adc_message_get_named_arg_idx_5, "adc_message_get_named_arg_idx_5");
+	exotic_add_test(&handle, &exotic_test_adc_message_get_named_arg_idx_6, "adc_message_get_named_arg_idx_6");
+	exotic_add_test(&handle, &exotic_test_adc_message_get_named_arg_idx_7, "adc_message_get_named_arg_idx_7");
+	exotic_add_test(&handle, &exotic_test_adc_message_get_named_arg_idx_8, "adc_message_get_named_arg_idx_8");
 	exotic_add_test(&handle, &exotic_test_adc_message_terminate_1, "adc_message_terminate_1");
 	exotic_add_test(&handle, &exotic_test_adc_message_terminate_2, "adc_message_terminate_2");
 	exotic_add_test(&handle, &exotic_test_adc_message_terminate_3, "adc_message_terminate_3");
