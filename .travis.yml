@@ -23,13 +23,13 @@ jobs:
 #     env: CONFIG=full
 #     cache:
 #       directories:
-#         - $HOME/vcpkg-full
+#         - "$HOME/vcpkg-full"
     - name: Windows minimal
       os: windows
       env: CONFIG=minimal
       cache:
         directories:
-          - $HOME/vcpkg-minimal
+          - "$HOME/vcpkg-minimal"
 
     # Mac OS X builds
     - name: Mac OSX full
@@ -119,6 +119,37 @@ jobs:
           cat "${TRAVIS_BUILD_DIR}/cov-int/scm_log.txt"
           true
     # End Coverity build
+
+    # SonarCloud build
+    - name: SonarCloud scan
+      branches:
+        only:
+          - master
+          - sonarcloud
+      env: CONFIG=full
+      addons:
+        sonarcloud:
+          organization: "modelrockettier"
+          # Encrypted tokens had issues, so it's set in the repo settings
+      # override the build script
+      script:
+        # Sonar needs an unshallow checkout for its source to work out properly
+        - git fetch --unshallow origin 'refs/heads/*:refs/remotes/origin/*'
+        # Prepare the build system
+        - cmake . -DSSL_SUPPORT=1 -DSYSTEMD_SUPPORT=1 -DADC_STRESS=1
+        # Wraps the compilation with the Build Wrapper to generate config
+        - build-wrapper-linux-x86-64 --out-dir bw-output cmake --build .
+        # Run the SonarQube analysis
+        - >
+          sonar-scanner \
+            -Dsonar.cfamily.build-wrapper-output=bw-output \
+            -Dsonar.login=${SONAR_TOKEN} \
+            -Dsonar.cfamily.cache.enabled=true \
+            -Dsonar.cfamily.cache.path="$HOME/.sonar/cache"
+      cache:
+        directories:
+          - "$HOME/.sonar/cache"
+    # End SonarCloud build
 
 install:
   - autotest/ci/install-build-depends.sh
