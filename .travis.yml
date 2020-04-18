@@ -16,38 +16,7 @@ jobs:
 
   # Additional builds to do (outside the build matrix)
   include:
-    # Bionic builds
-    - name: bionic full
-      dist: bionic
-      env: CONFIG=full
-    - name: bionic minimal
-      dist: bionic
-      env: CONFIG=minimal
-    # 64-bit ARM builds
-    - name: arm64 full
-      arch: arm64
-      env: config=full
-    - name: arm64 minimal
-      arch: arm64
-      env: config=minimal
-    # Debian package builds
-    - name: debian package
-      env: CONFIG=deb
-    - name: bionic debian package
-      dist: bionic
-      env: CONFIG=deb
-    # Docker build
-    - name: docker
-      language: minimal
-      services: docker
-      env: CONFIG=docker
-    # Mac OS X builds
-    - name: Mac OSX full
-      os: osx
-      env: CONFIG=full
-    - name: Mac OSX minimal
-      os: osx
-      env: CONFIG=minimal
+
     # Windows builds
 #   - name: Windows full
 #     os: windows
@@ -61,6 +30,34 @@ jobs:
       cache:
         directories:
           - $HOME/vcpkg-minimal
+
+    # Mac OS X builds
+    - name: Mac OSX full
+      os: osx
+      env: CONFIG=full
+      addons:
+        homebrew:
+          packages:
+          - cmake
+          - openssl
+          - sqlite
+    - name: Mac OSX minimal
+      os: osx
+      env: CONFIG=minimal
+      addons:
+        homebrew:
+          packages:
+          - cmake
+          - sqlite
+
+    # 64-bit ARM builds
+    - name: arm64 full
+      arch: arm64
+      env: config=full
+    - name: arm64 minimal
+      arch: arm64
+      env: config=minimal
+
     # 64-bit Little-Endian PPC builds
     - name: ppc64le full
       arch: ppc64le
@@ -68,6 +65,7 @@ jobs:
     - name: ppc64le minimal
       arch: ppc64le
       env: config=minimal
+
     # s390x (big-endian) builds
     - name: s390x full
       arch: s390x
@@ -76,12 +74,23 @@ jobs:
       arch: s390x
       env: config=minimal
 
-addons:
-  homebrew:
-    packages:
-    - cmake
-    - openssl
-    - sqlite
+    # Bionic builds
+    - name: bionic full
+      dist: bionic
+      env: CONFIG=full
+    - name: bionic minimal
+      dist: bionic
+      env: CONFIG=minimal
+
+    # Debian package builds
+    - name: debian package
+      env: CONFIG=deb
+
+    # Docker build
+    - name: docker
+      language: minimal
+      services: docker
+      env: CONFIG=docker
 
 install:
   - autotest/ci/install-build-depends.sh
