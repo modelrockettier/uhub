@@ -122,7 +122,7 @@ static void read_log_file(struct plugin_handle* plugin, struct log_data* data)
 	}
 
 	if (len)
-		list_append(data->messages, hub_strdup(buffer));
+		list_append(data->messages, hub_strndup(buffer, len));
 
 	while (list_size(data->messages) > data->max_log_entries)
 		list_remove_first(data->messages, hub_free);

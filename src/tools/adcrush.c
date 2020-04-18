@@ -254,7 +254,7 @@ static void client_connect(struct AdcFuzzUser* c, const char* nick, const char* 
 	timeout_evt_initialize(c->timer, timer_callback, c);
 	timeout_queue_insert(net_backend_get_timeout_queue(), c->timer, timeout);
 
-	bot_output(client, LVL_VERBOSE, "Initial timeout: %d seconds", timeout);
+	bot_output(client, LVL_VERBOSE, "Initial timeout: " PRINTF_SIZE_T " seconds", timeout);
 	c->logged_in = 0;
 
 	ADC_client_set_callback(client, handle);

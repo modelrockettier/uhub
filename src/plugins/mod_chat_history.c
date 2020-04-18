@@ -234,7 +234,7 @@ static void read_log_file(struct plugin_handle* plugin, struct chat_history_data
 	}
 
 	if (len)
-		list_append(data->chat_history, hub_strdup(buffer));
+		list_append(data->chat_history, hub_strndup(buffer, len));
 
 	while (list_size(data->chat_history) > data->history_max)
 		list_remove_first(data->chat_history, hub_free);

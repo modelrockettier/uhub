@@ -301,8 +301,8 @@ static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
 			int ok = auth_string_to_cred(argv[i], &data->credentials);
 			if (!ok)
 			{
-				LOG_ERROR("Unknown credential level \"%s\" found in database", argv[i]);
-				data->credentials = auth_cred_user;
+				LOG_ERROR("Unknown credential level \"%s\" found in get_user results", argv[i]);
+				return -1;
 			}
 			else if (data->credentials < auth_cred_user)
 				LOG_WARN("Found a guest in the database");
@@ -320,7 +320,10 @@ static int get_user_callback(void* ptr, int argc, char **argv, char **colName){
 			uhub_assert(sizeof(data->password) == max);
 		}
 		else
-			LOG_WARN("Unknown column \"%s\" in get_user results", colName[i]);
+		{
+			LOG_ERROR("Unknown column \"%s\" in get_user results", colName[i]);
+			return -1;
+		}
 
 		if (len >= max)
 		{
