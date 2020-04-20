@@ -288,7 +288,7 @@ static void log_close(struct log_data* data)
 
 static void log_message(struct log_data* data, const char *format, ...)
 {
-	static char logmsg[MAX_MSG_SIZE];
+	static char logmsg[MAX_MSG_SIZE + 1];
 	struct tm tmp;
 	time_t t;
 	va_list args;
@@ -301,8 +301,10 @@ static void log_message(struct log_data* data, const char *format, ...)
 	ts_len = strlen(logmsg);
 
 	va_start(args, format);
-	size = vsnprintf(logmsg + ts_len, MAX_MSG_SIZE - ts_len, format, args);
+	size = vsnprintf(logmsg + ts_len, sizeof(logmsg) - ts_len, format, args);
 	va_end(args);
+
+	size += (ssize_t)ts_len;
 
 	// Add the message to the list (without a trailing newline)
 	list_append(data->messages, hub_strdup(logmsg));
@@ -312,29 +314,32 @@ static void log_message(struct log_data* data, const char *format, ...)
 	}
 
 	// Append a newline to the message
-	if ((size_t)size >= (MAX_MSG_SIZE - ts_len - 1))
+	if ((size_t)size >= MAX_MSG_SIZE)
 	{
 		LOG_WARN("Log entry exceeded max size: %lld/" PRINTF_SIZE_T,
-			(long long)size, (size_t) MAX_MSG_SIZE - ts_len);
+			(long long) size, (size_t) MAX_MSG_SIZE);
 
 		// make sure the msg ends with "...\n" (4 chars + nul)
 		strcpy(&logmsg[MAX_MSG_SIZE - 5], "...\n");
 
-		size = MAX_MSG_SIZE - 1;
+		size = MAX_MSG_SIZE;
 	}
-	else
+	else if (logmsg[size - 1] != '\n')
 	{
-		size += (ssize_t)ts_len;
-		if (logmsg[size - 1] != '\n')
-		{
-			logmsg[size++] = '\n';
-			logmsg[size] = '\0';
-		}
+		logmsg[size] = '\n';
+		size++;
+		logmsg[size] = '\0';
 	}
 
 	if (data->logmode == mode_file)
 	{
-		uhub_assert((size_t)size == strlen(logmsg));
+#if DEBUG
+		if ((size_t) size != strlen(logmsg))
+		{
+			LOG_WARN("size != strlen(logmsg): " PRINTF_SIZE_T " / " PRINTF_SIZE_T,
+				(size_t) size, strlen(logmsg));
+		}
+#endif
 
 		if (write(data->fd, logmsg, size) < size)
 		{

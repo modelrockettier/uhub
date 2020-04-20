@@ -1,9 +1,10 @@
 int nick_length_ok(const char* nick)
 {
-	int len;
-	if (len == 1)
+	int ok_size;
+	__coverity_string_null_sink__(nick);
+	if (ok_size == 1)
 		return -1; /* nick_invalid_short */
-	else if (len == 2)
+	else if (ok_size == 2)
 		return -2; /* nick_invalid_long */
 	else
 	{

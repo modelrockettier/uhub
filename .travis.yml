@@ -11,6 +11,9 @@ env:
 
 jobs:
   allow_failures:
+    # Just in case we exceed the coverity scan limits
+    - name: Coverity scan
+    # vcpkg openssl has issues
 #   - os: windows
 #     env: CONFIG=full
 
@@ -96,7 +99,7 @@ jobs:
     - name: Coverity scan
       branches:
         only:
-          - coverity_scan
+          - master
       env: CONFIG=full
       # The COVERITY_SCAN_TOKEN env var is set in the travis repository settings
       addons:
@@ -107,7 +110,7 @@ jobs:
           notification_email: "modelrockettier@users.noreply.github.com"
           build_command_prepend: "cmake . -DSSL_SUPPORT=1 -DSYSTEMD_SUPPORT=1 -DADC_STRESS=1"
           build_command: "make -j2"
-          branch_pattern: coverity_scan
+          branch_pattern: master
       before_install:
         - set -x; echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
       # override the build script

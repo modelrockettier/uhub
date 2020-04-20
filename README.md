@@ -4,17 +4,19 @@
 [![Travis][travis-img]](https://travis-ci.com/modelrockettier/uhub)
 [![Docker Hub][docker-img]](https://hub.docker.com/r/modelrockettier/uhub)
 [![Quay.io][quay-img]](https://quay.io/repository/modelrockettier/uhub)
+[![Coverity][coverity-img]](https://scan.coverity.com/projects/modelrockettier-uhub)
 [![Releases][release-img]](https://github.com/modelrockettier/uhub/releases)
 [![Commits][commits-img]](https://github.com/modelrockettier/uhub/commits/master)
 [![GPLv3+][license-img]](https://www.gnu.org/licenses/gpl-3.0)
 
-[cirrus-img]:  https://api.cirrus-ci.com/github/modelrockettier/uhub.svg?branch=master "Cirrus CI build status"
-[travis-img]:  https://api.travis-ci.com/modelrockettier/uhub.svg?branch=master "Travis CI build status"
-[docker-img]:  https://img.shields.io/docker/cloud/build/modelrockettier/uhub?label=docker&cacheSeconds=300 "Docker Hub build status"
-[quay-img]:    https://quay.io/repository/modelrockettier/uhub/status "Quay.io build status"
-[release-img]: https://img.shields.io/github/v/release/modelrockettier/uhub?cacheSeconds=3600 "Latest GitHub release"
-[commits-img]: https://img.shields.io/github/commits-since/modelrockettier/uhub/latest/master?cacheSeconds=1800 "GitHub commits since latest release"
-[license-img]: https://img.shields.io/badge/License-GPLv3-blue.svg?label=license&cacheSeconds=3600 "License"
+[cirrus-img]:     https://api.cirrus-ci.com/github/modelrockettier/uhub.svg?branch=master "Cirrus CI build status"
+[travis-img]:     https://api.travis-ci.com/modelrockettier/uhub.svg?branch=master "Travis CI build status"
+[docker-img]:     https://img.shields.io/docker/cloud/build/modelrockettier/uhub?label=docker&cacheSeconds=300 "Docker Hub build status"
+[quay-img]:       https://quay.io/repository/modelrockettier/uhub/status "Quay.io build status"
+[coverity-img]:   https://scan.coverity.com/projects/20832/badge.svg "Coverity status"
+[release-img]:    https://img.shields.io/github/v/release/modelrockettier/uhub?cacheSeconds=3600 "Latest GitHub release"
+[commits-img]:    https://img.shields.io/github/commits-since/modelrockettier/uhub/latest/master?cacheSeconds=1800 "GitHub commits since latest release"
+[license-img]:    https://img.shields.io/badge/License-GPLv3-blue.svg?label=license&cacheSeconds=3600 "License"
 
 
 Uhub is a high performance peer-to-peer hub for the ADC network.

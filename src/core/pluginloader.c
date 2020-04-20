@@ -188,7 +188,7 @@ static int plugin_parse_line(char* line, int line_count, void* ptr_data)
 	soname    = cfg_token_get_next(tokens);
 	params    = cfg_token_get_next(tokens);
 
-	if (strcmp(directive, "plugin") == 0 && soname && *soname)
+	if (directive && strcmp(directive, "plugin") == 0 && soname && *soname)
 	{
 		if (!params)
 			params = "";

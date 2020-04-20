@@ -33,15 +33,14 @@ struct acl_data
 {
 	struct linked_list* users;
 	char* file;
-	int readonly;
 	int exclusive;
 };
 
 static void insert_user(struct linked_list* users, const char* nick, const char* pass, enum auth_credentials cred)
 {
 	struct auth_info* data = (struct auth_info*) hub_malloc_zero(sizeof(struct auth_info));
-	strncpy(data->nickname, nick, MAX_NICK_LEN);
-	strncpy(data->password, pass, MAX_PASS_LEN);
+	strlcpy(data->nickname, nick, MAX_NICK_LEN + 1);
+	strlcpy(data->password, pass, MAX_PASS_LEN + 1);
 	data->credentials = cred;
 	list_append(users, data);
 }
@@ -75,7 +74,6 @@ static struct acl_data* parse_config(const char* line, struct plugin_handle* plu
 	}
 
 	// set defaults
-	data->readonly = 1;
 	data->exclusive = 0;
 	data->users = list_create();
 
@@ -103,11 +101,6 @@ static struct acl_data* parse_config(const char* line, struct plugin_handle* plu
 			}
 
 			data->file = hub_strdup(cfg_settings_get_value(setting));
-		}
-		else if (strcmp(cfg_settings_get_key(setting), "readonly") == 0)
-		{
-			if (!string_to_boolean(cfg_settings_get_value(setting), &data->readonly))
-				data->readonly = 1;
 		}
 		else if (strcmp(cfg_settings_get_key(setting), "exclusive") == 0)
 		{
@@ -154,6 +147,12 @@ static int parse_line(char* line, int line_count, void* ptr_data)
 	credential = cfg_token_get_first(tokens);
 	username   = cfg_token_get_next(tokens);
 	password   = cfg_token_get_next(tokens);
+
+	if (!credential || !username || !password)
+	{
+		cfg_tokens_free(tokens);
+		return -1;
+	}
 
 	if (!auth_string_to_cred(credential, &cred))
 	{
