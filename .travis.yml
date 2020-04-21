@@ -97,11 +97,16 @@ jobs:
 
     # Coverity build
     - name: Coverity scan
+      # The COVERITY_SCAN_TOKEN env var is set in the travis repository settings
+      env: CONFIG=full
       branches:
         only:
           - master
-      env: CONFIG=full
-      # The COVERITY_SCAN_TOKEN env var is set in the travis repository settings
+          - coverity_scan
+      # Don't build for pull requests or if the token isn't set
+      if: |
+          env(COVERITY_SCAN_TOKEN) IS present AND \
+          type = push
       addons:
         coverity_scan:
           project:
@@ -125,11 +130,16 @@ jobs:
 
     # SonarCloud build
     - name: SonarCloud scan
+      env: CONFIG=full
       branches:
         only:
           - master
+          - staging
           - sonarcloud
-      env: CONFIG=full
+      # Don't build for pull requests or if the token isn't set
+      if: |
+          env(SONAR_TOKEN) IS present AND \
+          type = push
       addons:
         sonarcloud:
           organization: "modelrockettier"
