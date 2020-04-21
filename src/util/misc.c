@@ -23,13 +23,15 @@ static const char* BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 int is_space(char c)
 {
-	if (c == ' ') return 1;
+	if (c == ' ')
+		return 1;
 	return 0;
 }
 
 int is_white_space(char c)
 {
-	if (c == ' ' || c == '\t' || c == '\r') return 1;
+	if (c == ' ' || c == '\t' || c == '\r')
+		return 1;
 	return 0;
 }
 
@@ -37,8 +39,7 @@ static int is_printable(unsigned char c)
 {
 	if (c >= 32)
 		return 1;
-
-	if (c == '\t' || c == '\r' || c == '\n')
+	else if (c == '\t' || c == '\r' || c == '\n')
 		return 1;
 	return 0;
 }
@@ -51,14 +52,19 @@ char* strip_white_space(char* string)
 	if (!string)
 		return "";
 
-	while (string[0] && is_white_space(string[0])) string++;
+	while (string[0] && is_white_space(string[0]))
+		string++;
 
 	if (!*string)
 		return string;
 
 	/* Strip appending whitespace */
-	pos = &string[strlen(string)-1];
-	while (&string[0] < &pos[0] && is_white_space(pos[0])) { pos[0] = 0; pos--; }
+	pos = &string[strlen(string) - 1];
+	while (&string[0] < &pos[0] && is_white_space(pos[0]))
+	{
+		pos[0] = '\0';
+		pos--;
+	}
 
 	return string;
 }
@@ -69,14 +75,17 @@ static int is_valid_utf8_str(const unsigned char* string, size_t length)
 	char div = 0;
 	size_t pos = 0;
 
-	if (length == 0) return 1;
+	if (length == 0)
+		return 1;
 
 	for (pos = 0; pos < length; pos++)
 	{
 		if (expect)
 		{
-			if ((string[pos] & 0xC0) == 0x80) expect--;
-			else return 0;
+			if ((string[pos] & 0xC0) == 0x80)
+				expect--;
+			else
+				return 0;
 		}
 		else
 		{
@@ -84,28 +93,40 @@ static int is_valid_utf8_str(const unsigned char* string, size_t length)
 			{
 				for (div = 0x40; div > 0x08; div /= 2)
 				{
-					if (string[pos] & div) expect++;
-					else break;
+					if (string[pos] & div)
+						expect++;
+					else
+						break;
 				}
-				if ((string[pos] & div) || (pos+expect >= length)) return 0;
-				switch (expect) {
+
+				if ((string[pos] & div) || (pos + expect >= length))
+					return 0;
+
+				switch (expect)
+				{
 					case 0:
 						return 0;
 					case 1:
 						/* Out of range */
-						if (string[pos] < 0xC2) return 0;
+						if (string[pos] < 0xC2)
+							return 0;
 						break;
 					case 2:
 						/* Out of range */
-						if ((string[pos] == 0xE0) && (string[pos+1] < 0xA0 )) return 0;
+						if ((string[pos] == 0xE0) && (string[pos + 1] < 0xA0))
+							return 0;
 						/* Surrogates */
-						if ((string[pos] == 0xED) && (string[pos+1] > 0x9F )) return 0;
+						if ((string[pos] == 0xED) && (string[pos + 1] > 0x9F))
+							return 0;
 						break;
 					case 3:
 						/* Out of range */
-						if ((string[pos] == 0xF0) && (string[pos+1] < 0x90 )) return 0;
-						if (string[pos] > 0xF4) return 0;
-						if ((string[pos] == 0xF4) && (string[pos+1] > 0x8F )) return 0;
+						if ((string[pos] == 0xF0) && (string[pos + 1] < 0x90))
+							return 0;
+						if (string[pos] > 0xF4)
+							return 0;
+						if ((string[pos] == 0xF4) && (string[pos + 1] > 0x8F))
+							return 0;
 						break;
 				}
 			}
@@ -116,7 +137,7 @@ static int is_valid_utf8_str(const unsigned char* string, size_t length)
 
 int is_valid_utf8(const char* string)
 {
-	return is_valid_utf8_str((const unsigned char*)string, strlen(string));
+	return is_valid_utf8_str((const unsigned char*) string, strlen(string));
 }
 
 int is_printable_utf8(const char* string, size_t length)
@@ -127,67 +148,88 @@ int is_printable_utf8(const char* string, size_t length)
 		if (!is_printable(string[pos]))
 			return 0;
 	}
-	return is_valid_utf8_str((const unsigned char*)string, length);
+	return is_valid_utf8_str((const unsigned char*) string, length);
 }
 
 int is_valid_base32_char(char c)
 {
-	if ((c >= 'A' && c <= 'Z') || (c >= '2' && c <= '7')) return 1;
+	if ((c >= 'A' && c <= 'Z') || (c >= '2' && c <= '7'))
+		return 1;
 	return 0;
 }
 
 
 int is_num(char c)
 {
-	if (c >= '0' && c <= '9') return 1;
+	if (c >= '0' && c <= '9')
+		return 1;
 	return 0;
 }
 
 
-void base32_encode(const unsigned char* buffer, size_t len, char* result) {
+void base32_encode(const unsigned char* buffer, size_t len, char* result)
+{
 	unsigned char word = 0;
 	size_t n = 0;
 	size_t i = 0;
 	size_t index = 0;
-	for (; i < len;) {
-		if (index > 3) {
+	while (i < len)
+	{
+		if (index > 3)
+		{
 			word = (buffer[i] & (0xFF >> index));
 			index = (index + 5) % 8;
 			word <<= index;
 			if (i < len - 1)
 				word |= buffer[i + 1] >> (8 - index);
 			i++;
-		} else {
+		}
+		else
+		{
 			word = (buffer[i] >> (8 - (index + 5))) & 0x1F;
 			index = (index + 5) % 8;
-			if (index == 0) i++;
+			if (index == 0)
+				i++;
 		}
 		result[n++] = BASE32_ALPHABET[word];
 	}
 	result[n] = '\0';
 }
 
-void base32_decode(const char* src, unsigned char* dst, size_t len) {
+void base32_decode(const char* src, unsigned char* dst, size_t len)
+{
 	size_t index = 0;
 	size_t offset = 0;
 	size_t i = 0;
 	memset(dst, 0, len);
-	for (i = 0; src[i]; i++) {
+	for (i = 0; src[i]; i++)
+	{
 		unsigned char n = 0;
-		for (; n < 32; n++) if (src[i] == BASE32_ALPHABET[n]) break;
-		if (n == 32) continue;
-		if (index <= 3) {
+		for (; n < 32; n++)
+			if (src[i] == BASE32_ALPHABET[n])
+				break;
+		if (n == 32)
+			continue;
+		if (index <= 3)
+		{
 			index = (index + 5) % 8;
-			if (index == 0) {
+			if (index == 0)
+			{
 				dst[offset++] |= n;
-				if (offset == len) break;
-			} else {
+				if (offset == len)
+					break;
+			}
+			else
+			{
 				dst[offset] |= n << (8 - index);
 			}
-		} else {
+		}
+		else
+		{
 			index = (index + 5) % 8;
 			dst[offset++] |= (n >> index);
-			if (offset == len) break;
+			if (offset == len)
+				break;
 			dst[offset] |= n << (8 - index);
 		}
 	}
@@ -227,7 +269,7 @@ int string_split(const char* string, const char* split, void* data, string_split
 		}
 	}
 	hub_free(buf);
-	return count+1;
+	return count + 1;
 }
 
 struct file_read_line_data
@@ -241,7 +283,7 @@ static int file_read_line_handler(char* line, int count, void* ptr)
 	struct file_read_line_data* data = (struct file_read_line_data*) ptr;
 
 	LOG_DUMP("Line: %s", line);
-	if (data->handler(line, count+1, data->data) < 0)
+	if (data->handler(line, count + 1, data->data) < 0)
 		return -1;
 	return 0;
 }
@@ -264,7 +306,7 @@ int file_read_lines(const char* file, void* data, file_line_handler_t handler)
 		return -2;
 	}
 
-	ret = read(fd, buf, MAX_RECV_BUF-1);
+	ret = read(fd, buf, MAX_RECV_BUF - 1);
 	close(fd);
 
 	if (ret < 0)
@@ -272,7 +314,7 @@ int file_read_lines(const char* file, void* data, file_line_handler_t handler)
 		LOG_ERROR("Unable to read from file %s: %s", file, strerror(errno));
 		return -1;
 	}
-	else  if (ret == 0)
+	else if (ret == 0)
 	{
 		LOG_WARN("File is empty.");
 		return 0;
@@ -288,7 +330,8 @@ int file_read_lines(const char* file, void* data, file_line_handler_t handler)
 }
 
 
-int uhub_atoi(const char* value) {
+int uhub_atoi(const char* value)
+{
 	int len = strlen(value);
 	int offset = 0;
 	int val = 0;
@@ -297,8 +340,8 @@ int uhub_atoi(const char* value) {
 		if (value[i] > '9' || value[i] < '0')
 			offset++;
 
-	for (i = offset; i< len; i++)
-		val = val*10 + (value[i] - '0');
+	for (i = offset; i < len; i++)
+		val = val * 10 + (value[i] - '0');
 
 	return value[0] == '-' ? -val : val;
 }
@@ -317,8 +360,8 @@ int is_number(const char* value, int* num)
 		if (value[i] > '9' || value[i] < '0')
 			return 0;
 
-	for (i = offset; i< len; i++)
-		val = val*10 + (value[i] - '0');
+	for (i = offset; i < len; i++)
+		val = val * 10 + (value[i] - '0');
 	*num = value[0] == '-' ? -val : val;
 
 	return 1;
@@ -362,12 +405,11 @@ const char* uhub_ulltoa(uint64_t val)
 }
 
 
-
 #ifndef HAVE_STRNDUP
 char* strndup(const char* string, size_t n)
 {
 	size_t max = MIN(strlen(string), n);
-	char* tmp = hub_malloc(max+1);
+	char* tmp = hub_malloc(max + 1);
 	memcpy(tmp, string, max);
 	tmp[max] = 0;
 	return tmp;
@@ -375,7 +417,7 @@ char* strndup(const char* string, size_t n)
 #endif
 
 #ifndef HAVE_MEMMEM
-void* memmem(const void *haystack, size_t haystacklen, const void *needle, size_t needlelen)
+void* memmem(const void* haystack, size_t haystacklen, const void* needle, size_t needlelen)
 {
 	char* c_buf = (char*) haystack;
 	char* c_pat = (char*) needle;
@@ -393,7 +435,8 @@ void* memmem(const void *haystack, size_t haystacklen, const void *needle, size_
 
 int split_string(const char* string, const char* split, struct linked_list* list, int allow_empty)
 {
-	char* tmp1, *tmp2;
+	char* tmp1;
+	char* tmp2;
 	int n = 0;
 
 	if (!string || !*string || !split || !*split || !list)
@@ -403,8 +446,10 @@ int split_string(const char* string, const char* split, struct linked_list* list
 	{
 		tmp1 = strstr(string, split);
 
-		if (tmp1) tmp2 = hub_strndup(string, tmp1 - string);
-		else      tmp2 = hub_strdup(string);
+		if (tmp1)
+			tmp2 = hub_strndup(string, tmp1 - string);
+		else
+			tmp2 = hub_strdup(string);
 
 		if (!tmp2)
 		{
@@ -424,7 +469,8 @@ int split_string(const char* string, const char* split, struct linked_list* list
 			hub_free(tmp2);
 		}
 
-		if (!tmp1) break; /* last element found */
+		if (!tmp1)
+			break; /* last element found */
 
 		string = tmp1;
 		string += strlen(split);
@@ -498,26 +544,58 @@ int string_to_boolean(const char* str, int* boolean)
 	switch (strlen(str))
 	{
 		case 1:
-			if      (str[0] == '1') { *boolean = 1; return 1; }
-			else if (str[0] == '0') { *boolean = 0; return 1; }
+			if (str[0] == '1')
+			{
+				*boolean = 1;
+				return 1;
+			}
+			else if (str[0] == '0')
+			{
+				*boolean = 0;
+				return 1;
+			}
 			return 0;
 
 		case 2:
-			if (!strcasecmp(str, "on")) { *boolean = 1; return 1; }
-			if (!strcasecmp(str, "no")) { *boolean = 0; return 1; }
+			if (!strcasecmp(str, "on"))
+			{
+				*boolean = 1;
+				return 1;
+			}
+			if (!strcasecmp(str, "no"))
+			{
+				*boolean = 0;
+				return 1;
+			}
 			return 0;
 
 		case 3:
-			if (!strcasecmp(str, "yes")) { *boolean = 1; return 1; }
-			if (!strcasecmp(str, "off")) { *boolean = 0; return 1; }
+			if (!strcasecmp(str, "yes"))
+			{
+				*boolean = 1;
+				return 1;
+			}
+			if (!strcasecmp(str, "off"))
+			{
+				*boolean = 0;
+				return 1;
+			}
 			return 0;
 
 		case 4:
-			if (!strcasecmp(str, "true")) { *boolean = 1; return 1; }
+			if (!strcasecmp(str, "true"))
+			{
+				*boolean = 1;
+				return 1;
+			}
 			return 0;
 
 		case 5:
-			if (!strcasecmp(str, "false")) { *boolean = 0; return 1; }
+			if (!strcasecmp(str, "false"))
+			{
+				*boolean = 0;
+				return 1;
+			}
 			return 0;
 
 		default:
@@ -539,7 +617,7 @@ char* strip_off_quotes(char* line)
 	if ((line[0] == '"' && line[len - 1] == '"') ||
 	    (line[0] == '\'' && line[len - 1] == '\''))
 	{
-		line[len-1] = '\0';
+		line[len - 1] = '\0';
 		return line + 1;
 	}
 	return line;
