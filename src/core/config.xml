@@ -635,7 +635,7 @@
 
 	<option name="msg_auth_user_not_found" type="message" default="User not found in password database">
 		<description><![CDATA[This message is used if a user cannot be found in the password database.]]></description>
-		<since>0.2.0</since> <!-- FIXME? -->
+		<since>0.2.0</since>
 	</option>
 
 	<option name="msg_error_no_memory" type="message" default="No memory">
