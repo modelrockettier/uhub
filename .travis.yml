@@ -139,13 +139,20 @@ jobs:
         # Sonar needs an unshallow checkout for its source to work out properly
         - git fetch --unshallow origin 'refs/heads/*:refs/remotes/origin/*'
         # Prepare the build system
-        - cmake . -DSSL_SUPPORT=1 -DSYSTEMD_SUPPORT=1 -DADC_STRESS=1
+        - cmake . -DSSL_SUPPORT=ON -DSYSTEMD_SUPPORT=ON -DADC_STRESS=ON -DCOVERAGE=ON
         # Wraps the compilation with the Build Wrapper to generate config
         - build-wrapper-linux-x86-64 --out-dir bw-output cmake --build .
+        # Run the tests
+        - make test CTEST_OUTPUT_ON_FAILURE=1
+        - mkdir cov
+        - cd cov
+        - find .. -iname '*.gc?*' -exec gcov -a -b -c -u -l {} +
+        - cd ..
         # Run the SonarQube analysis
         - >
           sonar-scanner \
             -Dsonar.cfamily.build-wrapper-output=bw-output \
+            -Dsonar.cfamily.gcov.reportsPath=cov \
             -Dsonar.login=${SONAR_TOKEN} \
             -Dsonar.cfamily.cache.enabled=true \
             -Dsonar.cfamily.cache.path="$HOME/.sonar/cache"

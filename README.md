@@ -1,7 +1,7 @@
 # uHub
 
 [![Cirrus][cirrus-img]](https://cirrus-ci.com/github/modelrockettier/uhub)
-[![Travis][travis-img]](https://travis-ci.com/modelrockettier/uhub)
+[![Travis][travis-img]](https://travis-ci.org/modelrockettier/uhub)
 [![Docker Hub][docker-img]](https://hub.docker.com/r/modelrockettier/uhub)
 [![Quay.io][quay-img]](https://quay.io/repository/modelrockettier/uhub)
 [![Coverity][coverity-img]](https://scan.coverity.com/projects/modelrockettier-uhub)
