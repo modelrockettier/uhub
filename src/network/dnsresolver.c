@@ -316,6 +316,7 @@ extern int net_dns_job_cancel(struct net_dns_job* job)
 	struct net_dns_result* res;
 
 	LOG_TRACE("net_dns_job_cancel(): job=%p, name=%s", job, job->host);
+	uhub_assert(job->thread_handle);
 
 	/*
 	 * This function looks up the job in the jobs queue (which contains only active jobs)

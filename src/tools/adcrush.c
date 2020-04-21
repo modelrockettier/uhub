@@ -290,7 +290,6 @@ static void perf_normal_action(struct ADC_client* client)
 				bot_output(client, LVL_VERBOSE, "timeout -> chat");
 				if (user->logged_in)
 					perf_chat(client, 0);
-
 			}
 			break;
 
@@ -379,7 +378,6 @@ static int handle(struct ADC_client* client, enum ADC_client_callback_type type,
 		default:
 			bot_output(client, LVL_DEBUG, "Not handled event=%d\n", (int) type);
 			return 0;
-			break;
 	}
 	return 1;
 }
@@ -496,23 +494,42 @@ int parse_arguments(int argc, char** argv)
 	int opt;
 	for (opt = 2; opt < argc; opt++)
 	{
-		if      (!strcmp(argv[opt], "-c"))
+		if (!strcmp(argv[opt], "-c"))
 			cfg_chat = 1;
 		else if (!strncmp(argv[opt], "-d", 2))
 			cfg_debug += strlen(argv[opt]) - 1;
 		else if (!strcmp(argv[opt], "-q"))
 			cfg_quiet = 1;
-		else if (!strcmp(argv[opt], "-l") && (++opt) < argc)
+		else if (!strcmp(argv[opt], "-l"))
 		{
+			opt++;
+			if (opt >= argc)
+				return 0;
+
+			// ensure level is between 0 and 3 (or equal to either)
 			cfg_level = MIN(MAX(uhub_atoi(argv[opt]), 0), 3);
 		}
-		else if (!strcmp(argv[opt], "-i") && (++opt) < argc)
+		else if (!strcmp(argv[opt], "-i"))
 		{
+			opt++;
+			if (opt >= argc)
+				return 0;
+
+			// ensure interval is >= 1
 			cfg_netstats_interval = MAX(uhub_atoi(argv[opt]), 1);
 		}
-		else if (!strcmp(argv[opt], "-n") && (++opt) < argc)
+		else if (!strcmp(argv[opt], "-n"))
 		{
+			opt++;
+			if (opt >= argc)
+				return 0;
+
+			// ensure clients is between 1 and ADC_MAX_CLIENTS (or equal to either)
 			cfg_clients = MIN(MAX(uhub_atoi(argv[opt]), 1), ADC_MAX_CLIENTS);
+		}
+		else
+		{
+			return 0;
 		}
 	}
 	return ok;

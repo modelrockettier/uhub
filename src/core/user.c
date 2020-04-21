@@ -337,19 +337,19 @@ const char* user_get_quit_reason_string(enum user_quit_reason reason)
 {
 	switch (reason)
 	{
-		case quit_unknown:          return "unknown";        break;
-		case quit_disconnected:     return "disconnected";   break;
-		case quit_kicked:           return "kicked";         break;
-		case quit_banned:           return "banned";         break;
-		case quit_timeout:          return "timeout";        break;
-		case quit_send_queue:       return "send queue";     break;
-		case quit_memory_error:     return "out of memory";  break;
-		case quit_socket_error:     return "socket error";   break;
-		case quit_protocol_error:   return "protocol error"; break;
-		case quit_logon_error:      return "login error";    break;
-		case quit_update_error:     return "update error";   break;
-		case quit_hub_disabled:     return "hub disabled";   break;
-		case quit_ghost_timeout:    return "ghost";          break;
+		case quit_unknown:          return "unknown";
+		case quit_disconnected:     return "disconnected";
+		case quit_kicked:           return "kicked";
+		case quit_banned:           return "banned";
+		case quit_timeout:          return "timeout";
+		case quit_send_queue:       return "send queue";
+		case quit_memory_error:     return "out of memory";
+		case quit_socket_error:     return "socket error";
+		case quit_protocol_error:   return "protocol error";
+		case quit_logon_error:      return "login error";
+		case quit_update_error:     return "update error";
+		case quit_hub_disabled:     return "hub disabled";
+		case quit_ghost_timeout:    return "ghost";
 	}
 
 	return "unknown";

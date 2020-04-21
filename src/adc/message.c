@@ -21,12 +21,14 @@
 
 #ifdef DEBUG
 #define ADC_MSG_ASSERT(X) \
-	uhub_assert(X); \
-	uhub_assert(X->cache); \
-	uhub_assert(X->capacity); \
-	uhub_assert(X->length <= X->capacity); \
-	uhub_assert(X->references > 0); \
-	uhub_assert(X->length == strlen(X->cache));
+	do { \
+		uhub_assert(X); \
+		uhub_assert(X->cache); \
+		uhub_assert(X->capacity); \
+		uhub_assert(X->length <= X->capacity); \
+		uhub_assert(X->references > 0); \
+		uhub_assert(X->length == strlen(X->cache)); \
+	} while (0)
 #define ADC_MSG_NULL_ON_FREE
 #else
 #define ADC_MSG_ASSERT(X) do { } while(0)
@@ -120,10 +122,8 @@ static int adc_msg_grow(struct adc_message* msg, size_t size)
 	if (msg->capacity > size)
 		return 1;
 
-	/* Make sure we align our data */
-	newsize = size;
-	newsize += 2; /* termination */
-	newsize += (newsize % sizeof(size_t)); /* alignment padding */
+	newsize = size + 2; /* size + termination */
+	newsize += (sizeof(size_t) - newsize) % sizeof(size_t); /* alignment padding */
 
 	buf = msg_malloc_zero(newsize);
 	if (!buf)
@@ -721,7 +721,7 @@ int adc_msg_replace_named_argument(struct adc_message* cmd, const char prefix[2]
 
 void adc_msg_terminate(struct adc_message* cmd)
 {
-	if (cmd->length <= 0 || cmd->cache[cmd->length - 1] != '\n')
+	if (cmd->length < 1 || cmd->cache[cmd->length - 1] != '\n')
 	{
 		adc_msg_cache_append(cmd, "\n", 1);
 	}
@@ -921,32 +921,15 @@ int adc_msg_unescape_length(const char* str)
 
 char* adc_msg_unescape(const char* string)
 {
-	char* new_string = msg_malloc(adc_msg_unescape_length(string)+1);
-	char* ptr = (char*) new_string;
-	char* str = (char*) string;
-	int escaped = 0;
+	size_t dstlen = adc_msg_unescape_length(string) + 1;
+	char* new_string = msg_malloc(dstlen);
 
-	while (*str)
-	{
-		if (escaped) {
-			if (*str == 's')
-				*ptr++ = ' ';
-			else if (*str == '\\')
-				*ptr++ = '\\';
-			else if (*str == 'n')
-				*ptr++ = '\n';
-			else
-				*ptr++ = *str;
-			escaped = 0;
-		} else {
-			if (*str == '\\')
-				escaped = 1;
-			else
-				*ptr++ = *str;
-		}
-		str++;
-	}
-	*ptr = 0;
+	uhub_assert(string);
+	if (!new_string)
+		return NULL;
+
+	(void)adc_msg_unescape_to_target(string, new_string, dstlen);
+
 	return new_string;
 }
 
@@ -957,9 +940,14 @@ int adc_msg_unescape_to_target(const char* string, char* target, size_t target_s
 	char* str = (char*) string;
 	int escaped = 0;
 
-	while (*str && w < (target_size-1))
+	uhub_assert(string);
+	uhub_assert(target);
+	uhub_assert(target_size > 0);
+
+	while (*str && w < (target_size - 1))
 	{
-		if (escaped) {
+		if (escaped)
+		{
 			if (*str == 's')
 				*ptr++ = ' ';
 			else if (*str == '\\')
@@ -970,7 +958,9 @@ int adc_msg_unescape_to_target(const char* string, char* target, size_t target_s
 				*ptr++ = *str;
 			w++;
 			escaped = 0;
-		} else {
+		}
+		else
+		{
 			if (*str == '\\')
 				escaped = 1;
 			else
@@ -981,17 +971,35 @@ int adc_msg_unescape_to_target(const char* string, char* target, size_t target_s
 		}
 		str++;
 	}
-	*ptr = 0;
+
+	*ptr = '\0';
 	w++;
+
+	if (*str)
+	{
+		LOG_WARN("Message exceeded target size: ~" PRINTF_SIZE_T " / " PRINTF_SIZE_T,
+			(w + strlen(str)), target_size);
+	}
+#if DEBUG
+	else if (escaped)
+		LOG_WARN("Message has trailing escape");
+#endif
+
 	return w;
 }
 
 char* adc_msg_escape(const char* string)
 {
-	char* str = hub_malloc(adc_msg_escape_length(string)+1);
+	size_t srclen = strlen(string);
+	size_t dstlen = adc_msg_escape_length(string) + 1;
+	size_t i;
 	size_t n = 0;
-	size_t i = 0;
-	for (i = 0; i < strlen(string); i++)
+
+	char* str = hub_malloc(dstlen);
+	if (!str)
+		return NULL;
+
+	for (i = 0; i < srclen; i++)
 	{
 		switch (string[i]) {
 			case '\\': /* fall through */
@@ -1011,7 +1019,10 @@ char* adc_msg_escape(const char* string)
 					break;
 		}
 	}
+
+	uhub_assert(n < dstlen);
 	str[n] = '\0';
+
 	return str;
 }
 

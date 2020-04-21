@@ -127,13 +127,11 @@ static int handle(struct ADC_client* client, enum ADC_client_callback_type type,
 			status("Login error");
 			break;
 
-
 		case ADC_CLIENT_MESSAGE:
 			on_message(data->chat);
 			break;
 
 		case ADC_CLIENT_USER_JOIN:
-
 			user_add(data->user);
 			break;
 
@@ -152,7 +150,6 @@ static int handle(struct ADC_client* client, enum ADC_client_callback_type type,
 		default:
 			printf("Not handled event=%d\n", (int) type);
 			return 0;
-			break;
 	}
 	return 1;
 }

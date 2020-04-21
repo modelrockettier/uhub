@@ -1063,7 +1063,7 @@ void hub_send_status(struct hub_info* hub, struct hub_user* user, enum status_me
 
 const char* hub_get_status_message(struct hub_info* hub, enum status_message msg)
 {
-#define STATUS(MSG) case status_ ## MSG : return cfg->MSG; break
+#define STATUS(MSG) case status_ ## MSG : return cfg->MSG
 	struct hub_config* cfg = hub->config;
 	switch (msg)
 	{
@@ -1105,7 +1105,7 @@ const char* hub_get_status_message(struct hub_info* hub, enum status_message msg
 
 const char* hub_get_status_message_log(struct hub_info* hub, enum status_message msg)
 {
-#define STATUS(MSG) case status_ ## MSG : return #MSG; break
+#define STATUS(MSG) case status_ ## MSG : return #MSG
 	switch (msg)
 	{
 		STATUS(msg_hub_full);

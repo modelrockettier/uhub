@@ -143,8 +143,10 @@ static enum command_parse_status command_extract_arguments(struct hub_info* hub,
 			case 'a':
 				data = hub_malloc(sizeof(*data));
 				data->type = type_address;
+				data->data.address = hub_malloc_zero(sizeof(struct ip_addr_encap));
 				if (ip_convert_to_binary(token, data->data.address) == -1)
 				{
+					hub_free(data->data.address);
 					hub_free(data);
 					data = NULL;
 					status = cmd_status_arg_address;
