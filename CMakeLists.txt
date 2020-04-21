@@ -255,8 +255,6 @@ endforeach()
 
 set_target_properties(${PLUGINS} PROPERTIES PREFIX "")
 
-set(COMPILE_DEFINITIONS_DEBUG "${COMPILE_DEFINITIONS_DEBUG} -DDEBUG")
-
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 	set(CMAKE_C_FLAGS_DEBUG          "${CMAKE_C_FLAGS_DEBUG} -ggdb3")
 	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -ggdb3")
@@ -340,8 +338,14 @@ configure_file("${PROJECT_SOURCE_DIR}/system.h.in" "${PROJECT_BINARY_DIR}/system
 configure_file("${CMAKE_SOURCE_DIR}/doc/uhub.conf.in" "${PROJECT_BINARY_DIR}/uhub.conf")
 configure_file("${CMAKE_SOURCE_DIR}/doc/plugins.conf.in" "${PROJECT_BINARY_DIR}/plugins.conf")
 
-if(LOWLEVEL_DEBUG)
-	add_definitions(-DLOWLEVEL_DEBUG)
+if(CMAKE_BUILD_TYPE STREQUAL Debug OR CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
+	add_definitions(-DDEBUG)
+
+	if(LOWLEVEL_DEBUG)
+		add_definitions(-DLOWLEVEL_DEBUG)
+	endif()
+elseif(LOWLEVEL_DEBUG)
+	message(FATAL_ERROR "Can't use LOWLEVEL_DEBUG with a Release build, try -DCMAKE_BUILD_TYPE=RelWithDebInfo")
 endif()
 
 message(STATUS "**** Build Configuration ***")

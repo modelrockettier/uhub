@@ -319,6 +319,10 @@ int file_read_lines(const char* file, void* data, file_line_handler_t handler)
 		LOG_WARN("File is empty.");
 		return 0;
 	}
+	else if (ret >= MAX_RECV_BUF - 1)
+	{
+		LOG_WARN("File too large for buffer: %d", MAX_RECV_BUF);
+	}
 
 	buf[ret] = 0;
 

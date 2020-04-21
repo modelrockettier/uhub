@@ -39,10 +39,9 @@ static int apply_string(const char* key, const char* data, char** target, char* 
 	(void) regexp;
 	// FIXME: Add regexp checks for correct data
 
-	if (*target)
-		hub_free(*target);
-
+	hub_free(*target);
 	*target = hub_strdup(data);
+
 	return 1;
 }
 
@@ -77,7 +76,8 @@ static int config_parse_line(char* line, int line_count, void* ptr_data)
 
 	strip_off_ini_line_comments(line, line_count);
 
-	if (!*line) return 0;
+	if (!*line)
+		return 0;
 
 	LOG_DUMP("config_parse_line(): '%s'", line);
 
@@ -92,7 +92,8 @@ static int config_parse_line(char* line, int line_count, void* ptr_data)
 	}
 	else
 	{
-		return 0;
+		LOG_ERROR("Invalid format on line %d, no '=' found", line_count);
+		return -1;
 	}
 
 	key = line;
@@ -102,7 +103,8 @@ static int config_parse_line(char* line, int line_count, void* ptr_data)
 	data = strip_white_space(data);
 	data = strip_off_quotes(data);
 
-	if (!*key || !*data)
+	// data is allowed to be an empty string
+	if (!*key)
 	{
 		LOG_FATAL("Configuration parse error on line %d", line_count);
 		return -1;
@@ -112,7 +114,6 @@ static int config_parse_line(char* line, int line_count, void* ptr_data)
 
 	return apply_config(config, key, data, line_count);
 }
-
 
 int read_config(const char* file, struct hub_config* config, int allow_missing)
 {
@@ -136,5 +137,4 @@ int read_config(const char* file, struct hub_config* config, int allow_missing)
 
 	return 0;
 }
-
 

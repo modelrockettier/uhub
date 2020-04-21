@@ -450,6 +450,8 @@ static int command_loglevel(struct command_base* cbase, struct hub_user* user, s
 		{
 			level = hub_log_verbosity_to_string(verb);
 			cbuf_append_format(buf, "Set the log level to: %s (%d)", level, verb);
+
+			LOG_USER("Hub log level set to %s (%d) by \"%s\"", level, verb, user->id.nick);
 			hub_set_log_verbosity(verb);
 		}
 	}
