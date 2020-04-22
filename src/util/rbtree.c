@@ -190,11 +190,9 @@ int rb_tree_insert(struct rb_tree* tree, const void* key, const void* value)
 	return 1;
 }
 
-void null_node_free(struct rb_node* n) { }
-
 int rb_tree_remove(struct rb_tree* tree, const void* key)
 {
-	return rb_tree_remove_node(tree, key, &null_node_free);
+	return rb_tree_remove_node(tree, key, NULL);
 }
 
 int rb_tree_remove_node(struct rb_tree* tree, const void* key, rb_tree_free_node freecb)
@@ -266,7 +264,9 @@ int rb_tree_remove_node(struct rb_tree* tree, const void* key, rb_tree_free_node
 	/* Replace and remove if found */
 	if (f)
 	{
-		freecb(f);
+		if (freecb)
+			freecb(f);
+
 		f->key = q->key;
 		f->value = q->value;
 		p->link[p->link[1] == q] = q->link[q->link[0] == NULL];

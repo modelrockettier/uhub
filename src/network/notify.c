@@ -50,11 +50,8 @@ static void notify_callback(struct net_connection* con, int event, void* ptr)
 	struct uhub_notify_handle* handle = (struct uhub_notify_handle*) ptr;
 	char buf;
 	int ret = read(handle->pipe_fd[0], &buf, 1);
-	if (ret == 1)
-	{
-		if (handle->callback)
-			handle->callback(handle, handle->ptr);
-	}
+	if (ret == 1 && handle->callback)
+		handle->callback(handle, handle->ptr);
 }
 #endif
 

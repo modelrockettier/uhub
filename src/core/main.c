@@ -97,8 +97,9 @@ void setup_signal_handlers(struct hub_info* hub)
 	}
 }
 
-void shutdown_signal_handlers(struct hub_info* hub)
+static inline void shutdown_signal_handlers(struct hub_info* hub)
 {
+	// even though we're shutting down, leave the signal handlers in place
 }
 #endif /* !WIN32 */
 

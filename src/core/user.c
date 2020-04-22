@@ -320,7 +320,9 @@ int user_is_tls_connected(struct hub_user* user)
 		return 1;
 	else
 #endif
-	return 0;
+	{
+		return 0;
+	}
 }
 
 void user_net_io_want_write(struct hub_user* user)

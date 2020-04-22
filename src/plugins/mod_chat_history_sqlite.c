@@ -266,22 +266,30 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 		{
 			set_error_message(plugin, "Unable to parse startup parameters");
 			cfg_tokens_free(tokens);
+			sqlite3_close(data->db);
 			hub_free(data);
-			return 0;
+			return NULL;
 		}
 
 		if (strcmp(cfg_settings_get_key(setting), "file") == 0)
 		{
-			if (!data->db)
+			if (data->db)
 			{
-				if (sqlite3_open(cfg_settings_get_value(setting), &data->db))
-				{
-					cfg_tokens_free(tokens);
-					cfg_settings_free(setting);
-					hub_free(data);
-					set_error_message(plugin, "Unable to open database file");
-					return 0;
-				}
+				cfg_tokens_free(tokens);
+				cfg_settings_free(setting);
+				sqlite3_close(data->db);
+				hub_free(data);
+				set_error_message(plugin, "Only 1 database file is allowed");
+				return NULL;
+			}
+
+			if (sqlite3_open(cfg_settings_get_value(setting), &data->db))
+			{
+				cfg_tokens_free(tokens);
+				cfg_settings_free(setting);
+				hub_free(data);
+				set_error_message(plugin, "Unable to open database file");
+				return NULL;
 			}
 		}
 		else if (strcmp(cfg_settings_get_key(setting), "history_max") == 0)
@@ -301,8 +309,9 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 			set_error_message(plugin, "Unknown startup parameters given");
 			cfg_tokens_free(tokens);
 			cfg_settings_free(setting);
+			sqlite3_close(data->db);
 			hub_free(data);
-			return 0;
+			return NULL;
 		}
 
 		cfg_settings_free(setting);

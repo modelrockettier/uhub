@@ -299,6 +299,7 @@ void plugin_register_callback_functions(struct plugin_handle* handle)
 
 void plugin_unregister_callback_functions(struct plugin_handle* handle)
 {
+	// do nothing since register didn't allocate any memory
 }
 
 struct plugin_callback_data* plugin_callback_data_create()

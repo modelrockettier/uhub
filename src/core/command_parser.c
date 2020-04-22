@@ -74,9 +74,16 @@ static enum command_parse_status command_extract_arguments(struct hub_info* hub,
 	hub_free(token);
 	token = NULL;
 
-	while (status == cmd_status_ok && (arg_code = command->args[arg++]))
+	while (status == cmd_status_ok && command->args[arg])
 	{
-		if (greedy)
+		arg_code = command->args[arg];
+		arg++;
+
+		if (token)
+		{
+			// unprocessed token, don't change it
+		}
+		else if (greedy)
 		{
 			size = 1;
 			LIST_FOREACH(char*, tmp, tokens, { size += (strlen(tmp) + 1); });

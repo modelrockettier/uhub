@@ -320,7 +320,6 @@ static int ADC_client_on_recv_line(struct ADC_client* client, const char* line, 
 			EXTRACT_NAMED_ARG(msg, "DE", hubinfo.description);
 			EXTRACT_NAMED_ARG(msg, "VE", hubinfo.version);
 
-			struct ADC_client_callback_data data;
 			data.hubinfo = &hubinfo;
 			client->callback(client, ADC_CLIENT_HUB_INFO, &data);
 			hub_free(hubinfo.name);
@@ -357,7 +356,6 @@ static int ADC_client_on_recv_line(struct ADC_client* client, const char* line, 
 					EXTRACT_NAMED_ARG_X(msg, "ID", user.cid, sizeof(user.cid));
 					EXTRACT_NAMED_ARG_X(msg, "I4", user.address, sizeof(user.address));
 
-					struct ADC_client_callback_data data;
 					data.user = &user;
 					client->callback(client, ADC_CLIENT_USER_JOIN, &data);
 				}
@@ -422,30 +420,30 @@ static ssize_t ADC_client_recv(struct ADC_client* client)
 		char* start = buf;
 		char* pos = 0;
 		size_t remaining = buf_size;
+		ssize_t len;
 
 		while ((pos = memchr(start, '\n', remaining)))
 		{
-			lastPos = pos+1;
+			lastPos = pos + 1;
 			pos[0] = '\0';
 
+			len = (ssize_t) (pos - start);
+
 #ifdef DEBUG_SENDQ
-			LOG_DUMP("PROC: \"%s\" (%d)\n", start, (int) (pos - start));
+			LOG_DUMP("PROC: \"%s\" (%lld)\n", start, (long long) len);
 #endif
 
 			if (client->flags & cflag_choke)
 				client->flags &= ~cflag_choke;
-			else
+			else if (len > 0 && len < MAX_RECV_BUFFER)
 			{
-				if (((pos - start) > 0) && MAX_RECV_BUFFER > (pos - start))
-				{
-					if (ADC_client_on_recv_line(client, start, pos - start) == -1)
-						return -1;
-				}
+				if (ADC_client_on_recv_line(client, start, (size_t) len) == -1)
+					return -1;
 			}
 
 			pos[0] = '\n'; /* FIXME: not needed */
-			pos ++;
-			remaining -= (pos - start);
+			pos++;
+			remaining -= (size_t) len + 1;
 			start = pos;
 		}
 
@@ -631,11 +629,8 @@ static void connect_callback(struct net_connect_handle* handle, enum net_connect
 int ADC_client_connect(struct ADC_client* client, const char* address)
 {
 	ADC_TRACE;
-	if (client->state == ps_none)
-	{
-		if (!ADC_client_parse_address(client, address))
-			return 0;
-	}
+	if (client->state == ps_none && !ADC_client_parse_address(client, address))
+		return 0;
 
 	ADC_client_set_state(client, ps_conn);
 	client->connect_job = net_con_connect(client->address.hostname, client->address.port, connect_callback, client);

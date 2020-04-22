@@ -95,7 +95,7 @@ static void read_log_file(struct plugin_handle* plugin, struct log_data* data)
 
 		while ((endp = strchr(&buffer[off], '\n')) != NULL)
 		{
-			size_t len = (size_t) (endp - &buffer[off]);
+			len = (size_t) (endp - &buffer[off]);
 			if (len)
 				list_append(data->messages, hub_strndup(&buffer[off], len));
 			off += len + 1;

@@ -52,34 +52,32 @@ int handle_net_read(struct hub_user* user)
 		char* start = buf;
 		char* pos = 0;
 		size_t remaining = buf_size;
+		ssize_t len;
 
 		while ((pos = memchr(start, '\n', remaining)))
 		{
-			lastPos = pos+1;
+			lastPos = pos + 1;
 			pos[0] = '\0';
 
+			len = (ssize_t) (pos - start);
+
 #ifdef DEBUG_SENDQ
-			LOG_DUMP("PROC: \"%s\" (%d)\n", start, (int) (pos - start));
+			LOG_DUMP("PROC: \"%s\" (%lld)\n", start, (long long) len);
 #endif
 
 			if (user_flag_get(user, flag_maxbuf))
 			{
 				user_flag_unset(user, flag_maxbuf);
 			}
-			else
+			else if (len > 0 && len < user->hub->config->max_recv_buffer)
 			{
-				if (((pos - start) > 0) && user->hub->config->max_recv_buffer > (pos - start))
-				{
-					if (hub_handle_message(user->hub, user, start, (pos - start)) == -1)
-					{
-							return quit_protocol_error;
-					}
-				}
+				if (hub_handle_message(user->hub, user, start, (size_t) len) == -1)
+					return quit_protocol_error;
 			}
 
 			pos[0] = '\n'; /* FIXME: not needed */
-			pos ++;
-			remaining -= (pos - start);
+			pos++;
+			remaining -= (size_t) len + 1;
 			start = pos;
 		}
 

@@ -207,7 +207,7 @@ static void read_log_file(struct plugin_handle* plugin, struct chat_history_data
 
 		while ((endp = strchr(&buffer[off], '\n')) != NULL)
 		{
-			size_t len = (size_t) (endp - &buffer[off]);
+			len = (size_t) (endp - &buffer[off]);
 			if (len)
 				list_append(data->chat_history, hub_strndup(&buffer[off], len));
 			off += len + 1;

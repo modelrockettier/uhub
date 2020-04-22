@@ -226,8 +226,9 @@ void adm_shutdown_control_pipe()
 	notify_handle = NULL;
 }
 
-void adm_shutdown_signal_handlers()
+static inline void adm_shutdown_signal_handlers()
 {
+	// Don't bother unsetting signal handlers, we're about to exit anyway
 }
 #endif /* !WIN32 */
 
