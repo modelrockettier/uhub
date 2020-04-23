@@ -210,7 +210,7 @@ int check_configuration(int dump)
 }
 
 
-void print_version()
+NO_RETURN static void print_version()
 {
 	fprintf(stdout, PRODUCT_STRING "\n");
 	fprintf(stdout, COPYRIGHT "\n"
@@ -219,7 +219,7 @@ void print_version()
 }
 
 
-void print_usage(char* program)
+NO_RETURN static void print_usage(char* program)
 {
 	fprintf(stderr, "Usage: %s [options]\n\n", program);
 	fprintf(stderr,

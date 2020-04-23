@@ -58,6 +58,10 @@ if(POLICY CMP0054)
 	cmake_policy(SET CMP0054 NEW)
 endif()
 
+# Honor visibility properties for all target types.
+if(POLICY CMP0063)
+	cmake_policy(SET CMP0063 NEW)
+endif()
 
 include(InstallRequiredSystemLibraries)
 set(CPACK_PACKAGE_NAME uhub)
@@ -100,6 +104,7 @@ include(BuildType)
 find_package(Git)
 find_package(Sqlite3)
 
+include(CheckCSourceCompiles)
 include(CheckIncludeFile)
 include(CheckSymbolExists)
 include(CheckTypeSize)
@@ -171,6 +176,32 @@ check_symbol_exists(localtime_s time.h HAVE_LOCALTIME_S)
 
 if(HAVE_SYS_TYPES_H)
 	list(APPEND CMAKE_EXTRA_INCLUDE_FILES "sys/types.h")
+endif()
+
+check_c_source_compiles("
+__declspec(dllexport) int a = 0;
+int main(void) { return a; }
+" HAVE_DECLSPEC)
+
+check_c_source_compiles("
+__attribute__((unused)) static void foo(void) {};
+int main(void) { return 0; }
+" HAVE_ATTRIBUTE)
+
+if(HAVE_ATTRIBUTE)
+	set(NO_RETURN "__attribute__((noreturn))")
+elseif(HAVE_DECLSPEC)
+	set(NO_RETURN "__declspec(noreturn)")
+endif()
+
+if(HAVE_DECLSPEC)
+	set(PLUGIN_API "__declspec(dllexport)")
+elseif(HAVE_ATTRIBUTE)
+	set(PLUGIN_API "__attribute__((visibility(\"default\")))")
+endif()
+
+if(HAVE_DECLSPEC OR HAVE_ATTRIBUTE)
+	set(CMAKE_C_VISIBILITY_PRESET hidden)
 endif()
 
 include_directories("${PROJECT_SOURCE_DIR}")

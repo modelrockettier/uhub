@@ -450,16 +450,11 @@ void runloop(size_t clients)
 	}
 }
 
-static void print_version()
+NO_RETURN static void print_usage(const char* program)
 {
 	printf(ADCRUSH "\n");
 	printf("Copyright (C) 2008-2012, Jan Vidar Krey\n");
 	printf("\n");
-}
-
-static void print_usage(const char* program)
-{
-	print_version();
 
 	printf("Usage: %s [adc[s]://<host>:<port>] [options]\n", program);
 

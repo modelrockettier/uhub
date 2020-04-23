@@ -39,6 +39,18 @@ struct uhub_plugin* plugin_open(const char* filename)
 	plugin = (struct uhub_plugin*) hub_malloc_zero(sizeof(struct uhub_plugin));
 	if (!plugin)
 	{
+		LOG_ERROR("plugin_open: OOM");
+		return 0;
+	}
+
+	plugin->filename = hub_strdup(filename);
+	plugin->internals = hub_malloc_zero(sizeof(struct plugin_hub_internals));
+	if (!plugin->filename || !plugin->internals)
+	{
+		LOG_ERROR("plugin_open: OOM 2");
+		hub_free(plugin->filename);
+		hub_free(plugin->internals);
+		hub_free(plugin);
 		return 0;
 	}
 
@@ -59,8 +71,6 @@ struct uhub_plugin* plugin_open(const char* filename)
 		return 0;
 	}
 
-	plugin->filename = strdup(filename);
-	plugin->internals = hub_malloc_zero(sizeof(struct plugin_hub_internals));
 	return plugin;
 }
 
@@ -100,18 +110,17 @@ struct plugin_handle* plugin_load(const char* filename, const char* config, stru
 	plugin_register_f register_f;
 	plugin_unregister_f unregister_f;
 	int ret;
-	struct plugin_handle* handle = (struct plugin_handle*) hub_malloc_zero(sizeof(struct plugin_handle));
-	struct uhub_plugin* plugin = plugin_open(filename);
 
-	if (!plugin)
+	struct plugin_handle* handle = (struct plugin_handle*) hub_malloc_zero(sizeof(struct plugin_handle));
+	if (!handle)
 	{
-		hub_free(handle);
 		return NULL;
 	}
 
-	if (!handle)
+	struct uhub_plugin* plugin = plugin_open(filename);
+	if (!plugin)
 	{
-		plugin_close(plugin);
+		hub_free(handle);
 		return NULL;
 	}
 
@@ -148,6 +157,12 @@ struct plugin_handle* plugin_load(const char* filename, const char* config, stru
 		{
 			LOG_ERROR("Unable to load plugin: %s - Failed to initialize: %s", filename, handle->error_msg);
 		}
+	}
+	else
+	{
+		LOG_ERROR("Unable to load plugin: %s - Could not find plugin_register() and plugin_unregister()", filename);
+		LOG_PLUGIN("plugin_register():   %p", register_f);
+		LOG_PLUGIN("plugin_unregister(): %p", unregister_f);
 	}
 
 	plugin_close(plugin);

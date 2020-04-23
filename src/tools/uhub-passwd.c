@@ -60,7 +60,7 @@ static struct commands
 	{ &pass,   "pass",   2, 2, "username password" },
 };
 
-static void print_usage(const char* str)
+NO_RETURN static void print_usage(const char* str)
 {
 	if (str && *str)
 		die("Usage: %s filename %s %s\n", binary, command, str);
@@ -186,7 +186,7 @@ static int sql_execute(const char* sql, ...)
 
 static int command_dispatch(struct commands* cmd, size_t argc, const char** argv)
 {
-	if (argc < cmd->min_args || cmd->max_args < argc)
+	if (argc < cmd->min_args || argc > cmd->max_args)
 		print_usage(cmd->usage);
 
 	return cmd->handle(argc, argv);

@@ -307,9 +307,11 @@ typedef unsigned __int64 uint64_t;
 #include <pthread.h>
 #endif
 
-#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(_MSC_VER)
-#define PLUGIN_API __declspec(dllexport)
-#else
-#define PLUGIN_API
-#endif
+#cmakedefine HAVE_ATTRIBUTE
+#cmakedefine HAVE_DECLSPEC
+
+/* Set these to their cmake values (or define to empty if unset) */
+#define NO_RETURN  @NO_RETURN@
+#define PLUGIN_API @PLUGIN_API@
+
 #endif /* HAVE_UHUB_SYSTEM_H */
