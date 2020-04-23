@@ -66,29 +66,29 @@ static void msg_free(void* ptr)
 
 static int msg_check_escapes(const char* string, size_t len)
 {
-        char* start = (char*) string;
-        while ((start = memchr(start, '\\', len - (start - string))))
-        {
-                if (start+1 == (string + len))
-                        return 0;
+	char* start = (char*) string;
+	while ((start = memchr(start, '\\', len - (start - string))))
+	{
+		if ((start + 1) == (string + len))
+			return 0;
 
-                switch (*(++start))
-                {
-                        case '\\':
-                        case 'n':
-                        case 's':
-                                /* Increment so we don't check the escaped
-                                * character next time around. Not doing so
-                                * leads to messages with escaped backslashes
-                                * being incorrectly reported as having invalid
-                                * escapes. */
-                                ++start;
-                                break;
-                        default:
-                                return 0;
-                }
-        }
-        return 1;
+		switch (*(++start))
+		{
+			case '\\':
+			case 'n':
+			case 's':
+				/* Increment so we don't check the escaped
+				 * character next time around. Not doing so
+				 * leads to messages with escaped backslashes
+				 * being incorrectly reported as having invalid
+				 * escapes. */
+				++start;
+				break;
+			default:
+				return 0;
+		}
+	}
+	return 1;
 }
 
 
@@ -180,10 +180,10 @@ int adc_msg_get_arg_offset(struct adc_message* msg)
 			return 4;
 
 		case 'B':
-			return  9;
+			return 9;
 
 		case 'F':
-			return (10 + (list_size(msg->feature_cast_include)*5) + (list_size(msg->feature_cast_exclude)*5));
+			return (10 + (list_size(msg->feature_cast_include) * 5) + (list_size(msg->feature_cast_exclude) * 5));
 
 		case 'D':
 		case 'E':
@@ -209,7 +209,8 @@ int adc_msg_is_empty(struct adc_message* msg)
 
 void adc_msg_free(struct adc_message* msg)
 {
-	if (!msg) return;
+	if (!msg)
+		return;
 
 	ADC_MSG_ASSERT(msg);
 
@@ -219,9 +220,7 @@ void adc_msg_free(struct adc_message* msg)
 	{
 #ifdef ADC_MSG_NULL_ON_FREE
 		if (msg->cache)
-		{
-			*msg->cache = 0;
-		}
+			msg->cache[0] = '\0';
 #endif
 		msg_free(msg->cache);
 
@@ -248,7 +247,8 @@ struct adc_message* adc_msg_copy(const struct adc_message* cmd)
 {
 	char* tmp = 0;
 	struct adc_message* copy = (struct adc_message*) msg_malloc_zero(sizeof(struct adc_message));
-	if (!copy) return NULL; /* OOM */
+	if (!copy)
+		return NULL; /* OOM */
 
 	ADC_MSG_ASSERT(cmd);
 
@@ -355,7 +355,7 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 		return NULL;
 	}
 
-	if (line[length-1] != '\n')
+	if (line[length - 1] != '\n')
 	{
 		need_terminate = 1;
 	}
@@ -371,7 +371,7 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 
 	/* Ensure we are zero terminated */
 	command->cache[length] = 0;
-	command->cache[length+need_terminate] = 0;
+	command->cache[length + need_terminate] = 0;
 
 	command->cmd = FOURCC(line[0], line[1], line[2], line[3]);
 	command->priority = 0;
@@ -387,18 +387,19 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 
 		case 'I':
 		case 'H':
-			ok = (length > 3);
+			// ok = (length > 3);
 			break;
 
 		case 'B':
 			ok = (length > 8 &&
-					is_space(line[4]) &&
-					is_valid_base32_char(line[5]) &&
-					is_valid_base32_char(line[6]) &&
-					is_valid_base32_char(line[7]) &&
-					is_valid_base32_char(line[8]));
+				is_space(line[4]) &&
+				is_valid_base32_char(line[5]) &&
+				is_valid_base32_char(line[6]) &&
+				is_valid_base32_char(line[7]) &&
+				is_valid_base32_char(line[8]));
 
-			if (!ok) break;
+			if (!ok)
+				break;
 
 			temp_sid[0] = line[5];
 			temp_sid[1] = line[6];
@@ -411,13 +412,14 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 
 		case 'F':
 			ok = (length > 8 &&
-					is_space(line[4]) &&
-					is_valid_base32_char(line[5]) &&
-					is_valid_base32_char(line[6]) &&
-					is_valid_base32_char(line[7]) &&
-					is_valid_base32_char(line[8]));
+				is_space(line[4]) &&
+				is_valid_base32_char(line[5]) &&
+				is_valid_base32_char(line[6]) &&
+				is_valid_base32_char(line[7]) &&
+				is_valid_base32_char(line[8]));
 
-			if (!ok) break;
+			if (!ok)
+				break;
 
 			temp_sid[0] = line[5];
 			temp_sid[1] = line[6];
@@ -441,12 +443,15 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 			}
 
 			n = 10;
-			while (line[n] == '+' || line[n] == '-')
+			while (n < length && (line[n] == '+' || line[n] == '-'))
 			{
 				if (line[n++] == '+')
 					feature_cast_list = command->feature_cast_include;
 				else
 					feature_cast_list = command->feature_cast_exclude;
+
+				if (length <= n + 4)
+					break;
 
 				temp_sid[0] = line[n++];
 				temp_sid[1] = line[n++];
@@ -457,25 +462,26 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 				list_append(feature_cast_list, hub_strdup(temp_sid));
 			}
 
-			if  (n == 10)
+			if (n == 10)
 				ok = 0;
 			break;
 
 		case 'D':
 		case 'E':
 			ok = (length > 13 &&
-					is_space(line[4]) &&
-					is_valid_base32_char(line[5]) &&
-					is_valid_base32_char(line[6]) &&
-					is_valid_base32_char(line[7]) &&
-					is_valid_base32_char(line[8]) &&
-					is_space(line[9]) &&
-					is_valid_base32_char(line[10]) &&
-					is_valid_base32_char(line[11]) &&
-					is_valid_base32_char(line[12]) &&
-					is_valid_base32_char(line[13]));
+				is_space(line[4]) &&
+				is_valid_base32_char(line[5]) &&
+				is_valid_base32_char(line[6]) &&
+				is_valid_base32_char(line[7]) &&
+				is_valid_base32_char(line[8]) &&
+				is_space(line[9]) &&
+				is_valid_base32_char(line[10]) &&
+				is_valid_base32_char(line[11]) &&
+				is_valid_base32_char(line[12]) &&
+				is_valid_base32_char(line[13]));
 
-			if (!ok) break;
+			if (!ok)
+				break;
 
 			temp_sid[0] = line[5];
 			temp_sid[1] = line[6];
@@ -511,12 +517,17 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 
 	/* At this point the arg_offset should point to a space, or the end of message */
 	n = adc_msg_get_arg_offset(command);
+	uhub_assert(n < length);
+
 	if (command->cache[n] == ' ')
 	{
-		if (command->cache[n+1] == ' ') ok = 0;
+		if (command->cache[n + 1] == ' ')
+			ok = 0;
 	}
-	else if (command->cache[n] == '\n') ok = 1;
-	else ok = 0;
+	else if (command->cache[n] == '\n')
+		ok = 1;
+	else
+		ok = 0;
 
 	if (!ok)
 	{
@@ -609,9 +620,9 @@ int adc_msg_remove_named_argument(struct adc_message* cmd, const char prefix_[2]
 	{
 		endInfo = &cmd->cache[cmd->length];
 
-		if  (&start[0] < &endInfo[0])
+		if (&start[0] < &endInfo[0])
 		{
-			end = memchr(&start[1], ' ', &endInfo[0]-&start[1]);
+			end = memchr(&start[1], ' ', &endInfo[0] - &start[1]);
 		}
 		else
 		{
@@ -658,7 +669,7 @@ int adc_msg_has_named_argument(struct adc_message* cmd, const char prefix_[2])
 	while (start)
 	{
 		count++;
-		if ((size_t) (&start[0] - &cmd->cache[0]) < 1+cmd->length)
+		if ((size_t) (&start[0] - &cmd->cache[0]) < 1 + cmd->length)
 			start = memmem(&start[1], (&cmd->cache[cmd->length] - &start[0]), prefix, 3);
 		else
 			start = NULL;
@@ -685,14 +696,15 @@ char* adc_msg_get_named_argument(struct adc_message* cmd, const char prefix_[2])
 
 	start = &start[3];
 	end = strchr(start, ' ');
-	if (!end) end = &cmd->cache[cmd->length];
+	if (!end)
+		end = &cmd->cache[cmd->length];
 	length = &end[0] - &start[0];
 
 	argument = hub_strndup(start, length);
 
-	if (length > 0 && argument[length-1] == '\n')
+	if (length > 0 && argument[length - 1] == '\n')
 	{
-		argument[length-1] = 0;
+		argument[length - 1] = 0;
 	}
 
 	return argument;
@@ -732,7 +744,7 @@ void adc_msg_unterminate(struct adc_message* cmd)
 {
 	ADC_MSG_ASSERT(cmd);
 
-	if (cmd->length > 0 && cmd->cache[cmd->length-1] == '\n')
+	if (cmd->length > 0 && cmd->cache[cmd->length - 1] == '\n')
 	{
 		cmd->length--;
 		cmd->cache[cmd->length] = 0;
@@ -810,7 +822,7 @@ char* adc_msg_get_argument(struct adc_message* cmd, int offset)
 
 	adc_msg_unterminate(cmd);
 
-	start = strchr(&cmd->cache[adc_msg_get_arg_offset(cmd)-1], ' ');
+	start = strchr(&cmd->cache[adc_msg_get_arg_offset(cmd) - 1], ' ');
 	while (start)
 	{
 		end = strchr(&start[1], ' ');
@@ -823,8 +835,8 @@ char* adc_msg_get_argument(struct adc_message* cmd, int offset)
 			else
 			{
 				argument = hub_strdup(&start[1]);
-				if (argument && *argument && argument[strlen(argument)-1] == '\n')
-					argument[strlen(argument)-1] = 0;
+				if (argument && *argument && argument[strlen(argument) - 1] == '\n')
+					argument[strlen(argument) - 1] = 0;
 			}
 
 			if (!argument)
@@ -860,7 +872,7 @@ int adc_msg_get_named_argument_index(struct adc_message* cmd, const char prefix[
 
 	adc_msg_unterminate(cmd);
 
-	end = strchr(&cmd->cache[adc_msg_get_arg_offset(cmd)-1], ' ');
+	end = strchr(&cmd->cache[adc_msg_get_arg_offset(cmd) - 1], ' ');
 
 	while (end)
 	{
@@ -890,7 +902,8 @@ int adc_msg_escape_length(const char* str)
 	int add = 0;
 	int n = 0;
 	for (; str[n]; n++)
-		if (str[n] == ' ' || str[n] == '\n' || str[n] == '\\') add++;
+		if (str[n] == ' ' || str[n] == '\n' || str[n] == '\\')
+			add++;
 	return n + add;
 }
 
@@ -1001,22 +1014,23 @@ char* adc_msg_escape(const char* string)
 
 	for (i = 0; i < srclen; i++)
 	{
-		switch (string[i]) {
+		switch (string[i])
+		{
 			case '\\': /* fall through */
-					str[n++] = '\\';
-					str[n++] = '\\';
-					break;
+				str[n++] = '\\';
+				str[n++] = '\\';
+				break;
 			case '\n':
-					str[n++] = '\\';
-					str[n++] = 'n';
-					break;
+				str[n++] = '\\';
+				str[n++] = 'n';
+				break;
 			case ' ':
-					str[n++] = '\\';
-					str[n++] = 's';
-					break;
+				str[n++] = '\\';
+				str[n++] = 's';
+				break;
 			default:
-					str[n++] = string[i];
-					break;
+				str[n++] = string[i];
+				break;
 		}
 	}
 
