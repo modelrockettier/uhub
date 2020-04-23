@@ -120,7 +120,7 @@ const char* search_messages[MAX_SEARCH_MSGS] = {
 };
 
 
-
+PRINTF_ARG(3, 4)
 static void bot_output(struct ADC_client* client, int level, const char* format, ...)
 {
 	char logmsg[1024];
@@ -254,7 +254,7 @@ static void client_connect(struct AdcFuzzUser* c, const char* nick, const char* 
 	timeout_evt_initialize(c->timer, timer_callback, c);
 	timeout_queue_insert(net_backend_get_timeout_queue(), c->timer, timeout);
 
-	bot_output(client, LVL_VERBOSE, "Initial timeout: " PRINTF_SIZE_T " seconds", timeout);
+	bot_output(client, LVL_VERBOSE, "Initial timeout: %" PRIsz " seconds", timeout);
 	c->logged_in = 0;
 
 	ADC_client_set_callback(client, handle);

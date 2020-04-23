@@ -336,7 +336,7 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 
 	if (length < 4)
 	{
-		LOG_DEBUG("Dropped tiny message (" PRINTF_SIZE_T ").", length);
+		LOG_DEBUG("Dropped tiny message (%" PRIsz ").", length);
 		msg_free(command);
 		return NULL;
 	}
@@ -977,7 +977,7 @@ int adc_msg_unescape_to_target(const char* string, char* target, size_t target_s
 
 	if (*str)
 	{
-		LOG_WARN("Message exceeded target size: ~" PRINTF_SIZE_T " / " PRINTF_SIZE_T,
+		LOG_WARN("Message exceeded target size: ~%" PRIsz " / %" PRIsz,
 			(w + strlen(str)), target_size);
 	}
 #if DEBUG

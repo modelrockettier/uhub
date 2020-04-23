@@ -99,7 +99,7 @@ static struct user_manager* parse_config(const char* line, struct plugin_handle*
 			manager->password_length = (size_t) uhub_atoi(cfg_settings_get_value(setting));
 			if (manager->password_length > MAX_PASS_LEN)
 			{
-				LOG_WARN("Minimum password length (" PRINTF_SIZE_T ") exceeds "
+				LOG_WARN("Minimum password length (%" PRIsz ") exceeds "
 					"the maximum (%d)", manager->password_length, MAX_PASS_LEN);
 
 				manager->password_length = MAX_PASS_LEN;
@@ -543,7 +543,7 @@ static int command_userlist(struct plugin_handle* plugin, struct plugin_user* us
 	else
 	{
 		size_t user_count = list_size(users);
-		cbuf_append_format(buf, "*** %s: " PRINTF_SIZE_T " user%s\n",
+		cbuf_append_format(buf, "*** %s: %" PRIsz " user%s\n",
 			cmd->prefix, user_count, user_count != 1 ? "s" : "");
 
 		struct auth_info* list_item = (struct auth_info*) list_get_first(users);

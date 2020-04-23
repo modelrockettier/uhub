@@ -339,7 +339,7 @@ ssize_t net_con_ssl_accept(struct net_connection* con)
 	net_ssl_set_state(handle, tls_st_accepting);
 
 	ret = SSL_accept(handle->ssl);
-	LOG_PROTO("SSL_accept() ret=%d", (int) ret);
+	LOG_PROTO("SSL_accept() ret=%" PRIssz, ret);
 	if (ret > 0)
 	{
 		net_con_update(con, NET_EVENT_READ);
@@ -347,7 +347,12 @@ ssize_t net_con_ssl_accept(struct net_connection* con)
 		net_stats_tls_add_accept();
 		return ret;
 	}
-	return handle_openssl_error(con, ret, tls_st_accepting);
+
+	ret = handle_openssl_error(con, ret, tls_st_accepting);
+
+	if (ret != 0)
+		LOG_ERROR("net_con_ssl_accept: ret=%" PRIssz, ret);
+	return ret;
 }
 
 ssize_t net_con_ssl_connect(struct net_connection* con)
@@ -357,7 +362,7 @@ ssize_t net_con_ssl_connect(struct net_connection* con)
 	net_ssl_set_state(handle, tls_st_connecting);
 
 	ret = SSL_connect(handle->ssl);
-	LOG_PROTO("SSL_connect() ret=%d", (int) ret);
+	LOG_PROTO("SSL_connect() ret=%" PRIssz, ret);
 
 	if (ret > 0)
 	{
@@ -366,11 +371,11 @@ ssize_t net_con_ssl_connect(struct net_connection* con)
 		net_stats_tls_add_connect();
 		return ret;
 	}
-	
+
 	ret = handle_openssl_error(con, ret, tls_st_connecting);
-	
+
 	if (ret != 0)
-		LOG_ERROR("net_con_ssl_connect: ret=%d", (int) ret);
+		LOG_ERROR("net_con_ssl_connect: ret=%" PRIssz, ret);
 	return ret;
 }
 
@@ -421,12 +426,12 @@ ssize_t net_ssl_send(struct net_connection* con, const void* buf, size_t len)
 		return -2;
 
 	uhub_assert(handle->state == tls_st_connected);
-	
+
 
 	ERR_clear_error();
 	ssize_t ret = SSL_write(handle->ssl, buf, len);
 	add_io_stats(handle);
-	LOG_PROTO("SSL_write(con=%p, buf=%p, len=" PRINTF_SIZE_T ") => %d", con, buf, len, (int) ret);
+	LOG_PROTO("SSL_write(con=%p, buf=%p, len=%" PRIsz ") => %" PRIssz, con, buf, len, ret);
 	if (ret > 0)
 		handle->ssl_write_events = 0;
 	else
@@ -453,7 +458,7 @@ ssize_t net_ssl_recv(struct net_connection* con, void* buf, size_t len)
 
 	ret = SSL_read(handle->ssl, buf, len);
 	add_io_stats(handle);
-	LOG_PROTO("SSL_read(con=%p, buf=%p, len=" PRINTF_SIZE_T ") => %d", con, buf, len, (int) ret);
+	LOG_PROTO("SSL_read(con=%p, buf=%p, len=%" PRIsz ") => %" PRIssz, con, buf, len, ret);
 	if (ret > 0)
 		handle->ssl_read_events = 0;
 	else

@@ -42,6 +42,7 @@ struct auth_sqlite
 	char journal[16]; ///<<< "The SQLite journal mode to use"
 };
 
+/* Can't use PRINTF_ARG() since we use the sqlite3_printf() which allows %q */
 static int sql_execute(struct auth_sqlite* pdata, int (*callback)(void* ptr, int argc, char **argv, char **colName), void* ptr, const char* sql_fmt, ...)
 {
 	va_list args;

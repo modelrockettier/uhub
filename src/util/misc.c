@@ -388,7 +388,7 @@ const char* format_size(size_t bytes, char* buf, size_t bufsize)
 	if (factor >= 2)
 		snprintf(buf, bufsize, "%.1f %s", (double) bytes / (double) divisor, quant[factor]);
 	else
-		snprintf(buf, bufsize, PRINTF_SIZE_T " %s", bytes / divisor, quant[factor]);
+		snprintf(buf, bufsize, "%" PRIsz " %s", bytes / divisor, quant[factor]);
 	return buf;
 }
 
@@ -405,7 +405,7 @@ const char* uhub_ulltoa(uint64_t val)
 {
 	static char buf[22];
 
-	return snprintf(buf, sizeof(buf), PRINTF_UINT64_T, val) < 0 ? NULL : buf;
+	return snprintf(buf, sizeof(buf), "%" PRIu64, val) < 0 ? NULL : buf;
 }
 
 

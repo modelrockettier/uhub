@@ -100,6 +100,7 @@ static int ADC_client_parse_address(struct ADC_client* client, const char* arg);
 static int ADC_client_on_recv_line(struct ADC_client* client, const char* line, size_t length);
 static int ADC_client_send_queue(struct ADC_client* client);
 
+PRINTF_ARG(2, 3)
 static void ADC_client_debug(struct ADC_client* client, const char* format, ...)
 {
 	char logmsg[1024];
@@ -430,7 +431,7 @@ static ssize_t ADC_client_recv(struct ADC_client* client)
 			len = (ssize_t) (pos - start);
 
 #ifdef DEBUG_SENDQ
-			LOG_DUMP("PROC: \"%s\" (%lld)\n", start, (long long) len);
+			LOG_DUMP("PROC: \"%s\" (%" PRIssz ")\n", start, len);
 #endif
 
 			if (client->flags & cflag_choke)
@@ -668,7 +669,7 @@ static void ADC_client_on_connected(struct ADC_client* client)
 	else
 #endif
 	ADC_client_send_handshake(client);
-	
+
 }
 
 #ifdef SSL_SUPPORT

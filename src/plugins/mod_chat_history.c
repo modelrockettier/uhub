@@ -219,7 +219,7 @@ static void read_log_file(struct plugin_handle* plugin, struct chat_history_data
 		len = strlen(&buffer[off]);
 		if (len >= buflen)
 		{
-			LOG_WARN("Line too long: " PRINTF_SIZE_T "/" PRINTF_SIZE_T, len, buflen);
+			LOG_WARN("Line too long: %" PRIsz "/%" PRIsz, len, buflen);
 			list_append(data->chat_history, hub_strndup(&buffer[off], len));
 			len = 0;
 		}

@@ -86,6 +86,7 @@ extern int hub_log_string_to_verbosity(const char* str);
 /**
  * Print a message in the log.
  */
+PRINTF_ARG(2, 3)
 extern void hub_log(int log_verbosity, const char *format, ...);
 
 /**

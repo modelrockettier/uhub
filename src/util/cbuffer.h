@@ -29,7 +29,11 @@ extern void cbuf_clear(struct cbuffer* buf);
 extern void cbuf_resize(struct cbuffer* buf, size_t capacity);
 extern void cbuf_append_bytes(struct cbuffer* buf, const char* msg, size_t len);
 extern void cbuf_append(struct cbuffer* buf, const char* msg);
+
+PRINTF_ARG(2, 3)
 extern void cbuf_append_format(struct cbuffer* buf, const char* format, ...);
+
+STRFTIME_ARG(2, 0)
 extern void cbuf_append_strftime(struct cbuffer* buf, const char* format, const struct tm* tm);
 
 extern int cbuf_chomp(struct cbuffer* buf, char const* remove);

@@ -107,7 +107,7 @@ static void read_log_file(struct plugin_handle* plugin, struct log_data* data)
 		len = strlen(&buffer[off]);
 		if (len >= buflen)
 		{
-			LOG_WARN("Line too long: " PRINTF_SIZE_T "/" PRINTF_SIZE_T, len, buflen);
+			LOG_WARN("Line too long: %" PRIsz "/%" PRIsz, len, buflen);
 			list_append(data->messages, hub_strndup(&buffer[off], len));
 			len = 0;
 		}
@@ -286,6 +286,7 @@ static void log_close(struct log_data* data)
 	hub_free(data);
 }
 
+PRINTF_ARG(2, 3)
 static void log_message(struct log_data* data, const char *format, ...)
 {
 	static char logmsg[MAX_MSG_SIZE + 1];
@@ -316,7 +317,7 @@ static void log_message(struct log_data* data, const char *format, ...)
 	// Append a newline to the message
 	if ((size_t)size >= MAX_MSG_SIZE)
 	{
-		LOG_WARN("Log entry exceeded max size: %lld/" PRINTF_SIZE_T,
+		LOG_WARN("Log entry exceeded max size: %lld/%" PRIsz,
 			(long long) size, (size_t) MAX_MSG_SIZE);
 
 		// make sure the msg ends with "...\n" (4 chars + nul)
@@ -336,7 +337,7 @@ static void log_message(struct log_data* data, const char *format, ...)
 #if DEBUG
 		if ((size_t) size != strlen(logmsg))
 		{
-			LOG_WARN("size != strlen(logmsg): " PRINTF_SIZE_T " / " PRINTF_SIZE_T,
+			LOG_WARN("size != strlen(logmsg): %" PRIsz " / %" PRIsz,
 				(size_t) size, strlen(logmsg));
 		}
 #endif
@@ -440,7 +441,7 @@ static int command_log(struct plugin_handle* plugin, struct plugin_user* user, s
 	size_t last_entry = 0;
 
 	buf = cbuf_create(128);
-	cbuf_append_format(buf, "Logged entries: " PRINTF_SIZE_T " - " PRINTF_SIZE_T " of " PRINTF_SIZE_T,
+	cbuf_append_format(buf, "Logged entries: %" PRIsz " - %" PRIsz " of %" PRIsz,
 		offset + 1, offset + max_entries, list_size(data->messages));
 
 	command_status(plugin, user, cmd, buf);
@@ -498,7 +499,7 @@ static int command_findlog(struct plugin_handle* plugin, struct plugin_user* use
 	size_t entries = 0;
 
 	buf = cbuf_create(128);
-	cbuf_append_format(buf, "Logged entries: " PRINTF_SIZE_T ", searching for \"%s\"",
+	cbuf_append_format(buf, "Logged entries: %" PRIsz ", searching for \"%s\"",
 		list_size(data->messages), search);
 
 	command_status(plugin, user, cmd, buf);
@@ -517,7 +518,7 @@ static int command_findlog(struct plugin_handle* plugin, struct plugin_user* use
 		cbuf_clear(buf);
 	});
 
-	cbuf_append_format(buf, PRINTF_SIZE_T " entries shown.\n", entries);
+	cbuf_append_format(buf, "%" PRIsz " entries shown.\n", entries);
 	command_status(plugin, user, cmd, buf);
 
 	return 0;

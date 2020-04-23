@@ -239,7 +239,7 @@ static void probe_handle_http(struct net_connection* con)
 		if (len <= 0)
 			LOG_ERROR("probe_handle_http(): snprintf failed, %d", len);
 		else if ((size_t) len >= allocated)
-			LOG_ERROR("probe_handle_http(): buffer too small, %d/" PRINTF_SIZE_T, len + 1, allocated);
+			LOG_ERROR("probe_handle_http(): buffer too small, %d/%" PRIsz, len + 1, allocated);
 		else
 			net_con_send(con, buf, len);
 

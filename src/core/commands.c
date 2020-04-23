@@ -540,7 +540,7 @@ static int command_broadcast(struct command_base* cbase, struct hub_user* user, 
 		}
 	});
 
-	cbuf_append_format(buf, "*** %s: Delivered to " PRINTF_SIZE_T " user%s", cmd->prefix, recipients, (recipients != 1 ? "s" : ""));
+	cbuf_append_format(buf, "*** %s: Delivered to %" PRIsz " user%s", cmd->prefix, recipients, (recipients != 1 ? "s" : ""));
 	send_message(cbase, user, buf);
 	return 0;
 }
@@ -553,7 +553,7 @@ static int command_stats(struct command_base* cbase, struct hub_user* user, stru
 	static char txbuf[64] = { "0 B" };
 
 	cbuf_append(buf, "Hub statistics: ");
-	cbuf_append_format(buf, PRINTF_SIZE_T "/%d users (peak " PRINTF_SIZE_T "). ", hub->users->count, hub->config->max_users, hub->users->count_peak);
+	cbuf_append_format(buf, "%" PRIsz "/%d users (peak %" PRIsz "). ", hub->users->count, hub->config->max_users, hub->users->count_peak);
 
 	format_size(hub->stats.net_rx, rxbuf, sizeof(rxbuf));
 	format_size(hub->stats.net_tx, txbuf, sizeof(txbuf));

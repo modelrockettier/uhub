@@ -62,7 +62,7 @@ void hub_handle_signal(int sig)
 			break;
 
 		default:
-			LOG_TRACE("hub_handle_signal(): caught unknown signal: %d", signal);
+			LOG_TRACE("hub_handle_signal(): caught unknown signal: %d", sig);
 			hub->status = hub_status_shutdown;
 			break;
 	}

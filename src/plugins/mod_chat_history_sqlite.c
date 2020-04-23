@@ -48,6 +48,7 @@ struct chat_history_line
 
 static int null_callback(void* ptr, int argc, char **argv, char **colName) { return 0; }
 
+/* Can't use PRINTF_ARG() since we use the sqlite3_printf() which allows %q */
 static int sql_execute(struct chat_history_data* sql, int (*callback)(void* ptr, int argc, char **argv, char **colName), void* ptr, const char* sql_fmt, ...)
 {
 	va_list args;

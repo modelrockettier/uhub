@@ -99,13 +99,17 @@
 #define localtime_r(time_in, tm_out) localtime_s(tm_out, time_in)
 #endif
 
-/* printf support for size_t and uint64_t */
+/* printf support for size_t */
 #if defined(WIN32)
-#define PRINTF_SIZE_T "%Iu"
-#define PRINTF_UINT64_T "%I64u"
+#define PRIsz  "Iu"
+#define PRIssz "Id"
 #else
-#define PRINTF_SIZE_T "%zu"
-#define PRINTF_UINT64_T ("%" PRIu64)
+#define PRIsz  "zu"
+#define PRIssz "zd"
+#endif
+
+#ifndef PRIu64
+#define PRIu64 "llu"
 #endif
 
 #ifdef SSL_SUPPORT
@@ -271,6 +275,9 @@
 #ifndef HAVE_SSIZE_T
 typedef long ssize_t;
 #define HAVE_SSIZE_T
+
+#undef PRIssz
+#define PRIssz "ld"
 #endif
 
 #ifdef _MSC_VER
@@ -313,5 +320,13 @@ typedef unsigned __int64 uint64_t;
 /* Set these to their cmake values (or define to empty if unset) */
 #define NO_RETURN  @NO_RETURN@
 #define PLUGIN_API @PLUGIN_API@
+
+#if defined(HAVE_ATTRIBUTE)
+#define PRINTF_ARG(...)   __attribute__((format(printf,   __VA_ARGS__)))
+#define STRFTIME_ARG(...) __attribute__((format(strftime, __VA_ARGS__)))
+#else
+#define PRINTF_ARG(...)
+#define STRFTIME_ARG(...)
+#endif
 
 #endif /* HAVE_UHUB_SYSTEM_H */

@@ -174,7 +174,7 @@ static struct user_info* get_user_info(struct restrict_data* data, sid_t sid)
 		u = hub_realloc(data->users, n * sizeof(struct user_info));
 		if (!u)
 		{
-			LOG_FATAL("mod_restrict: No memory for " PRINTF_SIZE_T " users", n);
+			LOG_FATAL("mod_restrict: No memory for %" PRIsz " users", n);
 			return NULL;
 		}
 		// zero out the new user structs
