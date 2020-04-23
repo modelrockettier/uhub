@@ -173,9 +173,9 @@ int ip_mask_create_left(int af, int bits, struct ip_addr_encap* result)
 		if (bits <= 0)
 			mask = 0;
 		else if (bits >= 32)
-			mask = 0xffffffffu;
+			mask = 0xffffffffU;
 		else
-			mask = (0xffffffffu << (32 - bits));
+			mask = (0xffffffffU << (32 - bits));
 
 		result->internal_ip_data.in.s_addr = htonl(mask);
 	}
@@ -199,7 +199,7 @@ int ip_mask_create_left(int af, int bits, struct ip_addr_encap* result)
 
 			if (bits > 0)
 			{
-				mask = (0xffu << (8 - bits));
+				mask = (0xffU << (8 - bits));
 				addr6[n] = (uint8_t) mask;
 			}
 		}
@@ -231,9 +231,9 @@ int ip_mask_create_right(int af, int bits, struct ip_addr_encap* result)
 		if (bits <= 0)
 			mask = 0;
 		else if (bits >= 32)
-			mask = 0xffffffffu;
+			mask = 0xffffffffU;
 		else
-			mask = (0xffffffffu >> (32 - bits));
+			mask = (0xffffffffU >> (32 - bits));
 
 		result->internal_ip_data.in.s_addr = htonl(mask);
 	}
@@ -257,7 +257,7 @@ int ip_mask_create_right(int af, int bits, struct ip_addr_encap* result)
 
 			if (bits > 0)
 			{
-				mask = (0xffu >> (8 - bits));
+				mask = (0xffU >> (8 - bits));
 				addr6[n] = mask;
 			}
 		}

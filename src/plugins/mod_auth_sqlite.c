@@ -585,7 +585,7 @@ static void update_user_activity(struct plugin_handle* plugin, struct plugin_use
 	}
 }
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	struct auth_sqlite* pdata;
 	PLUGIN_INITIALIZE(plugin, "SQLite authentication plugin", "1.1", "Authenticate users with a SQLite database.");
@@ -612,7 +612,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	return 0;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	struct auth_sqlite* pdata = (struct auth_sqlite*) plugin->ptr;
 	set_error_message(plugin, 0);

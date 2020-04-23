@@ -52,14 +52,14 @@ static void command_unregister(struct plugin_handle* plugin)
 	plugin->ptr = NULL;
 }
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	PLUGIN_INITIALIZE(plugin, "Example plugin", "1.0", "A simple example plugin");
 	command_register(plugin);
 	return 0;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	command_unregister(plugin);
 	return 0;

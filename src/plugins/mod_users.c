@@ -581,7 +581,7 @@ static int command_userlist(struct plugin_handle* plugin, struct plugin_user* us
 		hub_free(HANDLE); \
 	} while (0)
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	struct user_manager* manager;
 	PLUGIN_INITIALIZE(plugin, "User management plugin", "1.0", "Manage users with hub commands.");
@@ -605,7 +605,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	return 0;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	struct user_manager* manager = (struct user_manager*) plugin->ptr;
 	set_error_message(plugin, 0);

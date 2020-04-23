@@ -112,7 +112,7 @@ static plugin_st get_user(struct plugin_handle* plugin, const char* nickname, st
 	return st_allow;
 }
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	PLUGIN_INITIALIZE(plugin, "Guest password authentication plugin", "1.0", "Require a password for guest users.");
 	set_error_message(plugin, NULL);
@@ -126,7 +126,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	return -1;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	struct guest_pass_data* data;
 	set_error_message(plugin, NULL);

@@ -523,7 +523,7 @@ static int command_findlog(struct plugin_handle* plugin, struct plugin_user* use
 	return 0;
 }
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	struct log_data* data;
 
@@ -551,7 +551,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	return 0;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	struct log_data* data = (struct log_data*) plugin->ptr;
 

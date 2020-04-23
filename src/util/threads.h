@@ -41,9 +41,9 @@ extern void uhub_mutex_unlock(uhub_mutex_t* mutex);
 extern int uhub_mutex_trylock(uhub_mutex_t* mutex);
 
 // Threads
-uhub_thread_t* uhub_thread_create(uhub_thread_start start, void* arg);
-void uhub_thread_cancel(uhub_thread_t* thread);
-void* uhub_thread_join(uhub_thread_t* thread);
+extern uhub_thread_t* uhub_thread_create(uhub_thread_start start, void* arg);
+extern void uhub_thread_cancel(uhub_thread_t* thread);
+extern void* uhub_thread_join(uhub_thread_t* thread);
 
 #endif /* HAVE_UHUB_UTIL_THREADS_H */
 

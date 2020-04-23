@@ -76,12 +76,12 @@ extern int hub_get_log_verbosity();
 /**
  * Convert a log verbosity level into a string value.
  */
-char const* hub_log_verbosity_to_string(int verbosity);
+extern char const* hub_log_verbosity_to_string(int verbosity);
 
 /**
  * Convert a string into a log verbosity level.
  */
-int hub_log_string_to_verbosity(const char* str);
+extern int hub_log_string_to_verbosity(const char* str);
 
 /**
  * Print a message in the log.

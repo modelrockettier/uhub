@@ -135,7 +135,5 @@ extern void* rb_iterator_key(struct rb_iterator* it);
  */
 extern void* rb_iterator_value(struct rb_iterator* it);
 
-
-
 #endif /* HAVE_UHUB_RED_BLACK_TREE_H */
 

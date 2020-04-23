@@ -39,13 +39,13 @@ enum auth_credentials
  * Returns 1 if the credentials means that a user is unrestricted.
  * Returns 0 otherwise.
  */
-int auth_cred_is_unrestricted(enum auth_credentials cred);
+extern int auth_cred_is_unrestricted(enum auth_credentials cred);
 
 /**
  * Returns 1 if the credentials means that a user is protected.
  * Returns 0 otherwise.
  */
-int auth_cred_is_protected(enum auth_credentials cred);
+extern int auth_cred_is_protected(enum auth_credentials cred);
 
 /**
  * Returns 1 if a user is registered.
@@ -53,14 +53,14 @@ int auth_cred_is_protected(enum auth_credentials cred);
  * Only registered users will be let in if the hub is configured for registered
  * users only.
  */
-int auth_cred_is_registered(enum auth_credentials cred);
+extern int auth_cred_is_registered(enum auth_credentials cred);
 
 /**
  * Returns a string representation of the credentials enum.
  */
-const char* auth_cred_to_string(enum auth_credentials cred);
+extern const char* auth_cred_to_string(enum auth_credentials cred);
 
 
-int auth_string_to_cred(const char* str, enum auth_credentials* out);
+extern int auth_string_to_cred(const char* str, enum auth_credentials* out);
 
 #endif /* HAVE_UHUB_CREDENTIALS_H */

@@ -140,7 +140,7 @@ static void on_user_logout(struct plugin_handle* plugin, struct plugin_user* use
 	info->sid = 0;
 }
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	PLUGIN_INITIALIZE(plugin, "Chat only hub", "1.0", "Disables connection setup, search and results.");
 	plugin->ptr = co_initialize();
@@ -155,7 +155,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	return 0;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	co_shutdown((struct chat_only_data*) plugin->ptr);
 	return 0;

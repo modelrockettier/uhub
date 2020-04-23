@@ -321,7 +321,7 @@ static struct chat_history_data* parse_config(const char* line, struct plugin_ha
 	return data;
 }
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	struct chat_history_data* data;
 	PLUGIN_INITIALIZE(plugin, "SQLite chat history plugin", "1.0", "Provide a global chat history log.");
@@ -348,7 +348,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	return 0;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	struct chat_history_data* data = (struct chat_history_data*) plugin->ptr;
 

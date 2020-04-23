@@ -20,25 +20,24 @@
 #ifndef HAVE_UHUB_CONFIG_TOKEN_H
 #define HAVE_UHUB_CONFIG_TOKEN_H
 
+struct cfg_settings;
 struct cfg_tokens;
 
-struct cfg_tokens* cfg_tokenize(const char* line);
-void cfg_tokens_free(struct cfg_tokens*);
+extern struct cfg_tokens* cfg_tokenize(const char* line);
+extern void cfg_tokens_free(struct cfg_tokens*);
 
-int cfg_token_add(struct cfg_tokens*, char* new_token);
+extern int cfg_token_add(struct cfg_tokens*, char* new_token);
 
-size_t cfg_token_count(struct cfg_tokens*);
+extern size_t cfg_token_count(struct cfg_tokens*);
 
-char* cfg_token_get(struct cfg_tokens*, size_t offset);
-char* cfg_token_get_first(struct cfg_tokens*);
-char* cfg_token_get_next(struct cfg_tokens*);
+extern char* cfg_token_get(struct cfg_tokens*, size_t offset);
+extern char* cfg_token_get_first(struct cfg_tokens*);
+extern char* cfg_token_get_next(struct cfg_tokens*);
 
-
-struct cfg_settings;
-struct cfg_settings* cfg_settings_split(const char* line);
-const char* cfg_settings_get_key(struct cfg_settings*);
-const char* cfg_settings_get_value(struct cfg_settings*);
-void cfg_settings_free(struct cfg_settings*);
+extern struct cfg_settings* cfg_settings_split(const char* line);
+extern const char* cfg_settings_get_key(struct cfg_settings*);
+extern const char* cfg_settings_get_value(struct cfg_settings*);
+extern void cfg_settings_free(struct cfg_settings*);
 
 #endif /* HAVE_UHUB_CONFIG_TOKEN_H */
 

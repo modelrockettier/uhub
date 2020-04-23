@@ -63,7 +63,7 @@ static int command_showtopic_handler(struct plugin_handle* plugin, struct plugin
 	return 0;
 }
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	struct topic_plugin_data* data = (struct topic_plugin_data*) hub_malloc(sizeof(struct topic_plugin_data));
 
@@ -85,7 +85,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	return 0;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	struct topic_plugin_data* data = (struct topic_plugin_data*) plugin->ptr;
 

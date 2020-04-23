@@ -264,7 +264,7 @@ static void user_logout(struct plugin_handle* plugin, struct plugin_user* user, 
 	cbuf_destroy(buf);
 }
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	struct joins_data* data;
 	PLUGIN_INITIALIZE(plugin, "Joins plugin", "1.0", "Announces which users join and leave to global chat.");
@@ -290,7 +290,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	return 0;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	struct joins_data* data = (struct joins_data*) plugin->ptr;
 	set_error_message(plugin, 0);

@@ -279,7 +279,7 @@ static int command_handler_rules(struct plugin_handle* plugin, struct plugin_use
 	return 0;
 }
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	struct welcome_data* data;
 	PLUGIN_INITIALIZE(plugin, "Welcome plugin", "0.1", "Sends a welcome message to users when they log into the hub.");
@@ -300,7 +300,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	return 0;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	struct welcome_data* data = (struct welcome_data*) plugin->ptr;
 

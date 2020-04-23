@@ -344,7 +344,7 @@ static void on_user_logout(struct plugin_handle* plugin, struct plugin_user* use
 	memset(info, 0, sizeof(*info));
 }
 
-int plugin_register(struct plugin_handle* plugin, const char* config)
+PLUGIN_API int plugin_register(struct plugin_handle* plugin, const char* config)
 {
 	struct restrict_data* data;
 	int restrictions = 0;
@@ -388,7 +388,7 @@ int plugin_register(struct plugin_handle* plugin, const char* config)
 	return 0;
 }
 
-int plugin_unregister(struct plugin_handle* plugin)
+PLUGIN_API int plugin_unregister(struct plugin_handle* plugin)
 {
 	restrict_shutdown(plugin);
 	return 0;
