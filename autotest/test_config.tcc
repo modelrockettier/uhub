@@ -82,12 +82,12 @@ EXO_TEST(apply_config_int_11, {
 
 EXO_TEST(apply_config_str_1, {
 	const char *alt = "127.0.0.1";
-	return !apply_config(&config1, "server_bind_addr", alt, 301) && !strcmp(alt, config1.server_bind_addr);
+	return !apply_config(&config1, "server_bind_addr", alt, 301) && str_match(alt, config1.server_bind_addr);
 });
 
 EXO_TEST(apply_config_str_2, {
 	const char *alt = "";
-	return !apply_config(&config1, "server_bind_addr", alt, 302) && !strcmp(alt, config1.server_bind_addr);
+	return !apply_config(&config1, "server_bind_addr", alt, 302) && str_match(alt, config1.server_bind_addr);
 });
 
 EXO_TEST(prepare_config_1, {
@@ -102,7 +102,7 @@ EXO_TEST(check_config_1_1, {
 	return
 		config1.hub_enabled == 0 &&
 		config1.server_port == 1234 &&
-		!strcmp(config1.server_bind_addr, "127.0.0.2");
+		str_match(config1.server_bind_addr, "127.0.0.2");
 });
 
 /* Default settings */
@@ -110,7 +110,7 @@ EXO_TEST(check_config_1_2, {
 	return
 		config1.show_banner == 1 &&
 		config1.max_users == 500 &&
-		!strcmp(config1.hub_name, "uhub");
+		str_match(config1.hub_name, "uhub");
 });
 
 EXO_TEST(dump_config, {
@@ -135,7 +135,7 @@ EXO_TEST(check_config_2_1, {
 	return
 		config2.hub_enabled == 0 &&
 		config2.server_port == 1234 &&
-		!strcmp(config2.server_bind_addr, "127.0.0.2");
+		str_match(config2.server_bind_addr, "127.0.0.2");
 });
 
 /* Default settings */
@@ -143,7 +143,7 @@ EXO_TEST(check_config_2_2, {
 	return
 		config2.show_banner == 1 &&
 		config2.max_users == 500 &&
-		!strcmp(config2.hub_name, "uhub");
+		str_match(config2.hub_name, "uhub");
 });
 
 EXO_TEST(remove_config_file, {

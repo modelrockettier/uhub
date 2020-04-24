@@ -93,10 +93,11 @@
 
 /*
  * If the system doesn't support localtime_r, use localtime_s in its place
- * NOTE: The args for _r and _s are flipped
+ * NOTE: The args for _r and _s are flipped and _r returns NULL on failure,
+ * _s returns 0 on success
  */
 #if !defined(HAVE_LOCALTIME_R) && defined(HAVE_LOCALTIME_S)
-#define localtime_r(time_in, tm_out) localtime_s(tm_out, time_in)
+#define localtime_r(time_in, tm_out) (localtime_s(tm_out, time_in) ? NULL : tm_out)
 #endif
 
 /* printf support for size_t */

@@ -158,7 +158,7 @@ EXO_TEST(list_prepend_check, {
 });
 
 EXO_TEST(list_clear_2, {
-	list_clear(list, &null_free);
+	list_clear(list, NULL);
 	return list->size == 0 && list->first == 0 && list->last == 0 && list->iterator == 0;
 });
 
@@ -222,7 +222,7 @@ EXO_TEST(list_remove_first_1_2,
 
 EXO_TEST(list_remove_first_1_3,
 {
-	list_remove_first(list, NULL);
+	list_remove_first(list, &null_free);
 	return list->size == 1 &&
 		list_get_index(list, 0) == C;
 });
@@ -260,7 +260,7 @@ EXO_TEST(list_remove_last_1_2,
 
 EXO_TEST(list_remove_last_1_3,
 {
-	list_remove_last(list, NULL);
+	list_remove_last(list, &null_free);
 	return list->size == 1 &&
 		list_get_index(list, 0) == A;
 });
@@ -413,20 +413,38 @@ EXO_TEST(list_append_list_3,
 			list_get_index(list, 5) == C2;
 });
 
+EXO_TEST(list_append_list_4,
+{
+	list2 = list_create();
+	list_append_list(list2, list);
+	return list->size == 0 && list2->size == 6;
+});
+
+EXO_TEST(list_append_list_5,
+{
+	list_destroy(list);
+	return list_get_index(list2, 0) == A &&
+			list_get_index(list2, 1) == B &&
+			list_get_index(list2, 2) == C &&
+			list_get_index(list2, 3) == A2 &&
+			list_get_index(list2, 4) == B2 &&
+			list_get_index(list2, 5) == C2;
+});
+
 EXO_TEST(list_clear_list_last,
 {
-	list_clear(list, &null_free);
+	list_clear(list2, &null_free);
 	return 1;
 });
 
 
 EXO_TEST(list_destroy_1, {
-	list_destroy(list);
+	list_destroy(list2);
 	return 1;
 });
 
 EXO_TEST(list_destroy_2, {
-	list_destroy(0);
+	list_destroy(NULL);
 	return 1;
 });
 

@@ -69,7 +69,7 @@ EXO_TEST(adc_message_add_arg_1, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_add_argument(msg, "XXwtf?");
-	ok = strcmp(msg->cache, "IINF AAfoo BBbar CCwhat XXwtf?\n") == 0;
+	ok = str_match(msg->cache, "IINF AAfoo BBbar CCwhat XXwtf?\n");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -78,7 +78,7 @@ EXO_TEST(adc_message_add_arg_2, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_add_named_argument(msg, "XX", "wtf?");
-	ok = strcmp(msg->cache, "IINF AAfoo BBbar CCwhat XXwtf?\n") == 0;
+	ok = str_match(msg->cache, "IINF AAfoo BBbar CCwhat XXwtf?\n");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -87,7 +87,7 @@ EXO_TEST(adc_message_remove_arg_1, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_remove_named_argument(msg, "AA");
-	ok = strcmp(msg->cache, "IINF BBbar CCwhat\n") == 0;
+	ok = str_match(msg->cache, "IINF BBbar CCwhat\n");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -96,7 +96,7 @@ EXO_TEST(adc_message_remove_arg_2, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_remove_named_argument(msg, "BB");
-	ok = strcmp(msg->cache, "IINF AAfoo CCwhat\n") == 0;
+	ok = str_match(msg->cache, "IINF AAfoo CCwhat\n");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -105,7 +105,7 @@ EXO_TEST(adc_message_remove_arg_3, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_remove_named_argument(msg, "CC");
-	ok = strcmp(msg->cache, "IINF AAfoo BBbar\n") == 0;
+	ok = str_match(msg->cache, "IINF AAfoo BBbar\n");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -115,7 +115,7 @@ EXO_TEST(adc_message_remove_arg_4, {
 	int ok;
 	struct adc_message* msg = adc_msg_parse_verify(g_user, test_string3, strlen(test_string3));
 	adc_msg_remove_named_argument(msg, "AW");
-	ok = strcmp(msg->cache, "BINF AAAB IDAN7ZMSLIEBL53OPTM7WXGSTXUS3XOY6KQS5LBGX NIFriend DEstuff SL3 SS0 SF0 VEQuickDC/0.4.17 US6430 SUADC0,TCP4,UDP4 I4127.0.0.1 HO5 HN1\n") == 0;
+	ok = str_match(msg->cache, "BINF AAAB IDAN7ZMSLIEBL53OPTM7WXGSTXUS3XOY6KQS5LBGX NIFriend DEstuff SL3 SS0 SF0 VEQuickDC/0.4.17 US6430 SUADC0,TCP4,UDP4 I4127.0.0.1 HO5 HN1\n");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -124,7 +124,7 @@ EXO_TEST(adc_message_replace_arg_1, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_remove_named_argument(msg, "AA");
-	ok = strcmp(msg->cache, "IINF BBbar CCwhat\n") == 0;
+	ok = str_match(msg->cache, "IINF BBbar CCwhat\n");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -133,7 +133,7 @@ EXO_TEST(adc_message_replace_arg_2, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_remove_named_argument(msg, "BB");
-	ok = strcmp(msg->cache, "IINF AAfoo CCwhat\n") == 0;
+	ok = str_match(msg->cache, "IINF AAfoo CCwhat\n");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -142,7 +142,7 @@ EXO_TEST(adc_message_replace_arg_3, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_remove_named_argument(msg, "CC");
-	ok = strcmp(msg->cache, "IINF AAfoo BBbar\n") == 0;
+	ok = str_match(msg->cache, "IINF AAfoo BBbar\n");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -151,7 +151,7 @@ EXO_TEST(adc_message_get_arg_1, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
 	char* c = adc_msg_get_argument(msg, 0);
-	ok = strcmp(c, "AAfoo") == 0;
+	ok = str_match(c, "AAfoo");
 	adc_msg_free(msg);
 	hub_free(c);
 	return ok;
@@ -161,7 +161,7 @@ EXO_TEST(adc_message_get_arg_2, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
 	char* c = adc_msg_get_argument(msg, 1);
-	ok = strcmp(c, "BBbar") == 0;
+	ok = str_match(c, "BBbar");
 	adc_msg_free(msg);
 	hub_free(c);
 	return ok;
@@ -170,7 +170,7 @@ EXO_TEST(adc_message_get_arg_2, {
 EXO_TEST(adc_message_get_arg_3, {
 	struct adc_message* msg = adc_msg_create(test_string1);
 	char* c = adc_msg_get_argument(msg, 2);
-	int ok = strcmp(c, "CCwhat") == 0;
+	int ok = str_match(c, "CCwhat");
 	adc_msg_free(msg);
 	hub_free(c);
 	return ok;
@@ -188,7 +188,7 @@ EXO_TEST(adc_message_get_arg_4, {
 EXO_TEST(adc_message_get_named_arg_1, {
 	struct adc_message* msg = adc_msg_create(test_string1);
 	char* c = adc_msg_get_named_argument(msg, "AA");
-	int ok = strcmp(c, "foo") == 0;
+	int ok = str_match(c, "foo");
 	adc_msg_free(msg);
 	hub_free(c);
 	return ok;
@@ -197,7 +197,7 @@ EXO_TEST(adc_message_get_named_arg_1, {
 EXO_TEST(adc_message_get_named_arg_2, {
 	struct adc_message* msg = adc_msg_create(test_string1);
 	char* c = adc_msg_get_named_argument(msg, "BB");
-	int ok = strcmp(c, "bar") == 0;
+	int ok = str_match(c, "bar");
 	adc_msg_free(msg);
 	hub_free(c);
 	return ok;
@@ -206,7 +206,7 @@ EXO_TEST(adc_message_get_named_arg_2, {
 EXO_TEST(adc_message_get_named_arg_3, {
 	struct adc_message* msg = adc_msg_create(test_string1);
 	char* c = adc_msg_get_named_argument(msg, "CC");
-	int ok = strcmp(c, "what") == 0;
+	int ok = str_match(c, "what");
 	adc_msg_free(msg);
 	hub_free(c);
 	return ok;
@@ -337,16 +337,16 @@ EXO_TEST(adc_message_get_named_arg_idx_8, {
 	int c = adc_msg_get_named_argument_index(msg, "CC");
 	int d = adc_msg_get_named_argument_index(msg, "DD");
 	int i = adc_msg_get_named_argument_index(msg, "II");
-	int match = strcmp(msg->cache, test_string1);
+	int match = str_match(msg->cache, test_string1);
 	adc_msg_free(msg);
-	return a == 0 && b == 1 && c == 2 && d == -1 && i == -1 && match == 0;
+	return a == 0 && b == 1 && c == 2 && d == -1 && i == -1 && match;
 });
 
 EXO_TEST(adc_message_terminate_1, {
 	int ok;
 	struct adc_message* msg = adc_msg_create("IINF AAfoo BBbar CCwhat");
 	adc_msg_unterminate(msg);
-	ok = strcmp(msg->cache, "IINF AAfoo BBbar CCwhat") == 0;
+	ok = str_match(msg->cache, "IINF AAfoo BBbar CCwhat");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -356,7 +356,7 @@ EXO_TEST(adc_message_terminate_2, {
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_unterminate(msg);
 	adc_msg_terminate(msg);
-	ok = strcmp(msg->cache, test_string1) == 0;
+	ok = str_match(msg->cache, test_string1);
 	adc_msg_free(msg);
 	return ok;
 });
@@ -367,7 +367,7 @@ EXO_TEST(adc_message_terminate_3, {
 	adc_msg_unterminate(msg);
 	adc_msg_terminate(msg);
 	adc_msg_unterminate(msg);
-	ok = strcmp(msg->cache, "IINF AAfoo BBbar CCwhat") == 0;
+	ok = str_match(msg->cache, "IINF AAfoo BBbar CCwhat");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -378,7 +378,7 @@ EXO_TEST(adc_message_terminate_4, {
 	adc_msg_unterminate(msg);
 	adc_msg_terminate(msg);
 	adc_msg_terminate(msg);
-	ok = strcmp(msg->cache, test_string1) == 0;
+	ok = str_match(msg->cache, test_string1);
 	adc_msg_free(msg);
 	return ok;
 });
@@ -388,7 +388,7 @@ EXO_TEST(adc_message_terminate_5, {
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_terminate(msg);
 	adc_msg_terminate(msg);
-	ok = strcmp(msg->cache, test_string1) == 0;
+	ok = str_match(msg->cache, test_string1);
 	adc_msg_free(msg);
 	return ok;
 });
@@ -398,7 +398,7 @@ EXO_TEST(adc_message_terminate_6, {
 	struct adc_message* msg = adc_msg_create(test_string1);
 	adc_msg_unterminate(msg);
 	adc_msg_unterminate(msg);
-	ok = strcmp(msg->cache, "IINF AAfoo BBbar CCwhat") == 0;
+	ok = str_match(msg->cache, "IINF AAfoo BBbar CCwhat");
 	adc_msg_free(msg);
 	return ok;
 });
@@ -406,7 +406,7 @@ EXO_TEST(adc_message_terminate_6, {
 EXO_TEST(adc_message_escape_1, {
 	int ok;
 	char* s = adc_msg_escape(test_string1);
-	ok = strcmp(s, "IINF\\sAAfoo\\sBBbar\\sCCwhat\\n") == 0;
+	ok = str_match(s, "IINF\\sAAfoo\\sBBbar\\sCCwhat\\n");
 	hub_free(s);
 	return ok;
 });
@@ -414,7 +414,7 @@ EXO_TEST(adc_message_escape_1, {
 EXO_TEST(adc_message_escape_2, {
 	char* s = adc_msg_escape(test_string1);
 	char* s2 = adc_msg_unescape(s);
-	int ok = strcmp(s2, test_string1) == 0;
+	int ok = str_match(s2, test_string1);
 	hub_free(s);
 	hub_free(s2);
 	return ok;
@@ -422,7 +422,7 @@ EXO_TEST(adc_message_escape_2, {
 
 EXO_TEST(adc_message_escape_3, {
 	char* s = adc_msg_unescape(test_string1);
-	int ok = strcmp(s, test_string1) == 0;
+	int ok = str_match(s, test_string1);
 	hub_free(s);
 	return ok;
 });
@@ -454,7 +454,7 @@ EXO_TEST(adc_message_copy_3, {
 				msg1->length     == msg2->length &&
 				msg1->priority   == msg2->priority &&
 				msg1->capacity   == msg2->capacity && /* might not be true! */
-				strcmp(msg1->cache, msg2->cache) == 0);
+				str_match(msg1->cache, msg2->cache));
 	adc_msg_free(msg1);
 	adc_msg_free(msg2);
 	return ok;
@@ -482,7 +482,7 @@ EXO_TEST(adc_message_update_1, {
 
 EXO_TEST(adc_message_update_2, {
 	user_set_info(g_user, updater1);
-	return strcmp(g_user->info->cache, updater1->cache) == 0 && g_user->info == updater1;
+	return str_match(g_user->info->cache, updater1->cache) && g_user->info == updater1;
 });
 
 EXO_TEST(adc_message_update_3, {

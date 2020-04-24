@@ -44,14 +44,18 @@ extern int  exotic_run(struct exotic_handle* handle);
 
 #endif /* HAVE_EXOTIC_AUTOTEST_H */
 
+#include "test_aa_init.tcc"
+#include "test_cbuffer.tcc"
 #include "test_commands.tcc"
 #include "test_config.tcc"
 #include "test_credentials.tcc"
 #include "test_eventqueue.tcc"
+#include "test_flood.tcc"
 #include "test_hub.tcc"
 #include "test_inf.tcc"
 #include "test_ipfilter.tcc"
 #include "test_list.tcc"
+#include "test_log.tcc"
 #include "test_memory.tcc"
 #include "test_message.tcc"
 #include "test_misc.tcc"
@@ -61,6 +65,7 @@ extern int  exotic_run(struct exotic_handle* handle);
 #include "test_timer.tcc"
 #include "test_tokenizer.tcc"
 #include "test_usermanager.tcc"
+#include "test_zz_exit.tcc"
 
 int main(int argc, char** argv)
 {
@@ -70,6 +75,42 @@ int main(int argc, char** argv)
 		return -1;
 
 	/* Register the tests to be run */
+	exotic_add_test(&handle, &exotic_test_init_log, "init_log");
+	exotic_add_test(&handle, &exotic_test_set_log_verbosity, "set_log_verbosity");
+	exotic_add_test(&handle, &exotic_test_get_log_verbosity, "get_log_verbosity");
+	exotic_add_test(&handle, &exotic_test_check_str_match, "check_str_match");
+	exotic_add_test(&handle, &exotic_test_cbuf_create_const_1, "cbuf_create_const_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_create_1, "cbuf_create_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_create_2, "cbuf_create_2");
+	exotic_add_test(&handle, &exotic_test_cbuf_size_1, "cbuf_size_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_size_2, "cbuf_size_2");
+	exotic_add_test(&handle, &exotic_test_cbuf_get_1, "cbuf_get_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_get_2, "cbuf_get_2");
+	exotic_add_test(&handle, &exotic_test_cbuf_append_1, "cbuf_append_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_append_2, "cbuf_append_2");
+	exotic_add_test(&handle, &exotic_test_cbuf_append_bytes_1, "cbuf_append_bytes_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_append_bytes_2, "cbuf_append_bytes_2");
+	exotic_add_test(&handle, &exotic_test_cbuf_chomp_1, "cbuf_chomp_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_chomp_2, "cbuf_chomp_2");
+	exotic_add_test(&handle, &exotic_test_cbuf_chomp_3, "cbuf_chomp_3");
+	exotic_add_test(&handle, &exotic_test_cbuf_chomp_4, "cbuf_chomp_4");
+	exotic_add_test(&handle, &exotic_test_cbuf_chomp_5, "cbuf_chomp_5");
+	exotic_add_test(&handle, &exotic_test_cbuf_chomp_6, "cbuf_chomp_6");
+	exotic_add_test(&handle, &exotic_test_cbuf_chomp_7, "cbuf_chomp_7");
+	exotic_add_test(&handle, &exotic_test_cbuf_chomp_8, "cbuf_chomp_8");
+	exotic_add_test(&handle, &exotic_test_cbuf_clear_1, "cbuf_clear_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_append_format_1, "cbuf_append_format_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_append_format_2, "cbuf_append_format_2");
+	exotic_add_test(&handle, &exotic_test_cbuf_append_format_3, "cbuf_append_format_3");
+	exotic_add_test(&handle, &exotic_test_cbuf_clear_2, "cbuf_clear_2");
+	exotic_add_test(&handle, &exotic_test_cbuf_clear_3, "cbuf_clear_3");
+	exotic_add_test(&handle, &exotic_test_populate_time, "populate_time");
+	exotic_add_test(&handle, &exotic_test_cbuf_append_format_4, "cbuf_append_format_4");
+	exotic_add_test(&handle, &exotic_test_cbuf_append_strftime_1, "cbuf_append_strftime_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_append_strftime_2, "cbuf_append_strftime_2");
+	exotic_add_test(&handle, &exotic_test_cbuf_destroy_const_1, "cbuf_destroy_const_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_destroy_1, "cbuf_destroy_1");
+	exotic_add_test(&handle, &exotic_test_cbuf_destroy_2, "cbuf_destroy_2");
 	exotic_add_test(&handle, &exotic_test_setup, "setup");
 	exotic_add_test(&handle, &exotic_test_command_setup_user, "command_setup_user");
 	exotic_add_test(&handle, &exotic_test_command_create, "command_create");
@@ -156,6 +197,11 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_cred_to_string_6, "cred_to_string_6");
 	exotic_add_test(&handle, &exotic_test_cred_to_string_7, "cred_to_string_7");
 	exotic_add_test(&handle, &exotic_test_cred_to_string_8, "cred_to_string_8");
+	exotic_add_test(&handle, &exotic_test_cred_to_string_9, "cred_to_string_9");
+	exotic_add_test(&handle, &exotic_test_cred_to_string_10, "cred_to_string_10");
+	exotic_add_test(&handle, &exotic_test_cred_to_string_11, "cred_to_string_11");
+	exotic_add_test(&handle, &exotic_test_cred_to_string_12, "cred_to_string_12");
+	exotic_add_test(&handle, &exotic_test_cred_to_string_13, "cred_to_string_13");
 	exotic_add_test(&handle, &exotic_test_cred_from_string_1, "cred_from_string_1");
 	exotic_add_test(&handle, &exotic_test_cred_from_string_2, "cred_from_string_2");
 	exotic_add_test(&handle, &exotic_test_cred_from_string_3, "cred_from_string_3");
@@ -166,6 +212,22 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_cred_from_string_8, "cred_from_string_8");
 	exotic_add_test(&handle, &exotic_test_cred_from_string_9, "cred_from_string_9");
 	exotic_add_test(&handle, &exotic_test_cred_from_string_10, "cred_from_string_10");
+	exotic_add_test(&handle, &exotic_test_cred_from_string_11, "cred_from_string_11");
+	exotic_add_test(&handle, &exotic_test_cred_from_string_12, "cred_from_string_12");
+	exotic_add_test(&handle, &exotic_test_cred_from_string_13, "cred_from_string_13");
+	exotic_add_test(&handle, &exotic_test_cred_from_string_14, "cred_from_string_14");
+	exotic_add_test(&handle, &exotic_test_cred_from_string_15, "cred_from_string_15");
+	exotic_add_test(&handle, &exotic_test_cred_from_string_16, "cred_from_string_16");
+	exotic_add_test(&handle, &exotic_test_bad_cred_from_string_1, "bad_cred_from_string_1");
+	exotic_add_test(&handle, &exotic_test_bad_cred_from_string_2, "bad_cred_from_string_2");
+	exotic_add_test(&handle, &exotic_test_bad_cred_from_string_3, "bad_cred_from_string_3");
+	exotic_add_test(&handle, &exotic_test_bad_cred_from_string_4, "bad_cred_from_string_4");
+	exotic_add_test(&handle, &exotic_test_bad_cred_from_string_5, "bad_cred_from_string_5");
+	exotic_add_test(&handle, &exotic_test_bad_cred_from_string_6, "bad_cred_from_string_6");
+	exotic_add_test(&handle, &exotic_test_bad_cred_from_string_7, "bad_cred_from_string_7");
+	exotic_add_test(&handle, &exotic_test_bad_cred_from_string_8, "bad_cred_from_string_8");
+	exotic_add_test(&handle, &exotic_test_bad_cred_from_string_9, "bad_cred_from_string_9");
+	exotic_add_test(&handle, &exotic_test_bad_cred_from_string_10, "bad_cred_from_string_10");
 	exotic_add_test(&handle, &exotic_test_eventqueue_init_1, "eventqueue_init_1");
 	exotic_add_test(&handle, &exotic_test_eventqueue_init_2, "eventqueue_init_2");
 	exotic_add_test(&handle, &exotic_test_eventqueue_post_1, "eventqueue_post_1");
@@ -178,6 +240,16 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_eventqueue_process_2, "eventqueue_process_2");
 	exotic_add_test(&handle, &exotic_test_eventqueue_size_4, "eventqueue_size_4");
 	exotic_add_test(&handle, &exotic_test_eventqueue_shutdown_1, "eventqueue_shutdown_1");
+	exotic_add_test(&handle, &exotic_test_flood_reset, "flood_reset");
+	exotic_add_test(&handle, &exotic_test_flood_check_1, "flood_check_1");
+	exotic_add_test(&handle, &exotic_test_flood_check_2, "flood_check_2");
+	exotic_add_test(&handle, &exotic_test_flood_check_3, "flood_check_3");
+	exotic_add_test(&handle, &exotic_test_flood_set_time, "flood_set_time");
+	exotic_add_test(&handle, &exotic_test_flood_check_4, "flood_check_4");
+	exotic_add_test(&handle, &exotic_test_flood_check_5, "flood_check_5");
+	exotic_add_test(&handle, &exotic_test_flood_check_6, "flood_check_6");
+	exotic_add_test(&handle, &exotic_test_flood_check_7, "flood_check_7");
+	exotic_add_test(&handle, &exotic_test_flood_check_8, "flood_check_8");
 	exotic_add_test(&handle, &exotic_test_hub_net_startup, "hub_net_startup");
 	exotic_add_test(&handle, &exotic_test_hub_config_initialize, "hub_config_initialize");
 	exotic_add_test(&handle, &exotic_test_hub_acl_initialize, "hub_acl_initialize");
@@ -741,9 +813,50 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_list_append_list_1, "list_append_list_1");
 	exotic_add_test(&handle, &exotic_test_list_append_list_2, "list_append_list_2");
 	exotic_add_test(&handle, &exotic_test_list_append_list_3, "list_append_list_3");
+	exotic_add_test(&handle, &exotic_test_list_append_list_4, "list_append_list_4");
+	exotic_add_test(&handle, &exotic_test_list_append_list_5, "list_append_list_5");
 	exotic_add_test(&handle, &exotic_test_list_clear_list_last, "list_clear_list_last");
 	exotic_add_test(&handle, &exotic_test_list_destroy_1, "list_destroy_1");
 	exotic_add_test(&handle, &exotic_test_list_destroy_2, "list_destroy_2");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_1, "log_verb_to_string_1");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_2, "log_verb_to_string_2");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_3, "log_verb_to_string_3");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_4, "log_verb_to_string_4");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_5, "log_verb_to_string_5");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_6, "log_verb_to_string_6");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_7, "log_verb_to_string_7");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_8, "log_verb_to_string_8");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_9, "log_verb_to_string_9");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_10, "log_verb_to_string_10");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_11, "log_verb_to_string_11");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_12, "log_verb_to_string_12");
+	exotic_add_test(&handle, &exotic_test_log_verb_to_string_13, "log_verb_to_string_13");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_1, "log_verb_from_str_1");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_2, "log_verb_from_str_2");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_3, "log_verb_from_str_3");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_4, "log_verb_from_str_4");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_5, "log_verb_from_str_5");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_6, "log_verb_from_str_6");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_7, "log_verb_from_str_7");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_8, "log_verb_from_str_8");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_9, "log_verb_from_str_9");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_10, "log_verb_from_str_10");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_11, "log_verb_from_str_11");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_12, "log_verb_from_str_12");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_13, "log_verb_from_str_13");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_str_14, "log_verb_from_str_14");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_1, "log_verb_from_int_1");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_2, "log_verb_from_int_2");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_3, "log_verb_from_int_3");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_4, "log_verb_from_int_4");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_5, "log_verb_from_int_5");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_6, "log_verb_from_int_6");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_7, "log_verb_from_int_7");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_8, "log_verb_from_int_8");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_9, "log_verb_from_int_9");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_10, "log_verb_from_int_10");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_int_11, "log_verb_from_int_11");
+	exotic_add_test(&handle, &exotic_test_log_verb_from_bad_str, "log_verb_from_bad_str");
 	exotic_add_test(&handle, &exotic_test_test_message_refc_1, "test_message_refc_1");
 	exotic_add_test(&handle, &exotic_test_test_message_refc_2, "test_message_refc_2");
 	exotic_add_test(&handle, &exotic_test_test_message_refc_3, "test_message_refc_3");
@@ -842,12 +955,53 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_is_num_9, "is_num_9");
 	exotic_add_test(&handle, &exotic_test_is_num_10, "is_num_10");
 	exotic_add_test(&handle, &exotic_test_is_num_11, "is_num_11");
+	exotic_add_test(&handle, &exotic_test_is_num_12, "is_num_12");
+	exotic_add_test(&handle, &exotic_test_is_num_13, "is_num_13");
+	exotic_add_test(&handle, &exotic_test_is_num_14, "is_num_14");
+	exotic_add_test(&handle, &exotic_test_is_num_15, "is_num_15");
+	exotic_add_test(&handle, &exotic_test_is_num_16, "is_num_16");
+	exotic_add_test(&handle, &exotic_test_is_num_17, "is_num_17");
+	exotic_add_test(&handle, &exotic_test_is_num_18, "is_num_18");
+	exotic_add_test(&handle, &exotic_test_is_num_19, "is_num_19");
+	exotic_add_test(&handle, &exotic_test_is_num_20, "is_num_20");
+	exotic_add_test(&handle, &exotic_test_is_num_21, "is_num_21");
+	exotic_add_test(&handle, &exotic_test_is_num_22, "is_num_22");
 	exotic_add_test(&handle, &exotic_test_is_space_1, "is_space_1");
 	exotic_add_test(&handle, &exotic_test_is_space_2, "is_space_2");
+	exotic_add_test(&handle, &exotic_test_is_space_3, "is_space_3");
+	exotic_add_test(&handle, &exotic_test_is_space_4, "is_space_4");
+	exotic_add_test(&handle, &exotic_test_is_space_5, "is_space_5");
+	exotic_add_test(&handle, &exotic_test_is_space_6, "is_space_6");
+	exotic_add_test(&handle, &exotic_test_is_space_7, "is_space_7");
+	exotic_add_test(&handle, &exotic_test_is_space_8, "is_space_8");
+	exotic_add_test(&handle, &exotic_test_is_space_9, "is_space_9");
+	exotic_add_test(&handle, &exotic_test_is_space_10, "is_space_10");
+	exotic_add_test(&handle, &exotic_test_is_space_11, "is_space_11");
+	exotic_add_test(&handle, &exotic_test_is_space_12, "is_space_12");
 	exotic_add_test(&handle, &exotic_test_is_white_space_1, "is_white_space_1");
 	exotic_add_test(&handle, &exotic_test_is_white_space_2, "is_white_space_2");
 	exotic_add_test(&handle, &exotic_test_is_white_space_3, "is_white_space_3");
 	exotic_add_test(&handle, &exotic_test_is_white_space_4, "is_white_space_4");
+	exotic_add_test(&handle, &exotic_test_is_white_space_5, "is_white_space_5");
+	exotic_add_test(&handle, &exotic_test_is_white_space_6, "is_white_space_6");
+	exotic_add_test(&handle, &exotic_test_is_white_space_7, "is_white_space_7");
+	exotic_add_test(&handle, &exotic_test_is_white_space_8, "is_white_space_8");
+	exotic_add_test(&handle, &exotic_test_is_white_space_9, "is_white_space_9");
+	exotic_add_test(&handle, &exotic_test_is_white_space_10, "is_white_space_10");
+	exotic_add_test(&handle, &exotic_test_is_white_space_11, "is_white_space_11");
+	exotic_add_test(&handle, &exotic_test_is_white_space_12, "is_white_space_12");
+	exotic_add_test(&handle, &exotic_test_is_printable_1, "is_printable_1");
+	exotic_add_test(&handle, &exotic_test_is_printable_2, "is_printable_2");
+	exotic_add_test(&handle, &exotic_test_is_printable_3, "is_printable_3");
+	exotic_add_test(&handle, &exotic_test_is_printable_4, "is_printable_4");
+	exotic_add_test(&handle, &exotic_test_is_printable_5, "is_printable_5");
+	exotic_add_test(&handle, &exotic_test_is_printable_6, "is_printable_6");
+	exotic_add_test(&handle, &exotic_test_is_printable_7, "is_printable_7");
+	exotic_add_test(&handle, &exotic_test_is_printable_8, "is_printable_8");
+	exotic_add_test(&handle, &exotic_test_is_printable_9, "is_printable_9");
+	exotic_add_test(&handle, &exotic_test_is_printable_10, "is_printable_10");
+	exotic_add_test(&handle, &exotic_test_is_printable_11, "is_printable_11");
+	exotic_add_test(&handle, &exotic_test_is_printable_12, "is_printable_12");
 	exotic_add_test(&handle, &exotic_test_itoa_1, "itoa_1");
 	exotic_add_test(&handle, &exotic_test_itoa_2, "itoa_2");
 	exotic_add_test(&handle, &exotic_test_itoa_3, "itoa_3");
@@ -856,6 +1010,75 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_itoa_6, "itoa_6");
 	exotic_add_test(&handle, &exotic_test_itoa_7, "itoa_7");
 	exotic_add_test(&handle, &exotic_test_itoa_8, "itoa_8");
+	exotic_add_test(&handle, &exotic_test_ulltoa_1, "ulltoa_1");
+	exotic_add_test(&handle, &exotic_test_ulltoa_2, "ulltoa_2");
+	exotic_add_test(&handle, &exotic_test_ulltoa_3, "ulltoa_3");
+	exotic_add_test(&handle, &exotic_test_ulltoa_4, "ulltoa_4");
+	exotic_add_test(&handle, &exotic_test_ulltoa_5, "ulltoa_5");
+	exotic_add_test(&handle, &exotic_test_ulltoa_6, "ulltoa_6");
+	exotic_add_test(&handle, &exotic_test_ulltoa_7, "ulltoa_7");
+	exotic_add_test(&handle, &exotic_test_ulltoa_8, "ulltoa_8");
+	exotic_add_test(&handle, &exotic_test_ulltoa_9, "ulltoa_9");
+	exotic_add_test(&handle, &exotic_test_ulltoa_10, "ulltoa_10");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_1_1, "string_to_bool_1_1");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_1_2, "string_to_bool_1_2");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_2_1, "string_to_bool_2_1");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_2_2, "string_to_bool_2_2");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_3_1, "string_to_bool_3_1");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_3_2, "string_to_bool_3_2");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_4_1, "string_to_bool_4_1");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_4_2, "string_to_bool_4_2");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_5_1, "string_to_bool_5_1");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_5_2, "string_to_bool_5_2");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_6_1, "string_to_bool_6_1");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_6_2, "string_to_bool_6_2");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_7_1, "string_to_bool_7_1");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_7_2, "string_to_bool_7_2");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_7_3, "string_to_bool_7_3");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_8_1, "string_to_bool_8_1");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_8_2, "string_to_bool_8_2");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_8_3, "string_to_bool_8_3");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_8_4, "string_to_bool_8_4");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_8_5, "string_to_bool_8_5");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_8_6, "string_to_bool_8_6");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_9_1, "string_to_bool_9_1");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_9_2, "string_to_bool_9_2");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_9_3, "string_to_bool_9_3");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_9_4, "string_to_bool_9_4");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_9_5, "string_to_bool_9_5");
+	exotic_add_test(&handle, &exotic_test_string_to_bool_9_6, "string_to_bool_9_6");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_1, "strip_white_space_1");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_2_1, "strip_white_space_2_1");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_2_2, "strip_white_space_2_2");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_2_3, "strip_white_space_2_3");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_3_1, "strip_white_space_3_1");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_3_2, "strip_white_space_3_2");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_3_3, "strip_white_space_3_3");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_4_1, "strip_white_space_4_1");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_4_2, "strip_white_space_4_2");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_4_3, "strip_white_space_4_3");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_5_1, "strip_white_space_5_1");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_5_2, "strip_white_space_5_2");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_5_3, "strip_white_space_5_3");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_5_4, "strip_white_space_5_4");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_6_1, "strip_white_space_6_1");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_6_2, "strip_white_space_6_2");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_6_3, "strip_white_space_6_3");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_6_4, "strip_white_space_6_4");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_6_5, "strip_white_space_6_5");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_7_1, "strip_white_space_7_1");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_7_2, "strip_white_space_7_2");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_7_3, "strip_white_space_7_3");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_7_4, "strip_white_space_7_4");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_7_5, "strip_white_space_7_5");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_7_6, "strip_white_space_7_6");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_7_7, "strip_white_space_7_7");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_7_8, "strip_white_space_7_8");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_8_1, "strip_white_space_8_1");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_8_2, "strip_white_space_8_2");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_8_3, "strip_white_space_8_3");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_9_1, "strip_white_space_9_1");
+	exotic_add_test(&handle, &exotic_test_strip_white_space_9_2, "strip_white_space_9_2");
 	exotic_add_test(&handle, &exotic_test_base32_valid_1, "base32_valid_1");
 	exotic_add_test(&handle, &exotic_test_base32_valid_2, "base32_valid_2");
 	exotic_add_test(&handle, &exotic_test_base32_valid_3, "base32_valid_3");
@@ -959,6 +1182,69 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_utf8_valid_38, "utf8_valid_38");
 	exotic_add_test(&handle, &exotic_test_utf8_valid_39, "utf8_valid_39");
 	exotic_add_test(&handle, &exotic_test_utf8_valid_40, "utf8_valid_40");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_1, "uhub_atoi_1");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_2, "uhub_atoi_2");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_3, "uhub_atoi_3");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_4, "uhub_atoi_4");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_5, "uhub_atoi_5");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_6, "uhub_atoi_6");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_7, "uhub_atoi_7");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_8, "uhub_atoi_8");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_9, "uhub_atoi_9");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_10, "uhub_atoi_10");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_11, "uhub_atoi_11");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_12, "uhub_atoi_12");
+	exotic_add_test(&handle, &exotic_test_uhub_atoi_13, "uhub_atoi_13");
+	exotic_add_test(&handle, &exotic_test_is_number_1, "is_number_1");
+	exotic_add_test(&handle, &exotic_test_is_number_2, "is_number_2");
+	exotic_add_test(&handle, &exotic_test_is_number_3, "is_number_3");
+	exotic_add_test(&handle, &exotic_test_is_number_4, "is_number_4");
+	exotic_add_test(&handle, &exotic_test_is_number_5, "is_number_5");
+	exotic_add_test(&handle, &exotic_test_is_number_6, "is_number_6");
+	exotic_add_test(&handle, &exotic_test_is_number_7, "is_number_7");
+	exotic_add_test(&handle, &exotic_test_is_number_8, "is_number_8");
+	exotic_add_test(&handle, &exotic_test_is_number_9, "is_number_9");
+	exotic_add_test(&handle, &exotic_test_is_number_10, "is_number_10");
+	exotic_add_test(&handle, &exotic_test_is_number_11, "is_number_11");
+	exotic_add_test(&handle, &exotic_test_is_number_12, "is_number_12");
+	exotic_add_test(&handle, &exotic_test_is_number_13, "is_number_13");
+	exotic_add_test(&handle, &exotic_test_is_number_14, "is_number_14");
+	exotic_add_test(&handle, &exotic_test_is_number_15, "is_number_15");
+	exotic_add_test(&handle, &exotic_test_format_size_1, "format_size_1");
+	exotic_add_test(&handle, &exotic_test_format_size_2, "format_size_2");
+	exotic_add_test(&handle, &exotic_test_format_size_3, "format_size_3");
+	exotic_add_test(&handle, &exotic_test_format_size_4, "format_size_4");
+	exotic_add_test(&handle, &exotic_test_format_size_5, "format_size_5");
+	exotic_add_test(&handle, &exotic_test_format_size_6, "format_size_6");
+	exotic_add_test(&handle, &exotic_test_format_size_7, "format_size_7");
+	exotic_add_test(&handle, &exotic_test_format_size_8, "format_size_8");
+	exotic_add_test(&handle, &exotic_test_format_size_9, "format_size_9");
+	exotic_add_test(&handle, &exotic_test_format_size_10, "format_size_10");
+	exotic_add_test(&handle, &exotic_test_format_size_11, "format_size_11");
+	exotic_add_test(&handle, &exotic_test_format_size_12, "format_size_12");
+	exotic_add_test(&handle, &exotic_test_format_size_13, "format_size_13");
+	exotic_add_test(&handle, &exotic_test_format_size_14, "format_size_14");
+	exotic_add_test(&handle, &exotic_test_format_size_15, "format_size_15");
+	exotic_add_test(&handle, &exotic_test_format_size_16, "format_size_16");
+	exotic_add_test(&handle, &exotic_test_format_size_17, "format_size_17");
+	exotic_add_test(&handle, &exotic_test_format_size_18, "format_size_18");
+	exotic_add_test(&handle, &exotic_test_format_size_19, "format_size_19");
+	exotic_add_test(&handle, &exotic_test_format_size_20, "format_size_20");
+	exotic_add_test(&handle, &exotic_test_format_size_21, "format_size_21");
+	exotic_add_test(&handle, &exotic_test_format_size_22, "format_size_22");
+	exotic_add_test(&handle, &exotic_test_format_size_23, "format_size_23");
+	exotic_add_test(&handle, &exotic_test_format_size_24, "format_size_24");
+	exotic_add_test(&handle, &exotic_test_format_size_25, "format_size_25");
+	exotic_add_test(&handle, &exotic_test_format_size_26, "format_size_26");
+	exotic_add_test(&handle, &exotic_test_format_size_27, "format_size_27");
+	exotic_add_test(&handle, &exotic_test_format_size_28, "format_size_28");
+	exotic_add_test(&handle, &exotic_test_format_size_29, "format_size_29");
+	exotic_add_test(&handle, &exotic_test_format_size_30, "format_size_30");
+	exotic_add_test(&handle, &exotic_test_format_size_31, "format_size_31");
+	exotic_add_test(&handle, &exotic_test_format_size_32, "format_size_32");
+	exotic_add_test(&handle, &exotic_test_format_size_33, "format_size_33");
+	exotic_add_test(&handle, &exotic_test_format_size_34, "format_size_34");
+	exotic_add_test(&handle, &exotic_test_format_size_35, "format_size_35");
 	exotic_add_test(&handle, &exotic_test_rbtree_create_destroy, "rbtree_create_destroy");
 	exotic_add_test(&handle, &exotic_test_rbtree_create_1, "rbtree_create_1");
 	exotic_add_test(&handle, &exotic_test_rbtree_size_0, "rbtree_size_0");
@@ -1065,6 +1351,10 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_tokenizer_settings_7, "tokenizer_settings_7");
 	exotic_add_test(&handle, &exotic_test_tokenizer_settings_8, "tokenizer_settings_8");
 	exotic_add_test(&handle, &exotic_test_tokenizer_settings_9, "tokenizer_settings_9");
+	exotic_add_test(&handle, &exotic_test_tokenizer_settings_10, "tokenizer_settings_10");
+	exotic_add_test(&handle, &exotic_test_tokenizer_settings_11, "tokenizer_settings_11");
+	exotic_add_test(&handle, &exotic_test_tokenizer_free_1, "tokenizer_free_1");
+	exotic_add_test(&handle, &exotic_test_tokenizer_free_2, "tokenizer_free_2");
 	exotic_add_test(&handle, &exotic_test_um_init_1, "um_init_1");
 	exotic_add_test(&handle, &exotic_test_um_shutdown_1, "um_shutdown_1");
 	exotic_add_test(&handle, &exotic_test_um_shutdown_2, "um_shutdown_2");
@@ -1077,6 +1367,7 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_um_size_3, "um_size_3");
 	exotic_add_test(&handle, &exotic_test_um_remove_2, "um_remove_2");
 	exotic_add_test(&handle, &exotic_test_um_shutdown_4, "um_shutdown_4");
+	exotic_add_test(&handle, &exotic_test_exit_log, "exit_log");
 
 	return exotic_run(&handle);
 }

@@ -85,38 +85,29 @@ EXO_TEST(tokenizer_escape_3, { return compare("\"value1\" \"value 2\"", "value1 
 EXO_TEST(tokenizer_escape_4, { return compare("\"value1\" value\\ 2", "value1 value_2"); });
 EXO_TEST(tokenizer_escape_5, { return compare("\"value1\" value\\\\2", "value1 value\\2"); });
 EXO_TEST(tokenizer_escape_6, { return compare("\"value1\" value\\\t2", "value1 value|2"); });
-EXO_TEST(tokenizer_escape_7, { return compare("\"value1\" \"value\t2\"", "value1 value|2"); });
-
-static inline int strcmp_null(const char* a, const char* b)
-{
-	if (!a && !b)
-		return 0;
-	else if (!b)
-		return 1;
-	else if (!a)
-		return -1;
-	else
-		return strcmp(a, b);
-}
+EXO_TEST(tokenizer_escape_7, { return compare("\"value1\" \"value\t\r2\"", "value1 value|2"); });
 
 static int test_setting(const char* str, const char* expected_key, const char* expected_value)
 {
 	int success = 0;
 	struct cfg_settings* setting = cfg_settings_split(str);
 	if (!setting) return expected_key == NULL;
-	success = (!strcmp_null(cfg_settings_get_key(setting), expected_key) && !strcmp_null(cfg_settings_get_value(setting), expected_value));
+	success = (str_match(cfg_settings_get_key(setting), expected_key) && str_match(cfg_settings_get_value(setting), expected_value));
 	cfg_settings_free(setting);
 	return success;
 }
 
-EXO_TEST(tokenizer_settings_1, { return test_setting("foo=bar", "foo", "bar"); });
-EXO_TEST(tokenizer_settings_2, { return test_setting("foo =bar", "foo", "bar"); });
-EXO_TEST(tokenizer_settings_3, { return test_setting("foo= bar", "foo", "bar"); });
-EXO_TEST(tokenizer_settings_4, { return test_setting("\tfoo=bar", "foo", "bar"); });
-EXO_TEST(tokenizer_settings_5, { return test_setting("foo=bar\t", "foo", "bar"); });
-EXO_TEST(tokenizer_settings_6, { return test_setting("\tfoo=bar\t", "foo", "bar"); });
-EXO_TEST(tokenizer_settings_7, { return test_setting("\tfoo\t=\tbar\t", "foo", "bar"); });
-EXO_TEST(tokenizer_settings_8, { return test_setting("foo=", "foo", ""); });
-EXO_TEST(tokenizer_settings_9, { return test_setting("=bar", NULL, ""); });
+EXO_TEST(tokenizer_settings_1,  { return test_setting("foo=bar", "foo", "bar"); });
+EXO_TEST(tokenizer_settings_2,  { return test_setting("foo =bar", "foo", "bar"); });
+EXO_TEST(tokenizer_settings_3,  { return test_setting("foo= bar", "foo", "bar"); });
+EXO_TEST(tokenizer_settings_4,  { return test_setting("\tfoo=bar", "foo", "bar"); });
+EXO_TEST(tokenizer_settings_5,  { return test_setting("foo=bar\t", "foo", "bar"); });
+EXO_TEST(tokenizer_settings_6,  { return test_setting("\tfoo=bar\t", "foo", "bar"); });
+EXO_TEST(tokenizer_settings_7,  { return test_setting("\tfoo\t=\tbar\t", "foo", "bar"); });
+EXO_TEST(tokenizer_settings_8,  { return test_setting(" foo = bar ", "foo", "bar"); });
+EXO_TEST(tokenizer_settings_9,  { return test_setting("foo=", "foo", ""); });
+EXO_TEST(tokenizer_settings_10, { return test_setting("=bar", NULL, ""); });
+EXO_TEST(tokenizer_settings_11, { return test_setting(NULL, NULL, ""); });
 
-
+EXO_TEST(tokenizer_free_1, { cfg_tokens_free(NULL); return 1; });
+EXO_TEST(tokenizer_free_2, { cfg_settings_free(NULL); return 1; });

@@ -391,9 +391,13 @@ const char* format_size(size_t bytes, char* buf, size_t bufsize)
 
 	if (remainder)
 	{
-		remainder = remainder * 10 / divisor;
-		if (remainder == 10)
-			remainder = 0;
+		/*
+		 * Have to use an intermediate double since it can represent
+		 * remainder * 10 when it's close to SIZE_MAX
+		 */
+		remainder = (size_t)((double)remainder * 10 / divisor);
+		if (remainder >= 10)
+			remainder = 9;
 	}
 
 	if (b < 100 && remainder != 0)
