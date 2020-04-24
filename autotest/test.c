@@ -45,6 +45,7 @@ extern int  exotic_run(struct exotic_handle* handle);
 #endif /* HAVE_EXOTIC_AUTOTEST_H */
 
 #include "test_commands.tcc"
+#include "test_config.tcc"
 #include "test_credentials.tcc"
 #include "test_eventqueue.tcc"
 #include "test_hub.tcc"
@@ -120,6 +121,33 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_command_user_destroy, "command_user_destroy");
 	exotic_add_test(&handle, &exotic_test_command_destroy, "command_destroy");
 	exotic_add_test(&handle, &exotic_test_cleanup, "cleanup");
+	exotic_add_test(&handle, &exotic_test_zero_configs, "zero_configs");
+	exotic_add_test(&handle, &exotic_test_default_config_1, "default_config_1");
+	exotic_add_test(&handle, &exotic_test_apply_config_bool_1, "apply_config_bool_1");
+	exotic_add_test(&handle, &exotic_test_apply_config_bool_2, "apply_config_bool_2");
+	exotic_add_test(&handle, &exotic_test_apply_config_bool_3, "apply_config_bool_3");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_1, "apply_config_int_1");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_2, "apply_config_int_2");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_3, "apply_config_int_3");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_4, "apply_config_int_4");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_5, "apply_config_int_5");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_6, "apply_config_int_6");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_7, "apply_config_int_7");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_8, "apply_config_int_8");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_9, "apply_config_int_9");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_10, "apply_config_int_10");
+	exotic_add_test(&handle, &exotic_test_apply_config_int_11, "apply_config_int_11");
+	exotic_add_test(&handle, &exotic_test_apply_config_str_1, "apply_config_str_1");
+	exotic_add_test(&handle, &exotic_test_apply_config_str_2, "apply_config_str_2");
+	exotic_add_test(&handle, &exotic_test_prepare_config_1, "prepare_config_1");
+	exotic_add_test(&handle, &exotic_test_check_config_1_1, "check_config_1_1");
+	exotic_add_test(&handle, &exotic_test_check_config_1_2, "check_config_1_2");
+	exotic_add_test(&handle, &exotic_test_dump_config, "dump_config");
+	exotic_add_test(&handle, &exotic_test_read_config, "read_config");
+	exotic_add_test(&handle, &exotic_test_check_config_2_1, "check_config_2_1");
+	exotic_add_test(&handle, &exotic_test_check_config_2_2, "check_config_2_2");
+	exotic_add_test(&handle, &exotic_test_remove_config_file, "remove_config_file");
+	exotic_add_test(&handle, &exotic_test_free_configs, "free_configs");
 	exotic_add_test(&handle, &exotic_test_cred_to_string_1, "cred_to_string_1");
 	exotic_add_test(&handle, &exotic_test_cred_to_string_2, "cred_to_string_2");
 	exotic_add_test(&handle, &exotic_test_cred_to_string_3, "cred_to_string_3");
@@ -1089,7 +1117,7 @@ static void exotic_summary(struct exotic_handle* handle)
 	int total     = handle->pass + handle->fail;
 	int pass_rate = total ? (100*handle->pass / total) : 0;
 	int fail_rate = total ? (100*handle->fail / total) : 0;
-	
+
 	printf("\n");
 	printf("--------------------------------------------\n");
 	printf("Results:\n");
@@ -1118,9 +1146,9 @@ int exotic_initialize(struct exotic_handle* handle, int argc, char** argv)
 {
 	int n;
 	if (!handle || !argv) return -1;
-	
+
 	memset(handle, 0, sizeof(struct exotic_handle));
-	
+
 	for (n = 1; n < argc; n++)
 	{
 		if (!strcmp(argv[n], "-h") || !strcmp(argv[n], "--help"))
@@ -1128,41 +1156,41 @@ int exotic_initialize(struct exotic_handle* handle, int argc, char** argv)
 			exotic_help(argv[0]);
 			exit(0);
 		}
-		
+
 		if (!strcmp(argv[n], "-v") || !strcmp(argv[n], "--version"))
 		{
 			exotic_version();
 			exit(0);
 		}
-		
+
 		if (!strcmp(argv[n], "-s") || !strcmp(argv[n], "--summary"))
 		{
 			handle->config_show_summary = cfg_on;
 			continue;
 		}
-		
+
 		if (!strcmp(argv[n], "-f") || !strcmp(argv[n], "--fail"))
 		{
 			handle->config_show_fail = cfg_on;
 			continue;
 		}
-		
+
 		if (!strcmp(argv[n], "-p") || !strcmp(argv[n], "--pass"))
 		{
 			handle->config_show_pass = cfg_on;
 			continue;
 		}
-		
+
 		fprintf(stderr, "Unknown argument: %s\n\n", argv[n]);
 		exotic_help(argv[0]);
 		exit(0);
 	}
-	
+
 	if (handle->config_show_summary == cfg_on)
 	{
 		if (handle->config_show_pass == cfg_default) handle->config_show_pass = cfg_off;
 		if (handle->config_show_fail == cfg_default) handle->config_show_fail = cfg_off;
-	
+
 	}
 	else if (handle->config_show_pass == cfg_on)
 	{
@@ -1192,19 +1220,19 @@ void exotic_add_test(struct exotic_handle* handle, exo_test_t func, const char* 
 		fprintf(stderr, "exotic_add_test: failed, no handle!\n");
 		exit(-1);
 	}
-	
+
 	test = (struct exo_test_data*) malloc(sizeof(struct exo_test_data));
 	if (!test)
 	{
 		fprintf(stderr, "exotic_add_test: out of memory!\n");
 		exit(-1);
 	}
-	
+
 	/* Create the test */
 	memset(test, 0, sizeof(struct exo_test_data));
 	test->test = func;
 	test->name = strdup(name);
-	
+
 	/* Register the test in the handle */
 	if (!handle->first)
 	{
@@ -1222,7 +1250,7 @@ void exotic_add_test(struct exotic_handle* handle, exo_test_t func, const char* 
 int exotic_run(struct exotic_handle* handle)
 {
 	struct exo_test_data* tmp = NULL;
-	
+
 	if (!handle)
 	{
 		fprintf(stderr, "Error: exotic is not initialized\n");
@@ -1233,7 +1261,7 @@ int exotic_run(struct exotic_handle* handle)
 	while (handle->current)
 	{
 		tmp = handle->current;
-		
+
 		if (handle->current->test()) {
 			if (handle->config_show_pass == cfg_on) printf("* PASS test '%s'\n", tmp->name);
 			handle->pass++;
@@ -1241,18 +1269,18 @@ int exotic_run(struct exotic_handle* handle)
 			if (handle->config_show_fail == cfg_on) printf("* FAIL test '%s'\n", tmp->name);
 			handle->fail++;
 		}
-		
+
 		handle->current = handle->current->next;
-		
+
 		free(tmp->name);
 		free(tmp);
 	}
-	
+
 	if (!handle->first)
 	{
 		printf("(No tests added)\n");
 	}
-	
+
 	if (handle->config_show_summary == cfg_on)
 		exotic_summary(handle);
 

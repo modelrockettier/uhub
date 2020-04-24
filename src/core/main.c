@@ -151,12 +151,11 @@ int main_loop()
 #if !defined(WIN32)
 			setup_signal_handlers(hub);
 #ifdef SYSTEMD
-                        /* Notify the service manager that this daemon has
-                         * been successfully initialized and shall enter the
-                         * main loop.
-                         */
-                        sd_notifyf(0, "READY=1\n"
-                                      "MAINPID=%lu", (unsigned long) getpid());
+			/* Notify the service manager that this daemon has
+			 * been successfully initialized and shall enter the
+			 * main loop.
+			 */
+			sd_notifyf(0, "READY=1\n" "MAINPID=%lu", (unsigned long) getpid());
 #endif /* SYSTEMD */
 
 #endif /* ! WIN32 */
@@ -193,7 +192,7 @@ int check_configuration(int dump)
 	int ret = read_config(arg_config, &configuration, 0);
 
 	if (dump && ret != -1)
-		dump_config(&configuration, dump > 1);
+		dump_config(&configuration, stdout, dump > 1);
 
 	free_config(&configuration);
 
@@ -424,7 +423,7 @@ int pidfile_create()
 	if (arg_pid)
 	{
 		FILE* pidfile = fopen(arg_pid, "w");
-	        if (!pidfile)
+		if (!pidfile)
 		{
 			LOG_FATAL("Unable to write pid file: %s\n", arg_pid);
 			return -1;

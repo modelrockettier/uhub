@@ -162,7 +162,8 @@ class CSourceGenerator(SourceGenerator):
 
 	def _write_free_impl(self, option):
 		if option.is_string:
-			self.f.write("\thub_free(config->%s);\n\n" % option.name)
+			self.f.write("\thub_free(config->%s);\n" % option.name)
+			self.f.write("\tconfig->%s = NULL;\n\n" % option.name)
 
 	def _write_dump_impl(self, option):
 		s = ""
@@ -179,7 +180,7 @@ class CSourceGenerator(SourceGenerator):
 			test = "strcmp(config->%s, %s) != 0" % (option.name, option.formatted_default())
 
 		s += "\tif (!ignore_defaults || %s)\n" % test;
-		s += "\t\tfprintf(stdout, \"%s = %s\\n\", %s);\n\n" % (option.name, fmt, val)
+		s += "\t\tfprintf(stream, \"%s = %s\\n\", %s);\n\n" % (option.name, fmt, val)
 		self.f.write(s)
 
 	def write(self, options):
@@ -188,15 +189,20 @@ class CSourceGenerator(SourceGenerator):
 		for option in options:
 			self._write_default_impl(option)
 		self.f.write("}\n\n")
-		self.f.write("static int apply_config(struct hub_config* config, char* key, char* data, int line_count)\n{\n\tint max = 0;\n\tint min = 0;\n\n")
+		self.f.write("int apply_config(struct hub_config* config, const char* key, const char* data, int line_count)\n{\n")
+		self.f.write("\tint max = 0;\n")
+		self.f.write("\tint min = 0;\n\n")
 		for option in options:
 			self._write_apply_impl(option)
-		self.f.write("\t/* Still here -- unknown directive */\n\tLOG_ERROR(\"Unknown configuration directive: '%s'\", key);\n\treturn -1;\n}\n\n")
+		self.f.write("\t/* Still here -- unknown directive */\n")
+		self.f.write("\tLOG_ERROR(\"Unknown configuration directive: '%s'\", key);\n")
+		self.f.write("\treturn -1;\n")
+		self.f.write("}\n\n")
 		self.f.write("void free_config(struct hub_config* config)\n{\n")
 		for option in options:
 			self._write_free_impl(option)
 		self.f.write("}\n\n")
-		self.f.write("void dump_config(struct hub_config* config, int ignore_defaults)\n{\n")
+		self.f.write("void dump_config(const struct hub_config* config, FILE* stream, int ignore_defaults)\n{\n")
 		for option in options:
 			self._write_dump_impl(option)
 		self.f.write("}\n\n")
@@ -210,7 +216,7 @@ class SqlWebsiteDocsGenerator(SourceGenerator):
 		if self.sqlite_support:
 			return s.replace("\"", "\"\"")
 		return s.replace("\"", "\\\"")
-		
+
 
 	def _write_or_null(self, s):
 		if (not s or len(s) == 0):
@@ -245,7 +251,7 @@ class SqlWebsiteDocsGenerator(SourceGenerator):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(
-	            description="Configuration file parser and source generator",
+				description="Configuration file parser and source generator",
 				formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 	parser.add_argument("-i", "--input", default="config.xml",

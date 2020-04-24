@@ -48,7 +48,12 @@ extern void free_config(struct hub_config* config);
 /**
  * Print all configuration data to standard out.
  */
-extern void dump_config(struct hub_config* config, int ignore_defaults);
+extern void dump_config(const struct hub_config* config, FILE* stream, int ignore_defaults);
+
+/**
+ * Set a configuration parameter.
+ */
+extern int apply_config(struct hub_config* config, const char* key, const char* data, int line_count);
 
 
 #endif /* HAVE_UHUB_CONFIG_H */

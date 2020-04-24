@@ -187,7 +187,7 @@
 		<short>Ignore HTTP requests.</short>
 		<description><![CDATA[
 			If this is enabled all HTTP requests will be ignored and will not send anything back to the user.
-            Otherwise, the hub will respond with a simple HTTP error message or redirect (if http_redirect_addr is set).
+			Otherwise, the hub will respond with a simple HTTP error message or redirect (if http_redirect_addr is set).
 		]]></description>
 		<since>0.5.2</since>
 	</option>
@@ -355,7 +355,7 @@
 	</option>
 
 	<option name="flood_ctl_interval" type="int" default="0">
-		<check min="1" max="60" />
+		<check min="0" max="60" />
 		<short>Time interval in seconds for flood control check.</short>
 		<description><![CDATA[
 			This is the time interval that will be used for all flood control calculations.
