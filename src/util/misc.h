@@ -27,6 +27,7 @@ extern const char* get_timestamp(time_t time);
 extern int is_num(char c);
 extern int is_space(char c);
 extern int is_white_space(char c);
+extern int is_printable(unsigned char c);
 extern int is_valid_utf8(const char* string);
 extern int is_printable_utf8(const char* string, size_t length);
 extern int is_valid_base32_char(char c);

@@ -299,15 +299,6 @@ void* list_get_first(struct linked_list* list)
 	return list->iterator->ptr;
 }
 
-struct node* list_get_first_node(struct linked_list* list)
-{
-	list->iterator = list->first;
-	if (list->iterator == NULL)
-		return NULL;
-
-	return list->iterator;
-}
-
 void* list_get_last(struct linked_list* list)
 {
 	list->iterator = list->last;
@@ -315,16 +306,6 @@ void* list_get_last(struct linked_list* list)
 		return NULL;
 
 	return list->iterator->ptr;
-}
-
-struct node* list_get_last_node(struct linked_list* list)
-{
-	list->iterator = list->last;
-	if (list->iterator == NULL)
-		return NULL;
-
-	return list->iterator;
-
 }
 
 void* list_get_next(struct linked_list* list)

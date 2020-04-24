@@ -35,9 +35,9 @@ int is_white_space(char c)
 	return 0;
 }
 
-static int is_printable(unsigned char c)
+int is_printable(unsigned char c)
 {
-	if (c >= 32)
+	if (c >= 32 && c != 0x7f)
 		return 1;
 	else if (c == '\t' || c == '\r' || c == '\n')
 		return 1;
@@ -378,17 +378,29 @@ const char* format_size(size_t bytes, char* buf, size_t bufsize)
 	size_t b = bytes;
 	size_t factor = 0;
 	size_t divisor = 1;
-	while (b > 1024)
+	size_t remainder = 0;
+
+	while (b >= 1024)
 	{
+		remainder |= (b & 0x3ff) << (factor * 10);
 		factor++;
 		b = (b >> 10);
 		divisor = (divisor << 10);
 	}
-	uhub_assert(factor < (sizeof(quant) / sizeof(const char*)));
-	if (factor >= 2)
-		snprintf(buf, bufsize, "%.1f %s", (double) bytes / (double) divisor, quant[factor]);
+	uhub_assert(factor < (sizeof(quant) / sizeof(quant[0])));
+
+	if (remainder)
+	{
+		remainder = remainder * 10 / divisor;
+		if (remainder == 10)
+			remainder = 0;
+	}
+
+	if (b < 100 && remainder != 0)
+		snprintf(buf, bufsize, "%" PRIsz ".%" PRIsz " %s", b, remainder, quant[factor]);
 	else
-		snprintf(buf, bufsize, "%" PRIsz " %s", bytes / divisor, quant[factor]);
+		snprintf(buf, bufsize, "%" PRIsz " %s", b, quant[factor]);
+
 	return buf;
 }
 
@@ -619,7 +631,7 @@ char* strip_off_quotes(char* line)
 		return line;
 
 	if ((line[0] == '"' && line[len - 1] == '"') ||
-	    (line[0] == '\'' && line[len - 1] == '\''))
+		(line[0] == '\'' && line[len - 1] == '\''))
 	{
 		line[len - 1] = '\0';
 		return line + 1;
