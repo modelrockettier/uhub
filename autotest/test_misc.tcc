@@ -122,7 +122,7 @@ static int check_strip(char const* in, const char* expect)
 	}
 	else
 	{
-		strcpy(buf, in);
+		strlcpy(buf, in, sizeof(buf));
 		result = strip_white_space(buf);
 	}
 

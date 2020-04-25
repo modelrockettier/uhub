@@ -83,6 +83,24 @@ EXO_TEST(adc_message_add_arg_2, {
 	return ok;
 });
 
+EXO_TEST(adc_message_add_arg_3, {
+	int ok;
+	struct adc_message* msg = adc_msg_create(test_string1);
+	adc_msg_add_named_argument_int(msg, "II", 1234);
+	ok = str_match(msg->cache, "IINF AAfoo BBbar CCwhat II1234\n");
+	adc_msg_free(msg);
+	return ok;
+});
+
+EXO_TEST(adc_message_add_arg_4, {
+	int ok;
+	struct adc_message* msg = adc_msg_create(test_string1);
+	adc_msg_add_named_argument_uint64(msg, "UU", (uint64_t)1234567890123456789);
+	ok = str_match(msg->cache, "IINF AAfoo BBbar CCwhat UU1234567890123456789\n");
+	adc_msg_free(msg);
+	return ok;
+});
+
 EXO_TEST(adc_message_remove_arg_1, {
 	int ok;
 	struct adc_message* msg = adc_msg_create(test_string1);
@@ -427,6 +445,15 @@ EXO_TEST(adc_message_escape_3, {
 	return ok;
 });
 
+EXO_TEST(adc_message_escape_4, {
+	char* s = adc_msg_escape(test_string2);
+	char* s2 = adc_msg_unescape(s);
+	int ok = str_match(s2, test_string2);
+	hub_free(s);
+	hub_free(s2);
+	return ok;
+});
+
 EXO_TEST(adc_message_copy_1, {
 	struct adc_message* msg1 = adc_msg_create(test_string1);
 	struct adc_message* msg2 = adc_msg_copy(msg1);
@@ -523,6 +550,22 @@ EXO_TEST(adc_message_empty_2, {
 EXO_TEST(adc_message_empty_3, {
 	struct adc_message* msg = adc_msg_parse_verify(g_user, test_string5, strlen(test_string5));
 	int ok = adc_msg_is_empty(msg) == 0; /* arguably not empty, contains a space */
+	adc_msg_free(msg);
+	return ok;
+});
+
+EXO_TEST(adc_message_construct_source_1, {
+	int ok;
+	struct adc_message* msg = adc_msg_construct_source(ADC_CMD_BMSG, 2, 0);
+	ok = str_match(msg->cache, "BMSG AAAC\n");
+	adc_msg_free(msg);
+	return ok;
+});
+
+EXO_TEST(adc_message_construct_source_dest_1, {
+	int ok;
+	struct adc_message* msg = adc_msg_construct_source_dest(ADC_CMD_DMSG, 3, 4, 0);
+	ok = str_match(msg->cache, "DMSG AAAD AAAE\n");
 	adc_msg_free(msg);
 	return ok;
 });
