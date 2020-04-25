@@ -41,10 +41,8 @@ task:
     folder: "C:\\Users\\ContainerAdministrator\\vcpkg-minimal"
     fingerprint_script:
       - echo "OS: ${CIRRUS_OS}"
-      - echo "TAG: ${CIRRUS_TAG}"
-      - echo "BRANCH: ${CIRRUS_BRANCH}"
       - echo "PR: ${CIRRUS_PR}"
-      - cat autotest/ci/install-build-depends.sh
+      - md5sum autotest/ci/install-build-depends.sh
     reupload_on_changes: true
   environment_script: env
   install_build_depends_script: ./autotest/ci/install-build-depends.sh

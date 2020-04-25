@@ -176,18 +176,25 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 
 	cmake ${CMAKEOPTS}
 
+	ret=0
 	if [ "$OS_NAME" = "windows" ]; then
 		export VERBOSE=1
 		cmake --build . --target ALL_BUILD --config $BUILD_TYPE -j3
 		unset VERBOSE
 
 		du -shc */autotest-bin.exe */mod_*.dll */uhub.exe */uhub-passwd.exe
-		cmake --build . --target RUN_TESTS --config $BUILD_TYPE
+		cmake --build . --target RUN_TESTS --config $BUILD_TYPE || ret=$?
 	else
 		make VERBOSE=1 -j3
 
 		du -shc autotest-bin mod_*.so uhub uhub-admin uhub-passwd
-		make test
+		make test || ret=$?
+	fi
+
+	# Display the test log on failure before exiting
+	if [ "$ret" != 0 ]; then
+		cat test.log || true
+		exit $ret
 	fi
 
 	if [ "$OS_NAME" = "linux" ] || [ "$OS_NAME" = "freebsd" ]; then

@@ -117,7 +117,11 @@ jobs:
           build_command: "make -j2"
           branch_pattern: master
       before_install:
-        - set -x; echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
+        - |
+          set -x
+          echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
+          git fetch --unshallow origin 'refs/heads/*:refs/remotes/origin/*'
+          true
       # override the build script
       script:
         - |
@@ -175,4 +179,3 @@ install:
   - autotest/ci/install-build-depends.sh
 script:
   - autotest/ci/build-and-test.sh
-
