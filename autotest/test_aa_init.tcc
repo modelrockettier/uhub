@@ -27,18 +27,18 @@ EXO_TEST(get_log_verbosity, {
 /* Returns 0 = strings are different, 1 (or other non-zero) = strings match */
 static int str_match(char const* a, char const* b)
 {
-	int diff;
+	int same;
 
 	if (!a && !b)
-		return 0;
+		return 1;
 
 	if (!a || !b)
-		diff = 1;
+		same = 0;
 	else
-		diff = strcmp(a, b);
+		same = !strcmp(a, b);
 
 #ifdef DEBUG_TESTS
-	if (diff)
+	if (!same)
 	{
 		printf("str_match fail: ");
 
@@ -53,7 +53,7 @@ static int str_match(char const* a, char const* b)
 			printf("b='%s'\n", b);
 	}
 #endif
-	return !diff;
+	return same;
 }
 
 /*
@@ -68,10 +68,10 @@ static int str_match2(char const* result, char const* expect, char const* alt)
 	if (!result)
 	{
 		if (!expect || !alt)
-			return 0;
+			return 1;
 
 		printf("str_match2 fail: result=<NULL>, expect='%s', alt='%s'\n", expect, alt);
-		return 1;
+		return 0;
 	}
 
 	same =

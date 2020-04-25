@@ -377,20 +377,22 @@ const char* format_size(size_t bytes, char* buf, size_t bufsize)
 	static const char* quant[] = { "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB" };
 	size_t b = bytes;
 	size_t factor = 0;
-	size_t divisor = 1;
 	size_t remainder = 0;
 
 	while (b >= 1024)
 	{
-		remainder |= (b & 0x3ff) << (factor * 10);
 		factor++;
-		b = (b >> 10);
-		divisor = (divisor << 10);
+		b >>= 10;
 	}
 	uhub_assert(factor < (sizeof(quant) / sizeof(quant[0])));
 
-	if (remainder)
+	/* Only calculate the remainder when b < 10 (want 2 digits precision) */
+	if (b < 10)
+		remainder = bytes & ~((size_t)0x3ff << (factor * 10));
+
+	if (remainder != 0)
 	{
+		size_t divisor = (size_t)1 << (factor * 10);
 		/*
 		 * Have to use an intermediate double since it can represent
 		 * remainder * 10 when it's close to SIZE_MAX
@@ -400,7 +402,7 @@ const char* format_size(size_t bytes, char* buf, size_t bufsize)
 			remainder = 9;
 	}
 
-	if (b < 100 && remainder != 0)
+	if (remainder != 0)
 		snprintf(buf, bufsize, "%" PRIsz ".%" PRIsz " %s", b, remainder, quant[factor]);
 	else
 		snprintf(buf, bufsize, "%" PRIsz " %s", b, quant[factor]);

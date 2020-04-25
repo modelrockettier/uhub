@@ -1245,6 +1245,10 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_format_size_33, "format_size_33");
 	exotic_add_test(&handle, &exotic_test_format_size_34, "format_size_34");
 	exotic_add_test(&handle, &exotic_test_format_size_35, "format_size_35");
+	exotic_add_test(&handle, &exotic_test_format_size_36, "format_size_36");
+	exotic_add_test(&handle, &exotic_test_format_size_37, "format_size_37");
+	exotic_add_test(&handle, &exotic_test_format_size_38, "format_size_38");
+	exotic_add_test(&handle, &exotic_test_format_size_39, "format_size_39");
 	exotic_add_test(&handle, &exotic_test_rbtree_create_destroy, "rbtree_create_destroy");
 	exotic_add_test(&handle, &exotic_test_rbtree_create_1, "rbtree_create_1");
 	exotic_add_test(&handle, &exotic_test_rbtree_size_0, "rbtree_size_0");
