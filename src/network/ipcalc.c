@@ -328,6 +328,8 @@ int ip_compare(struct ip_addr_encap* a, struct ip_addr_encap* b)
 	int ret = 0;
 	uint32_t A, B;
 
+	uhub_assert(a->af == b->af);
+
 	if (a->af == AF_INET)
 	{
 		A = ntohl(a->internal_ip_data.in.s_addr);

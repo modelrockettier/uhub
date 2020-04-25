@@ -11,6 +11,8 @@ static struct ip_addr_encap ip6_c;
 static struct ip_addr_encap mask;
 static struct ip_range ban6;
 static struct ip_range ban4;
+struct ip_range range1;
+struct ip_range range2;
 
 EXO_TEST(prepare_network, {
 	return net_initialize() == 0;
@@ -20,6 +22,47 @@ EXO_TEST(check_ipv6, {
 	ipv6 = net_is_ipv6_supported();
 	return ipv6 != -1;
 });
+
+EXO_TEST(ip_is_valid_ipv4_1,  { return  ip_is_valid_ipv4("0.0.0.0"); });
+EXO_TEST(ip_is_valid_ipv4_2,  { return  ip_is_valid_ipv4("255.255.255.255"); });
+EXO_TEST(ip_is_valid_ipv4_3,  { return  ip_is_valid_ipv4("127.0.0.1"); });
+EXO_TEST(ip_is_valid_ipv4_4,  { return  ip_is_valid_ipv4("10.18.1.178"); });
+EXO_TEST(ip_is_valid_ipv4_5,  { return  ip_is_valid_ipv4("224.0.0.1"); });
+EXO_TEST(ip_is_valid_ipv4_6,  { return !ip_is_valid_ipv4("224.0.0. "); });
+EXO_TEST(ip_is_valid_ipv4_7,  { return !ip_is_valid_ipv4("invalid"); });
+EXO_TEST(ip_is_valid_ipv4_8,  { return !ip_is_valid_ipv4("localhost"); });
+EXO_TEST(ip_is_valid_ipv4_9,  { return !ip_is_valid_ipv4("123.45.67.890"); });
+EXO_TEST(ip_is_valid_ipv4_10, { return !ip_is_valid_ipv4("777.777.777.777"); });
+EXO_TEST(ip_is_valid_ipv4_11, { return !ip_is_valid_ipv4("224.0.0.0-224.0.0.255"); });
+EXO_TEST(ip_is_valid_ipv4_12, { return !ip_is_valid_ipv4("224.0.0.0/24"); });
+
+static int check_valid_ipv6(const char* str)
+{
+	if (!ipv6) return 1;
+	return ip_is_valid_ipv6(str);
+}
+
+EXO_TEST(ip_is_valid_ipv6_1,  { return  check_valid_ipv6("::"); });
+EXO_TEST(ip_is_valid_ipv6_2,  { return  check_valid_ipv6("0:0:0:0:0:0:0:0"); });
+EXO_TEST(ip_is_valid_ipv6_3,  { return  check_valid_ipv6("::1"); });
+EXO_TEST(ip_is_valid_ipv6_4,  { return  check_valid_ipv6("::ffff:0.0.0.0"); });
+EXO_TEST(ip_is_valid_ipv6_5,  { return  check_valid_ipv6("::ffff:127.0.0.1"); });
+EXO_TEST(ip_is_valid_ipv6_6,  { return  check_valid_ipv6("::ffff:255.255.255.255"); });
+EXO_TEST(ip_is_valid_ipv6_7,  { return  check_valid_ipv6("2001::"); });
+EXO_TEST(ip_is_valid_ipv6_8,  { return  check_valid_ipv6("2001::201:2ff:fefa:fffe"); });
+EXO_TEST(ip_is_valid_ipv6_9,  { return  check_valid_ipv6("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip_is_valid_ipv6_10, { return !check_valid_ipv6("2001:"); });
+EXO_TEST(ip_is_valid_ipv6_11, { return !check_valid_ipv6(":2001"); });
+EXO_TEST(ip_is_valid_ipv6_12, { return !check_valid_ipv6(":ffff:0.0.0.0"); });
+EXO_TEST(ip_is_valid_ipv6_13, { return !check_valid_ipv6("2001::x01:2ff:fefa:fffe"); });
+EXO_TEST(ip_is_valid_ipv6_14, { return !check_valid_ipv6("2001::201:2ff:fefa::"); });
+EXO_TEST(ip_is_valid_ipv6_15, { return !check_valid_ipv6("2.0.0.1::2ff"); });
+EXO_TEST(ip_is_valid_ipv6_16, { return !check_valid_ipv6("::ffff:224.0.0."); });
+EXO_TEST(ip_is_valid_ipv6_17, { return !check_valid_ipv6("0:0:0:0:0:0:0:0:0"); });
+EXO_TEST(ip_is_valid_ipv6_18, { return !check_valid_ipv6("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip_is_valid_ipv6_19, { return !check_valid_ipv6("2001::/120"); });
+EXO_TEST(ip_is_valid_ipv6_20, { return !check_valid_ipv6("2001::-2002::"); });
+
 
 EXO_TEST(create_addresses_1, {
 	return
@@ -35,111 +78,25 @@ EXO_TEST(create_addresses_2, {
 		ip_convert_to_binary("2001::201:2ff:fefa:fffe", &ip6_c);
 });
 
-EXO_TEST(ip_is_valid_ipv4_1, {
-	return ip_is_valid_ipv4("127.0.0.1");
-});
+EXO_TEST(ip4_compare_1, { return ip_compare(&ip4_a, &ip4_b) < 0; });
+EXO_TEST(ip4_compare_2, { return ip_compare(&ip4_a, &ip4_c) < 0; });
+EXO_TEST(ip4_compare_3, { return ip_compare(&ip4_b, &ip4_c) > 0; });
+EXO_TEST(ip4_compare_4, { return ip_compare(&ip4_b, &ip4_a) > 0; });
+EXO_TEST(ip4_compare_5, { return ip_compare(&ip4_c, &ip4_a) > 0; });
+EXO_TEST(ip4_compare_6, { return ip_compare(&ip4_c, &ip4_c) == 0; });
 
-EXO_TEST(ip_is_valid_ipv4_2, {
-	return ip_is_valid_ipv4("10.18.1.178");
-});
-
-EXO_TEST(ip_is_valid_ipv4_3, {
-	return ip_is_valid_ipv4("10.18.1.178");
-});
-
-EXO_TEST(ip_is_valid_ipv4_4, {
-	return ip_is_valid_ipv4("224.0.0.1");
-});
-
-EXO_TEST(ip_is_valid_ipv4_5, {
-	return !ip_is_valid_ipv4("224.0.0.");
-});
-
-EXO_TEST(ip_is_valid_ipv4_6, {
-	return !ip_is_valid_ipv4("invalid");
-});
-
-EXO_TEST(ip_is_valid_ipv4_7, {
-	return !ip_is_valid_ipv4("localhost");
-});
-
-EXO_TEST(ip_is_valid_ipv4_8, {
-	return !ip_is_valid_ipv4("123.45.67.890");
-});
-
-EXO_TEST(ip_is_valid_ipv4_9, {
-	return !ip_is_valid_ipv4("777.777.777.777");
-});
-
-EXO_TEST(ip_is_valid_ipv6_1, {
+static int ip6_compare(struct ip_addr_encap* a, struct ip_addr_encap* b)
+{
 	if (!ipv6) return 1;
-	return ip_is_valid_ipv6("::");
-});
+	return ip_compare(a, b);
+}
 
-EXO_TEST(ip_is_valid_ipv6_2, {
-	if (!ipv6) return 1;
-	return ip_is_valid_ipv6("::1");
-});
-
-EXO_TEST(ip_is_valid_ipv6_3, {
-	if (!ipv6) return 1;
-	return ip_is_valid_ipv6("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff");
-});
-
-EXO_TEST(ip4_compare_1, {
-	return ip_compare(&ip4_a, &ip4_b) < 0;
-});
-
-EXO_TEST(ip4_compare_2, {
-	return ip_compare(&ip4_a, &ip4_c) < 0;
-});
-
-EXO_TEST(ip4_compare_3, {
-	return ip_compare(&ip4_b, &ip4_c) > 0;
-});
-
-EXO_TEST(ip4_compare_4, {
-	return ip_compare(&ip4_b, &ip4_a) > 0;
-});
-
-EXO_TEST(ip4_compare_5, {
-	return ip_compare(&ip4_c, &ip4_a) > 0;
-});
-
-EXO_TEST(ip4_compare_6, {
-	if (!ipv6) return 1;
-	return ip_compare(&ip4_c, &ip4_c) == 0;
-});
-
-EXO_TEST(ip6_compare_1, {
-	if (!ipv6) return 1;
-	return ip_compare(&ip6_a, &ip6_b) < 0;
-});
-
-EXO_TEST(ip6_compare_2, {
-	if (!ipv6) return 1;
-	return ip_compare(&ip6_a, &ip6_c) < 0;
-});
-
-EXO_TEST(ip6_compare_3, {
-	if (!ipv6) return 1;
-	return ip_compare(&ip6_b, &ip6_c) > 0;
-});
-
-EXO_TEST(ip6_compare_4, {
-	if (!ipv6) return 1;
-	return ip_compare(&ip6_b, &ip6_a) > 0;
-});
-
-EXO_TEST(ip6_compare_5, {
-	if (!ipv6) return 1;
-	return ip_compare(&ip6_c, &ip6_a) > 0;
-});
-
-EXO_TEST(ip6_compare_6, {
-	if (!ipv6) return 1;
-	return ip_compare(&ip6_c, &ip6_c) == 0;
-});
+EXO_TEST(ip6_compare_1, { return ip6_compare(&ip6_a, &ip6_b) < 0; });
+EXO_TEST(ip6_compare_2, { return ip6_compare(&ip6_a, &ip6_c) < 0; });
+EXO_TEST(ip6_compare_3, { return ip6_compare(&ip6_b, &ip6_c) > 0; });
+EXO_TEST(ip6_compare_4, { return ip6_compare(&ip6_b, &ip6_a) > 0; });
+EXO_TEST(ip6_compare_5, { return ip6_compare(&ip6_c, &ip6_a) > 0; });
+EXO_TEST(ip6_compare_6, { return ip6_compare(&ip6_c, &ip6_c) == 0; });
 
 static int ip4_convert(const char* src)
 {
@@ -270,13 +227,18 @@ EXO_TEST(ip6_convert_to_string_24,   { return ip6_convert_simple("1234:5678:9abc
 EXO_TEST(ip6_convert_to_string_25,   { return ip6_convert_simple("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
 
 
+static int check_mask(const char* expected)
+{
+	struct ip_addr_encap ip;
+	return ip_convert_to_binary(expected, &ip) && !ip_compare(&mask, &ip);
+}
+
 #define LMASK4(bits)    !ip_mask_create_left (AF_INET,  bits, &mask)
 #define LMASK6(bits)    (ipv6 ? !ip_mask_create_left (AF_INET6, bits, &mask) : 1)
 #define RMASK4(bits)    !ip_mask_create_right(AF_INET,  bits, &mask)
 #define RMASK6(bits)    (ipv6 ? !ip_mask_create_right(AF_INET6, bits, &mask) : 1)
-#define CHECK4(expect)   str_match(ip_convert_to_string(&mask), expect)
-#define CHECK6(expect)  (ipv6 ? str_match(ip_convert_to_string(&mask), expect) : 1)
-#define CHECK6_2(expect, alt) (ipv6 ? str_match2(ip_convert_to_string(&mask), expect, alt) : 1)
+#define CHECK4(expect)   check_mask(expect)
+#define CHECK6(expect)  (ipv6 ? check_mask(expect) : 1)
 
 /* Check IPv4 masks */
 EXO_TEST(ipv4_lmask_create_n,  { return LMASK4(-1) && CHECK4("0.0.0.0"); });
@@ -452,22 +414,22 @@ EXO_TEST(ip6_lmask_create_93,  { return LMASK6( 93) && CHECK6("ffff:ffff:ffff:ff
 EXO_TEST(ip6_lmask_create_94,  { return LMASK6( 94) && CHECK6("ffff:ffff:ffff:ffff:ffff:fffc::"); });
 EXO_TEST(ip6_lmask_create_95,  { return LMASK6( 95) && CHECK6("ffff:ffff:ffff:ffff:ffff:fffe::"); });
 EXO_TEST(ip6_lmask_create_96,  { return LMASK6( 96) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff::"); });
-EXO_TEST(ip6_lmask_create_97,  { return LMASK6( 97) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:8000:0", "ffff:ffff:ffff:ffff:ffff:ffff:8000::"); });
-EXO_TEST(ip6_lmask_create_98,  { return LMASK6( 98) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:c000:0", "ffff:ffff:ffff:ffff:ffff:ffff:c000::"); });
-EXO_TEST(ip6_lmask_create_99,  { return LMASK6( 99) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:e000:0", "ffff:ffff:ffff:ffff:ffff:ffff:e000::"); });
-EXO_TEST(ip6_lmask_create_100, { return LMASK6(100) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:f000:0", "ffff:ffff:ffff:ffff:ffff:ffff:f000::"); });
-EXO_TEST(ip6_lmask_create_101, { return LMASK6(101) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:f800:0", "ffff:ffff:ffff:ffff:ffff:ffff:f800::"); });
-EXO_TEST(ip6_lmask_create_102, { return LMASK6(102) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:fc00:0", "ffff:ffff:ffff:ffff:ffff:ffff:fc00::"); });
-EXO_TEST(ip6_lmask_create_103, { return LMASK6(103) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:fe00:0", "ffff:ffff:ffff:ffff:ffff:ffff:fe00::"); });
-EXO_TEST(ip6_lmask_create_104, { return LMASK6(104) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:ff00:0", "ffff:ffff:ffff:ffff:ffff:ffff:ff00::"); });
-EXO_TEST(ip6_lmask_create_105, { return LMASK6(105) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:ff80:0", "ffff:ffff:ffff:ffff:ffff:ffff:ff80::"); });
-EXO_TEST(ip6_lmask_create_106, { return LMASK6(106) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:ffc0:0", "ffff:ffff:ffff:ffff:ffff:ffff:ffc0::"); });
-EXO_TEST(ip6_lmask_create_107, { return LMASK6(107) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:ffe0:0", "ffff:ffff:ffff:ffff:ffff:ffff:ffe0::"); });
-EXO_TEST(ip6_lmask_create_108, { return LMASK6(108) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:fff0:0", "ffff:ffff:ffff:ffff:ffff:ffff:fff0::"); });
-EXO_TEST(ip6_lmask_create_109, { return LMASK6(109) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:fff8:0", "ffff:ffff:ffff:ffff:ffff:ffff:fff8::"); });
-EXO_TEST(ip6_lmask_create_110, { return LMASK6(110) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:fffc:0", "ffff:ffff:ffff:ffff:ffff:ffff:fffc::"); });
-EXO_TEST(ip6_lmask_create_111, { return LMASK6(111) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:fffe:0", "ffff:ffff:ffff:ffff:ffff:ffff:fffe::"); });
-EXO_TEST(ip6_lmask_create_112, { return LMASK6(112) && CHECK6_2("ffff:ffff:ffff:ffff:ffff:ffff:ffff:0", "ffff:ffff:ffff:ffff:ffff:ffff:ffff::"); });
+EXO_TEST(ip6_lmask_create_97,  { return LMASK6( 97) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:8000:0"); });
+EXO_TEST(ip6_lmask_create_98,  { return LMASK6( 98) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:c000:0"); });
+EXO_TEST(ip6_lmask_create_99,  { return LMASK6( 99) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:e000:0"); });
+EXO_TEST(ip6_lmask_create_100, { return LMASK6(100) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:f000:0"); });
+EXO_TEST(ip6_lmask_create_101, { return LMASK6(101) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:f800:0"); });
+EXO_TEST(ip6_lmask_create_102, { return LMASK6(102) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:fc00:0"); });
+EXO_TEST(ip6_lmask_create_103, { return LMASK6(103) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:fe00:0"); });
+EXO_TEST(ip6_lmask_create_104, { return LMASK6(104) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:ff00:0"); });
+EXO_TEST(ip6_lmask_create_105, { return LMASK6(105) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:ff80:0"); });
+EXO_TEST(ip6_lmask_create_106, { return LMASK6(106) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:ffc0:0"); });
+EXO_TEST(ip6_lmask_create_107, { return LMASK6(107) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:ffe0:0"); });
+EXO_TEST(ip6_lmask_create_108, { return LMASK6(108) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:fff0:0"); });
+EXO_TEST(ip6_lmask_create_109, { return LMASK6(109) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:fff8:0"); });
+EXO_TEST(ip6_lmask_create_110, { return LMASK6(110) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:fffc:0"); });
+EXO_TEST(ip6_lmask_create_111, { return LMASK6(111) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:fffe:0"); });
+EXO_TEST(ip6_lmask_create_112, { return LMASK6(112) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:ffff:0"); });
 EXO_TEST(ip6_lmask_create_113, { return LMASK6(113) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:ffff:8000"); });
 EXO_TEST(ip6_lmask_create_114, { return LMASK6(114) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:ffff:c000"); });
 EXO_TEST(ip6_lmask_create_115, { return LMASK6(115) && CHECK6("ffff:ffff:ffff:ffff:ffff:ffff:ffff:e000"); });
@@ -488,40 +450,40 @@ EXO_TEST(ip6_lmask_create_129, { return LMASK6(129) && CHECK6("ffff:ffff:ffff:ff
 
 /* Check IPv6 right to left masks */
 /* These low IPv6 addresses sometimes use their IPv4 representation for the last hextet in strings */
-EXO_TEST(ip6_rmask_create_n,   { return RMASK6( -1) && CHECK6_2("::",          "::0.0.0.0"); });
-EXO_TEST(ip6_rmask_create_0,   { return RMASK6(  0) && CHECK6_2("::",          "::0.0.0.0"); });
-EXO_TEST(ip6_rmask_create_1,   { return RMASK6(  1) && CHECK6_2("::1",         "::0.0.0.1"); });
-EXO_TEST(ip6_rmask_create_2,   { return RMASK6(  2) && CHECK6_2("::3",         "::0.0.0.3"); });
-EXO_TEST(ip6_rmask_create_3,   { return RMASK6(  3) && CHECK6_2("::7",         "::0.0.0.7"); });
-EXO_TEST(ip6_rmask_create_4,   { return RMASK6(  4) && CHECK6_2("::f",         "::0.0.0.15"); });
-EXO_TEST(ip6_rmask_create_5,   { return RMASK6(  5) && CHECK6_2("::1f",        "::0.0.0.31"); });
-EXO_TEST(ip6_rmask_create_6,   { return RMASK6(  6) && CHECK6_2("::3f",        "::0.0.0.63"); });
-EXO_TEST(ip6_rmask_create_7,   { return RMASK6(  7) && CHECK6_2("::7f",        "::0.0.0.127"); });
-EXO_TEST(ip6_rmask_create_8,   { return RMASK6(  8) && CHECK6_2("::ff",        "::0.0.0.255"); });
-EXO_TEST(ip6_rmask_create_9,   { return RMASK6(  9) && CHECK6_2("::1ff",       "::0.0.1.255"); });
-EXO_TEST(ip6_rmask_create_10,  { return RMASK6( 10) && CHECK6_2("::3ff",       "::0.0.3.255"); });
-EXO_TEST(ip6_rmask_create_11,  { return RMASK6( 11) && CHECK6_2("::7ff",       "::0.0.7.255"); });
-EXO_TEST(ip6_rmask_create_12,  { return RMASK6( 12) && CHECK6_2("::fff",       "::0.0.15.255"); });
-EXO_TEST(ip6_rmask_create_13,  { return RMASK6( 13) && CHECK6_2("::1fff",      "::0.0.31.255"); });
-EXO_TEST(ip6_rmask_create_14,  { return RMASK6( 14) && CHECK6_2("::3fff",      "::0.0.63.255"); });
-EXO_TEST(ip6_rmask_create_15,  { return RMASK6( 15) && CHECK6_2("::7fff",      "::0.0.127.255"); });
-EXO_TEST(ip6_rmask_create_16,  { return RMASK6( 16) && CHECK6_2("::ffff",      "::0.0.255.255"); });
-EXO_TEST(ip6_rmask_create_17,  { return RMASK6( 17) && CHECK6_2("::1:ffff",    "::0.1.255.255"); });
-EXO_TEST(ip6_rmask_create_18,  { return RMASK6( 18) && CHECK6_2("::3:ffff",    "::0.3.255.255"); });
-EXO_TEST(ip6_rmask_create_19,  { return RMASK6( 19) && CHECK6_2("::7:ffff",    "::0.7.255.255"); });
-EXO_TEST(ip6_rmask_create_20,  { return RMASK6( 20) && CHECK6_2("::f:ffff",    "::0.15.255.255"); });
-EXO_TEST(ip6_rmask_create_21,  { return RMASK6( 21) && CHECK6_2("::1f:ffff",   "::0.31.255.255"); });
-EXO_TEST(ip6_rmask_create_22,  { return RMASK6( 22) && CHECK6_2("::3f:ffff",   "::0.63.255.255"); });
-EXO_TEST(ip6_rmask_create_23,  { return RMASK6( 23) && CHECK6_2("::7f:ffff",   "::0.127.255.255"); });
-EXO_TEST(ip6_rmask_create_24,  { return RMASK6( 24) && CHECK6_2("::ff:ffff",   "::0.255.255.255"); });
-EXO_TEST(ip6_rmask_create_25,  { return RMASK6( 25) && CHECK6_2("::1ff:ffff",  "::1.255.255.255"); });
-EXO_TEST(ip6_rmask_create_26,  { return RMASK6( 26) && CHECK6_2("::3ff:ffff",  "::3.255.255.255"); });
-EXO_TEST(ip6_rmask_create_27,  { return RMASK6( 27) && CHECK6_2("::7ff:ffff",  "::7.255.255.255"); });
-EXO_TEST(ip6_rmask_create_28,  { return RMASK6( 28) && CHECK6_2("::fff:ffff",  "::15.255.255.255"); });
-EXO_TEST(ip6_rmask_create_29,  { return RMASK6( 29) && CHECK6_2("::1fff:ffff", "::31.255.255.255"); });
-EXO_TEST(ip6_rmask_create_30,  { return RMASK6( 30) && CHECK6_2("::3fff:ffff", "::63.255.255.255"); });
-EXO_TEST(ip6_rmask_create_31,  { return RMASK6( 31) && CHECK6_2("::7fff:ffff", "::127.255.255.255"); });
-EXO_TEST(ip6_rmask_create_32,  { return RMASK6( 32) && CHECK6_2("::ffff:ffff", "::255.255.255.255"); });
+EXO_TEST(ip6_rmask_create_n,   { return RMASK6( -1) && CHECK6("::"); });
+EXO_TEST(ip6_rmask_create_0,   { return RMASK6(  0) && CHECK6("::"); });
+EXO_TEST(ip6_rmask_create_1,   { return RMASK6(  1) && CHECK6("::1"); });
+EXO_TEST(ip6_rmask_create_2,   { return RMASK6(  2) && CHECK6("::3"); });
+EXO_TEST(ip6_rmask_create_3,   { return RMASK6(  3) && CHECK6("::7"); });
+EXO_TEST(ip6_rmask_create_4,   { return RMASK6(  4) && CHECK6("::f"); });
+EXO_TEST(ip6_rmask_create_5,   { return RMASK6(  5) && CHECK6("::1f"); });
+EXO_TEST(ip6_rmask_create_6,   { return RMASK6(  6) && CHECK6("::3f"); });
+EXO_TEST(ip6_rmask_create_7,   { return RMASK6(  7) && CHECK6("::7f"); });
+EXO_TEST(ip6_rmask_create_8,   { return RMASK6(  8) && CHECK6("::ff"); });
+EXO_TEST(ip6_rmask_create_9,   { return RMASK6(  9) && CHECK6("::1ff"); });
+EXO_TEST(ip6_rmask_create_10,  { return RMASK6( 10) && CHECK6("::3ff"); });
+EXO_TEST(ip6_rmask_create_11,  { return RMASK6( 11) && CHECK6("::7ff"); });
+EXO_TEST(ip6_rmask_create_12,  { return RMASK6( 12) && CHECK6("::fff"); });
+EXO_TEST(ip6_rmask_create_13,  { return RMASK6( 13) && CHECK6("::1fff"); });
+EXO_TEST(ip6_rmask_create_14,  { return RMASK6( 14) && CHECK6("::3fff"); });
+EXO_TEST(ip6_rmask_create_15,  { return RMASK6( 15) && CHECK6("::7fff"); });
+EXO_TEST(ip6_rmask_create_16,  { return RMASK6( 16) && CHECK6("::ffff"); });
+EXO_TEST(ip6_rmask_create_17,  { return RMASK6( 17) && CHECK6("::1:ffff"); });
+EXO_TEST(ip6_rmask_create_18,  { return RMASK6( 18) && CHECK6("::3:ffff"); });
+EXO_TEST(ip6_rmask_create_19,  { return RMASK6( 19) && CHECK6("::7:ffff"); });
+EXO_TEST(ip6_rmask_create_20,  { return RMASK6( 20) && CHECK6("::f:ffff"); });
+EXO_TEST(ip6_rmask_create_21,  { return RMASK6( 21) && CHECK6("::1f:ffff"); });
+EXO_TEST(ip6_rmask_create_22,  { return RMASK6( 22) && CHECK6("::3f:ffff"); });
+EXO_TEST(ip6_rmask_create_23,  { return RMASK6( 23) && CHECK6("::7f:ffff"); });
+EXO_TEST(ip6_rmask_create_24,  { return RMASK6( 24) && CHECK6("::ff:ffff"); });
+EXO_TEST(ip6_rmask_create_25,  { return RMASK6( 25) && CHECK6("::1ff:ffff"); });
+EXO_TEST(ip6_rmask_create_26,  { return RMASK6( 26) && CHECK6("::3ff:ffff"); });
+EXO_TEST(ip6_rmask_create_27,  { return RMASK6( 27) && CHECK6("::7ff:ffff"); });
+EXO_TEST(ip6_rmask_create_28,  { return RMASK6( 28) && CHECK6("::fff:ffff"); });
+EXO_TEST(ip6_rmask_create_29,  { return RMASK6( 29) && CHECK6("::1fff:ffff"); });
+EXO_TEST(ip6_rmask_create_30,  { return RMASK6( 30) && CHECK6("::3fff:ffff"); });
+EXO_TEST(ip6_rmask_create_31,  { return RMASK6( 31) && CHECK6("::7fff:ffff"); });
+EXO_TEST(ip6_rmask_create_32,  { return RMASK6( 32) && CHECK6("::ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_33,  { return RMASK6( 33) && CHECK6("::1:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_34,  { return RMASK6( 34) && CHECK6("::3:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_35,  { return RMASK6( 35) && CHECK6("::7:ffff:ffff"); });
@@ -537,16 +499,7 @@ EXO_TEST(ip6_rmask_create_44,  { return RMASK6( 44) && CHECK6("::fff:ffff:ffff")
 EXO_TEST(ip6_rmask_create_45,  { return RMASK6( 45) && CHECK6("::1fff:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_46,  { return RMASK6( 46) && CHECK6("::3fff:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_47,  { return RMASK6( 47) && CHECK6("::7fff:ffff:ffff"); });
-/* ::ffff:0:0/96 is IPv4-mapped IPv6 addresses so it can also be represented as a plain IPv4 address of the last 32-bits */
-EXO_TEST(ip6_rmask_create_48, {
-	if (!ipv6)
-		return 1;
-	char const* s;
-	return
-		RMASK6(48) && (s = ip_convert_to_string(&mask)) &&
-			(!strcmp(s, "::ffff:ffff:ffff") ||
-			str_match2(s, "::ffff:255.255.255.255", "255.255.255.255"));
-});
+EXO_TEST(ip6_rmask_create_48,  { return RMASK6( 48) && CHECK6("::ffff:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_49,  { return RMASK6( 49) && CHECK6("::1:ffff:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_50,  { return RMASK6( 50) && CHECK6("::3:ffff:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_51,  { return RMASK6( 51) && CHECK6("::7:ffff:ffff:ffff"); });
@@ -595,22 +548,22 @@ EXO_TEST(ip6_rmask_create_93,  { return RMASK6( 93) && CHECK6("::1fff:ffff:ffff:
 EXO_TEST(ip6_rmask_create_94,  { return RMASK6( 94) && CHECK6("::3fff:ffff:ffff:ffff:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_95,  { return RMASK6( 95) && CHECK6("::7fff:ffff:ffff:ffff:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_96,  { return RMASK6( 96) && CHECK6("::ffff:ffff:ffff:ffff:ffff:ffff"); });
-EXO_TEST(ip6_rmask_create_97,  { return RMASK6( 97) && (CHECK6("0:1:ffff:ffff:ffff:ffff:ffff:ffff")    || CHECK6("::1:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_98,  { return RMASK6( 98) && (CHECK6("0:3:ffff:ffff:ffff:ffff:ffff:ffff")    || CHECK6("::3:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_99,  { return RMASK6( 99) && (CHECK6("0:7:ffff:ffff:ffff:ffff:ffff:ffff")    || CHECK6("::7:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_100, { return RMASK6(100) && (CHECK6("0:f:ffff:ffff:ffff:ffff:ffff:ffff")    || CHECK6("::f:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_101, { return RMASK6(101) && (CHECK6("0:1f:ffff:ffff:ffff:ffff:ffff:ffff")   || CHECK6("::1f:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_102, { return RMASK6(102) && (CHECK6("0:3f:ffff:ffff:ffff:ffff:ffff:ffff")   || CHECK6("::3f:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_103, { return RMASK6(103) && (CHECK6("0:7f:ffff:ffff:ffff:ffff:ffff:ffff")   || CHECK6("::7f:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_104, { return RMASK6(104) && (CHECK6("0:ff:ffff:ffff:ffff:ffff:ffff:ffff")   || CHECK6("::ff:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_105, { return RMASK6(105) && (CHECK6("0:1ff:ffff:ffff:ffff:ffff:ffff:ffff")  || CHECK6("::1ff:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_106, { return RMASK6(106) && (CHECK6("0:3ff:ffff:ffff:ffff:ffff:ffff:ffff")  || CHECK6("::3ff:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_107, { return RMASK6(107) && (CHECK6("0:7ff:ffff:ffff:ffff:ffff:ffff:ffff")  || CHECK6("::7ff:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_108, { return RMASK6(108) && (CHECK6("0:fff:ffff:ffff:ffff:ffff:ffff:ffff")  || CHECK6("::fff:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_109, { return RMASK6(109) && (CHECK6("0:1fff:ffff:ffff:ffff:ffff:ffff:ffff") || CHECK6("::1fff:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_110, { return RMASK6(110) && (CHECK6("0:3fff:ffff:ffff:ffff:ffff:ffff:ffff") || CHECK6("::3fff:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_111, { return RMASK6(111) && (CHECK6("0:7fff:ffff:ffff:ffff:ffff:ffff:ffff") || CHECK6("::7fff:ffff:ffff:ffff:ffff:ffff:ffff")); });
-EXO_TEST(ip6_rmask_create_112, { return RMASK6(112) && (CHECK6("0:ffff:ffff:ffff:ffff:ffff:ffff:ffff") || CHECK6("::ffff:ffff:ffff:ffff:ffff:ffff:ffff")); });
+EXO_TEST(ip6_rmask_create_97,  { return RMASK6( 97) && CHECK6("0:1:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_98,  { return RMASK6( 98) && CHECK6("0:3:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_99,  { return RMASK6( 99) && CHECK6("0:7:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_100, { return RMASK6(100) && CHECK6("0:f:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_101, { return RMASK6(101) && CHECK6("0:1f:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_102, { return RMASK6(102) && CHECK6("0:3f:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_103, { return RMASK6(103) && CHECK6("0:7f:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_104, { return RMASK6(104) && CHECK6("0:ff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_105, { return RMASK6(105) && CHECK6("0:1ff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_106, { return RMASK6(106) && CHECK6("0:3ff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_107, { return RMASK6(107) && CHECK6("0:7ff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_108, { return RMASK6(108) && CHECK6("0:fff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_109, { return RMASK6(109) && CHECK6("0:1fff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_110, { return RMASK6(110) && CHECK6("0:3fff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_111, { return RMASK6(111) && CHECK6("0:7fff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ip6_rmask_create_112, { return RMASK6(112) && CHECK6("0:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_113, { return RMASK6(113) && CHECK6("1:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_114, { return RMASK6(114) && CHECK6("3:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
 EXO_TEST(ip6_rmask_create_115, { return RMASK6(115) && CHECK6("7:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
@@ -836,28 +789,98 @@ EXO_TEST(ip6_bitwise_OR_3, {
 	return str_match(ip_convert_to_string(&ip6_c), "7777:cccc:3333:1111:ffff:ffff:ffff:1c1c");
 });
 
-EXO_TEST(ip_range_1, {
-	struct ip_range range; memset(&range, 0, sizeof(range));
-	return ip_convert_address_to_range("192.168.0.1", &range) && memcmp(&range.lo, &range.hi, sizeof(struct ip_addr_encap)) == 0;
-});
+EXO_TEST(ipv4_invalid_range_1,  { return !ip_convert_address_to_range("24.0.0.0-24", &range1); });
+EXO_TEST(ipv4_invalid_range_2,  { return !ip_convert_address_to_range("24.0.0.0-24.0.0", &range1); });
+EXO_TEST(ipv4_invalid_range_3,  { return !ip_convert_address_to_range("224.0.0. ", &range1); });
+EXO_TEST(ipv4_invalid_range_4,  { return !ip_convert_address_to_range("224.0.0.0-", &range1); });
+EXO_TEST(ipv4_invalid_range_5,  { return !ip_convert_address_to_range("224.0.0.0/", &range1); });
+EXO_TEST(ipv4_invalid_range_6,  { return !ip_convert_address_to_range("224.0.0.0/a", &range1); });
+EXO_TEST(ipv4_invalid_range_7,  { return !ip_convert_address_to_range("224.0.0./24 ", &range1); });
+EXO_TEST(ipv4_invalid_range_8,  { return !ip_convert_address_to_range("224.0.0.-224.0.0.255", &range1); });
+EXO_TEST(ipv4_invalid_range_9,  { return !ip_convert_address_to_range("224.0.0.0-224.0.0. ", &range1); });
+EXO_TEST(ipv4_invalid_range_10, { return !ip_convert_address_to_range("123.45.67.89-123.45.67.890", &range1); });
+EXO_TEST(ipv4_invalid_range_11, { return !ip_convert_address_to_range("123.45.67.890/12", &range1); });
+EXO_TEST(ipv4_invalid_range_12, { return !ip_convert_address_to_range("777.777.777.777", &range1); });
 
-EXO_TEST(ip_range_2, {
-	struct ip_range range; memset(&range, 0, sizeof(range));
-	return ip_convert_address_to_range("192.168.0.0-192.168.255.255", &range) && range.lo.af == range.hi.af && memcmp(&range.lo, &range.hi, sizeof(struct ip_addr_encap)) != 0;
-});
+EXO_TEST(ipv6_invalid_range_1,  { return !ip_convert_address_to_range("2001:", &range1); });
+EXO_TEST(ipv6_invalid_range_2,  { return !ip_convert_address_to_range("2001::x01:2ff:fefa:fffe", &range1); });
+EXO_TEST(ipv6_invalid_range_3,  { return !ip_convert_address_to_range("2001::x01:2ff:fefa:fffe/128", &range1); });
+EXO_TEST(ipv6_invalid_range_4,  { return !ip_convert_address_to_range("2001::201:2ff:fefa::", &range1); });
+EXO_TEST(ipv6_invalid_range_5,  { return !ip_convert_address_to_range("2001::201:2ff:fefa::/120", &range1); });
+EXO_TEST(ipv6_invalid_range_6,  { return !ip_convert_address_to_range("2.0.0.1::2ff", &range1); });
+EXO_TEST(ipv6_invalid_range_7,  { return !ip_convert_address_to_range("2.0.0.1::2ff/128", &range1); });
+EXO_TEST(ipv6_invalid_range_8,  { return !ip_convert_address_to_range("::ffff:224.0.0.", &range1); });
+EXO_TEST(ipv6_invalid_range_9,  { return !ip_convert_address_to_range("::ffff:224.0.0./120", &range1); });
+EXO_TEST(ipv6_invalid_range_10, { return !ip_convert_address_to_range("2001::-2001", &range1); });
+EXO_TEST(ipv6_invalid_range_11, { return !ip_convert_address_to_range("2001::-2001:", &range1); });
+EXO_TEST(ipv6_invalid_range_12, { return !ip_convert_address_to_range("2001:0:0:0:0:0:0:0:0/120", &range1); });
+EXO_TEST(ipv6_invalid_range_13, { return !ip_convert_address_to_range("2001:0:0:0:0:0:0:0:0-2002:0:0:0:0:0:0:0", &range1); });
+EXO_TEST(ipv6_invalid_range_14, { return !ip_convert_address_to_range("2001:0:0:0:0:0:0:0-2002:0:0:0:0:0:0:0:0", &range1); });
+EXO_TEST(ipv6_invalid_range_15, { return !ip_convert_address_to_range("2001:0:0:0:0:0:0:0:0-2002::", &range1); });
+EXO_TEST(ipv6_invalid_range_16, { return !ip_convert_address_to_range("2001::-2002:0:0:0:0:0:0:0:0", &range1); });
+EXO_TEST(ipv6_invalid_range_17, { return !ip_convert_address_to_range("2001::-", &range1); });
+EXO_TEST(ipv6_invalid_range_18, { return !ip_convert_address_to_range("2001::/", &range1); });
+EXO_TEST(ipv6_invalid_range_19, { return !ip_convert_address_to_range("2001::/a", &range1); });
+EXO_TEST(ipv6_invalid_range_20, { return !ip_convert_address_to_range("127.0.0.0-::ffff:127.0.0.255", &range1); });
+EXO_TEST(ipv6_invalid_range_21, { return !ip_convert_address_to_range("::ffff:127.0.0.0-127.0.0.255", &range1); });
 
-EXO_TEST(ip_range_3, {
-	struct ip_range range; memset(&range, 0, sizeof(range));
-	return ip_convert_address_to_range("192.168.0.0/16", &range) && range.lo.af == range.hi.af && memcmp(&range.lo, &range.hi, sizeof(struct ip_addr_encap)) != 0;
-});
+static int check_ranges(const char* str, const char* lo, const char* hi)
+{
+	return
+		ip_convert_address_to_range(str, &range1) &&
+		ip_convert_to_binary(lo, &range2.lo) &&
+		ip_convert_to_binary(hi, &range2.hi) &&
+		!ip_compare(&range1.lo, &range2.lo) &&
+		!ip_compare(&range1.hi, &range2.hi);
+}
 
-EXO_TEST(ip_range_4, {
-	struct ip_range range1;
-	struct ip_range range2;
+EXO_TEST(ip_range_sanity_1, { return check_ranges("192.168.0.1", "192.168.0.1", "192.168.0.1"); });
+EXO_TEST(ip_range_sanity_2, { return check_ranges("192.168.0.0-192.168.255.255", "192.168.0.0", "192.168.255.255"); });
+EXO_TEST(ip_range_sanity_3, { return check_ranges("192.168.0.0/16", "192.168.0.0", "192.168.255.255"); });
+EXO_TEST(ip_range_sanity_4, {
 	memset(&range1, 0, sizeof(range1));
 	memset(&range2, 0, sizeof(range2));
 	return ip_convert_address_to_range("192.168.0.0/16", &range1) && ip_convert_address_to_range("192.168.0.0-192.168.255.255", &range2) && memcmp(&range1, &range2, sizeof(struct ip_range)) == 0;
 });
+
+EXO_TEST(ipv4_range_1,  { return check_ranges("0.0.0.0/0",                       "0.0.0.0",         "255.255.255.255"); });
+EXO_TEST(ipv4_range_2,  { return check_ranges("0.0.0.0-255.255.255.255",         "0.0.0.0",         "255.255.255.255"); });
+EXO_TEST(ipv4_range_3,  { return check_ranges("0.0.0.0/1",                       "0.0.0.0",         "127.255.255.255"); });
+EXO_TEST(ipv4_range_4,  { return check_ranges("0.0.0.0-127.255.255.255",         "0.0.0.0",         "127.255.255.255"); });
+EXO_TEST(ipv4_range_5,  { return check_ranges("255.255.255.254/32",              "255.255.255.254", "255.255.255.254"); });
+EXO_TEST(ipv4_range_6,  { return check_ranges("255.255.255.254",                 "255.255.255.254", "255.255.255.254"); });
+EXO_TEST(ipv4_range_7,  { return check_ranges("255.255.255.254-255.255.255.254", "255.255.255.254", "255.255.255.254"); });
+EXO_TEST(ipv4_range_8,  { return check_ranges("127.0.0.1/8",                     "127.0.0.0",       "127.255.255.255"); });
+EXO_TEST(ipv4_range_9,  { return check_ranges("127.0.0.0-127.255.255.255",       "127.0.0.0",       "127.255.255.255"); });
+EXO_TEST(ipv4_range_10, { return check_ranges("10.18.1.100/30",                  "10.18.1.100",     "10.18.1.103"); });
+EXO_TEST(ipv4_range_11, { return check_ranges("10.18.1.100-10.18.1.103",         "10.18.1.100",     "10.18.1.103"); });
+EXO_TEST(ipv4_range_12, { return check_ranges("192.168.0.0/16",                  "192.168.0.0",     "192.168.255.255"); });
+EXO_TEST(ipv4_range_13, { return check_ranges("192.168.0.0-192.168.255.255",     "192.168.0.0",     "192.168.255.255"); });
+
+EXO_TEST(ipv6_range_1,  { return check_ranges("::",                                              "::",                      "::"); });
+EXO_TEST(ipv6_range_2,  { return check_ranges("::/0",                                            "::",                      "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ipv6_range_3,  { return check_ranges("::/32",                                           "::",                      "::ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ipv6_range_4,  { return check_ranges("::/128",                                          "::",                      "::"); });
+EXO_TEST(ipv6_range_5,  { return check_ranges("0:0:0:0:0:0:0:0",                                 "::",                      "::"); });
+EXO_TEST(ipv6_range_6,  { return check_ranges("0:0:0:0:0:0:0:0-0:0:0:0:0:0:0:ffff",              "::",                      "::ffff"); });
+EXO_TEST(ipv6_range_7,  { return check_ranges("0:0:0:0:0:0:0:0/112",                             "::",                      "::ffff"); });
+EXO_TEST(ipv6_range_8,  { return check_ranges("::-::ffff",                                       "::",                      "::ffff"); });
+EXO_TEST(ipv6_range_9,  { return check_ranges("::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",      "::",                      "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ipv6_range_10, { return check_ranges("::1",                                             "::1",                     "::1"); });
+EXO_TEST(ipv6_range_11, { return check_ranges("::1/128",                                         "::1",                     "::1"); });
+EXO_TEST(ipv6_range_12, { return check_ranges("::ffff:0.0.0.0/96",                               "::ffff:0.0.0.0",          "::ffff:255.255.255.255"); });
+EXO_TEST(ipv6_range_13, { return check_ranges("::ffff:0.0.0.0-::ffff:255.255.255.255",           "::ffff:0.0.0.0",          "::ffff:255.255.255.255"); });
+EXO_TEST(ipv6_range_14, { return check_ranges("::ffff:0.0.0.0/97",                               "::ffff:0.0.0.0",          "::ffff:127.255.255.255"); });
+EXO_TEST(ipv6_range_15, { return check_ranges("::ffff:0.0.0.0-::ffff:127.255.255.255",           "::ffff:0.0.0.0",          "::ffff:127.255.255.255"); });
+EXO_TEST(ipv6_range_16, { return check_ranges("::ffff:127.0.0.1",                                "::ffff:127.0.0.1",        "::ffff:127.0.0.1"); });
+EXO_TEST(ipv6_range_17, { return check_ranges("::ffff:255.255.255.255/128",                      "::ffff:255.255.255.255",  "::ffff:255.255.255.255"); });
+EXO_TEST(ipv6_range_18, { return check_ranges("2001::",                                          "2001::",                  "2001::"); });
+EXO_TEST(ipv6_range_19, { return check_ranges("2001::/16",                                       "2001::",                  "2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ipv6_range_20, { return check_ranges("2001::-2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  "2001::",                  "2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ipv6_range_21, { return check_ranges("2001::201:2ff:fefa:fff4/126",                     "2001::201:2ff:fefa:fff4", "2001::201:2ff:fefa:fff7"); });
+EXO_TEST(ipv6_range_22, { return check_ranges("2001::201:2ff:fefa:fff4-2001::201:2ff:fefa:fff7", "2001::201:2ff:fefa:fff4", "2001::201:2ff:fefa:fff7"); });
+EXO_TEST(ipv6_range_23, { return check_ranges("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",         "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(ipv6_range_24, { return check_ranges("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128",     "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
 
 
 EXO_TEST(shutdown_network, {
