@@ -33,6 +33,9 @@ static void hub_command_args_free(struct hub_command* cmd)
 			case type_string:
 				hub_free(data->data.string);
 				break;
+			case type_address:
+				hub_free(data->data.address);
+				break;
 			case type_range:
 				hub_free(data->data.range);
 				break;
@@ -120,6 +123,8 @@ static enum command_parse_status command_extract_arguments(struct hub_info* hub,
 				continue;
 
 			case '+':
+				if (!greedy)
+					token = NULL;
 				greedy = 1;
 				continue;
 

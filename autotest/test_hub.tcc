@@ -18,7 +18,7 @@ static void create_test_user()
 */
 
 EXO_TEST(hub_net_startup, {
-	return (net_initialize() != -1);
+	return net_initialize() == 0;
 });
 
 EXO_TEST(hub_config_initialize, {
@@ -68,5 +68,5 @@ EXO_TEST(hub_service_shutdown, {
 });
 
 EXO_TEST(hub_net_shutdown, {
-	return (net_destroy() != -1);
+	return net_destroy() == 0;
 });
