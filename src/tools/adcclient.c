@@ -515,7 +515,7 @@ void ADC_client_send(struct ADC_client* client, struct adc_message* msg)
 	}
 }
 
-void ADC_client_send_info(struct ADC_client* client)
+static void ADC_client_send_info(struct ADC_client* client)
 {
 	ADC_TRACE;
 	client->info = adc_msg_construct_source(ADC_CMD_BINF, client->sid, 96);

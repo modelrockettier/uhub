@@ -85,6 +85,11 @@ obsolete_clients = yes
 # fulfilling some requirements.
 #redirect_addr =
 
+# The redirect address clients should use when hub goes offline suddenly.
+# Sent to clients during handshake.
+# Use comma separated list for multiple hubs (no spaces allowed).
+#failover_redirect_addr =
+
 # Redirect any NMDC users to this hub address.
 #nmdc_redirect_addr = adc://192.168.1.2:1511/
 

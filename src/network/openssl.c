@@ -318,10 +318,6 @@ static int handle_openssl_error(struct net_connection* con, int ret, int read)
 			return 0;
 
 		case SSL_ERROR_SSL:
-			net_ssl_set_state(handle, tls_st_error);
-			net_stats_tls_add_error();
-			return -2;
-
 		case SSL_ERROR_SYSCALL:
 			net_ssl_set_state(handle, tls_st_error);
 			net_stats_tls_add_error();

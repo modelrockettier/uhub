@@ -385,7 +385,7 @@ int net_accept(int fd, struct ip_addr_encap* ipaddr)
 		if (ipaddr)
 		{
 			memset(ipaddr, 0, sizeof(struct ip_addr_encap));
-			ipaddr->af = addr.ss_family;;
+			ipaddr->af = addr.ss_family;
 			if (ipaddr->af == AF_INET6)
 			{
 				char address[INET6_ADDRSTRLEN+1] = { 0, };

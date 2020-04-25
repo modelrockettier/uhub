@@ -155,7 +155,7 @@ int main_loop()
 			 * been successfully initialized and shall enter the
 			 * main loop.
 			 */
-			sd_notifyf(0, "READY=1\n" "MAINPID=%lu", (unsigned long) getpid());
+			sd_notifyf(0, "READY=1\nMAINPID=%lu", (unsigned long) getpid());
 #endif /* SYSTEMD */
 
 #endif /* ! WIN32 */

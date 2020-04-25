@@ -38,7 +38,7 @@ task:
     image: cirrusci/windowsservercore:cmake
     os_version: 2019
   vcpkg_cache:
-    folder: "C:/Users/ContainerAdministrator/vcpkg-minimal"
+    folder: "C:\\Users\\ContainerAdministrator\\vcpkg-minimal"
     fingerprint_script:
       - echo "OS: ${CIRRUS_OS}"
       - echo "TAG: ${CIRRUS_TAG}"

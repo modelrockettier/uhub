@@ -178,7 +178,7 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 
 	if [ "$OS_NAME" = "windows" ]; then
 		export VERBOSE=1
-		cmake --build . --target ALL_BUILD --config $BUILD_TYPE
+		cmake --build . --target ALL_BUILD --config $BUILD_TYPE -j3
 		unset VERBOSE
 
 		du -shc */autotest-bin.exe */mod_*.dll */uhub.exe */uhub-passwd.exe

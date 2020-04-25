@@ -217,7 +217,8 @@ int rb_tree_remove_node(struct rb_tree* tree, const void* key, rb_tree_free_node
 		int res;
 
 		/* Update helpers */
-		g = p, p = q;
+		g = p;
+		p = q;
 		q = q->link[dir];
 		res = tree->compare(q->key, key);
 		dir = res < 0;

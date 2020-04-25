@@ -63,7 +63,7 @@ static void on_message(struct ADC_chat_message* chat)
 	}
 
 	lines = list_create();
-	ret = split_string(chat->message, "\n", lines, 1);
+	(void)split_string(chat->message, "\n", lines, 1);
 
 	ret = 0;
 	LIST_FOREACH(char*, line, lines,
@@ -253,7 +253,9 @@ int main(int argc, char** argv)
 	ADC_client_set_callback(client, handle);
 	ADC_client_connect(client, argv[1]);
 
-	while (running && net_backend_process()) { }
+	while (running && net_backend_process()) {
+		/* main event loop, net_backend_process() does the work here */
+	}
 
 	adm_shutdown_control_pipe();
 
@@ -262,5 +264,4 @@ int main(int argc, char** argv)
 	adm_shutdown_signal_handlers();
 	return 0;
 }
-
 
