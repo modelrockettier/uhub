@@ -160,7 +160,9 @@ void net_con_callback(struct net_connection* con, int events)
 		net_ssl_callback(con, events);
 	else
 #endif
+	{
 		con->callback(con, events, con->ptr);
+	}
 }
 
 struct net_connect_job
@@ -183,6 +185,7 @@ struct net_connect_handle
 	struct net_connect_job* job6;
 };
 
+// NOTE: net_connect_callback() always frees handle
 static void net_connect_callback(struct net_connect_handle* handle, enum net_connect_status status, struct net_connection* con);
 static void net_connect_job_internal_cb(struct net_connection* con, int event, void* ptr);
 
@@ -205,10 +208,21 @@ static int net_connect_job_check(struct net_connect_job* job)
 		net_connect_callback(job->handle, net_connect_status_ok, con);
 		return 1;
 	}
-	else if (ret == -1 && (net_error() == EALREADY || net_error() == EINPROGRESS || net_error() == EWOULDBLOCK || net_error() == EINTR))
+	else if (ret == -1)
 	{
-		return 0;
+		switch (net_error())
+		{
+			case EALREADY:
+			case EINPROGRESS:
+			case EWOULDBLOCK:
+			case EINTR:
+				return 0;
+
+			default:
+				break;
+		}
 	}
+
 	LOG_TRACE("net_connect_job_check(): Socket error!");
 
 	switch (net_error())
@@ -240,13 +254,9 @@ static void net_connect_job_free(struct net_connect_job* job)
 static void net_connect_job_stop(struct net_connect_job* job)
 {
 	if (job->addr.ss_family == AF_INET6)
-	{
 		job->handle->job6 = job->next;
-	}
 	else
-	{
 		job->handle->job4 = job->next;
-	}
 
 	net_connect_job_free(job);
 }
@@ -258,6 +268,9 @@ static int net_connect_depleted(struct net_connect_handle* handle)
 
 static int net_connect_job_process(struct net_connect_job* job)
 {
+	if (!job)
+		return -1;
+
 	int sd;
 	if (!job->con)
 	{
@@ -266,7 +279,7 @@ static int net_connect_job_process(struct net_connect_job* job)
 		{
 			LOG_DEBUG("net_connect_job_process: Unable to create socket!");
 			net_connect_callback(job->handle, net_connect_status_socket_error, NULL);
-			return -1; // FIXME
+			return -1;
 		}
 
 		job->con = 	net_con_create();
@@ -289,25 +302,18 @@ static void net_connect_job_internal_cb(struct net_connection* con, int event, v
 
 	if (event == NET_EVENT_TIMEOUT)
 	{
+		int af = job->addr.ss_family;
+
+		net_connect_job_stop(job);
+		// net_connect_job_stop() frees the job
+
 		// FIXME: Try next address, or if no more addresses left declare failure to connect.
-		if (job->addr.ss_family == AF_INET6)
+		if (!next_job)
 		{
-			net_connect_job_stop(job);
-
-			if (!next_job)
-			{
+			if (af == AF_INET6)
 				LOG_TRACE("No more IPv6 addresses to try!");
-			}
-
-		}
-		else
-		{
-			net_connect_job_stop(job);
-
-			if (!next_job)
-			{
+			else
 				LOG_TRACE("No more IPv4 addresses to try!");
-			}
 		}
 
 		if (net_connect_depleted(handle))
@@ -315,6 +321,7 @@ static void net_connect_job_internal_cb(struct net_connection* con, int event, v
 			LOG_TRACE("No more addresses left. Unable to connect!");
 			net_connect_callback(handle, net_connect_status_timeout, NULL);
 		}
+
 		return;
 	}
 
@@ -350,13 +357,14 @@ static void net_connect_cancel(struct net_connect_handle* handle)
 static int net_connect_process_queue(struct net_connect_handle* handle, struct net_connect_job* job)
 {
 	int ret;
-	while (job)
+
+	if (job)
 	{
 		ret = net_connect_job_process(job);
 		if (ret < 0)
 		{
-			net_connect_job_stop(job);
-			continue;
+			// job has already been freed
+			return  -1;
 		}
 		else if (ret == 0)
 		{
@@ -369,6 +377,7 @@ static int net_connect_process_queue(struct net_connect_handle* handle, struct n
 			return 1;
 		}
 	}
+
 	return -1;
 }
 
@@ -477,11 +486,23 @@ static int net_con_connect_dns_callback(struct net_dns_job* job, const struct ne
 struct net_connect_handle* net_con_connect(const char* address, uint16_t port, net_connect_cb callback, void* ptr)
 {
 	struct net_connect_handle* handle = hub_malloc_zero(sizeof(struct net_connect_handle));
+	if (!handle)
+	{
+		LOG_TRACE("net_con_connect(): OOM");
+		return NULL;
+	}
 
-	handle->address = hub_strdup(address);
 	handle->port = port;
 	handle->ptr = ptr;
 	handle->callback = callback;
+
+	handle->address = hub_strdup(address);
+	if (!handle->address)
+	{
+		LOG_TRACE("net_con_connect(): OOM");
+		hub_free(handle);
+		return NULL;
+	}
 
 	// FIXME: Check if DNS resolving is necessary ?
 	handle->dns = net_dns_gethostbyname(address, AF_UNSPEC, net_con_connect_dns_callback, handle);
@@ -498,7 +519,10 @@ struct net_connect_handle* net_con_connect(const char* address, uint16_t port, n
 
 void net_connect_destroy(struct net_connect_handle* handle)
 {
-	hub_free((char*) handle->address);
+	if (!handle)
+		return;
+
+	hub_free((void*) handle->address);
 
 	// cancel DNS job if pending
 	if (handle->dns)
