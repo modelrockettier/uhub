@@ -417,9 +417,13 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_check_config_1_1, "check_config_1_1");
 	exotic_add_test(&handle, &exotic_test_check_config_1_2, "check_config_1_2");
 	exotic_add_test(&handle, &exotic_test_dump_config, "dump_config");
+	exotic_add_test(&handle, &exotic_test_dump_config_no_defaults, "dump_config_no_defaults");
 	exotic_add_test(&handle, &exotic_test_read_config, "read_config");
+	exotic_add_test(&handle, &exotic_test_read_config_no_defaults, "read_config_no_defaults");
 	exotic_add_test(&handle, &exotic_test_check_config_2_1, "check_config_2_1");
 	exotic_add_test(&handle, &exotic_test_check_config_2_2, "check_config_2_2");
+	exotic_add_test(&handle, &exotic_test_check_config_3_1, "check_config_3_1");
+	exotic_add_test(&handle, &exotic_test_check_config_3_2, "check_config_3_2");
 	exotic_add_test(&handle, &exotic_test_remove_config_file, "remove_config_file");
 	exotic_add_test(&handle, &exotic_test_free_configs, "free_configs");
 	exotic_add_test(&handle, &exotic_test_cred_to_string_1, "cred_to_string_1");

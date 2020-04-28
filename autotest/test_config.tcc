@@ -1,9 +1,11 @@
 static struct hub_config config1;
 static struct hub_config config2;
+static struct hub_config config3;
 
 EXO_TEST(zero_configs, {
 	memset(&config1, 0, sizeof(struct hub_config));
 	memset(&config2, 0, sizeof(struct hub_config));
+	memset(&config3, 0, sizeof(struct hub_config));
 	return 1;
 });
 
@@ -126,8 +128,25 @@ EXO_TEST(dump_config, {
 	return ok;
 });
 
+EXO_TEST(dump_config_no_defaults, {
+	FILE *cf = fopen("dump2.conf", "w");
+	if (!cf)
+		return 0;
+
+	dump_config(&config1, cf, 1);
+
+	int ok = (ftell(cf) != 0);
+	fclose(cf);
+
+	return ok;
+});
+
 EXO_TEST(read_config, {
 	return !read_config("dump.conf", &config2, 0);
+});
+
+EXO_TEST(read_config_no_defaults, {
+	return !read_config("dump2.conf", &config3, 0);
 });
 
 /* Changed settings */
@@ -146,14 +165,31 @@ EXO_TEST(check_config_2_2, {
 		str_match(config2.hub_name, "uhub");
 });
 
+EXO_TEST(check_config_3_1, {
+	return
+		config3.hub_enabled == 0 &&
+		config3.server_port == 1234 &&
+		str_match(config3.server_bind_addr, "127.0.0.2");
+});
+
+EXO_TEST(check_config_3_2, {
+	return
+		config3.show_banner == 1 &&
+		config3.max_users == 500 &&
+		str_match(config3.hub_name, "uhub");
+});
+
 EXO_TEST(remove_config_file, {
 	if(remove("dump.conf") == -1)
 		LOG_ERROR("Could not delete 'dump.conf'");
+	if(remove("dump2.conf") == -1)
+		LOG_ERROR("Could not delete 'dump2.conf'");
 	return 1;
 });
 
 EXO_TEST(free_configs, {
 	free_config(&config1);
 	free_config(&config2);
+	free_config(&config3);
 	return 1;
 });
