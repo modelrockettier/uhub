@@ -19,6 +19,7 @@ set -e
 
 quiet() { "$@" >/dev/null 2>&1; }
 exists() { quiet which "$@"; }
+nofail() { "$@" || true; }
 
 # Check if we have a working "which"
 if ! exists bash; then
@@ -73,7 +74,17 @@ fi
 export BRANCH CONFIG DIST OS_NAME
 
 if [ "$OS_NAME" = windows ]; then
-	export VCPKG_ROOT="$HOME/vcpkg-$CONFIG"
+	: ${VCPKG_ROOT="$HOME/vcpkg${CONFIG+-$CONFIG}${ARCH+-$ARCH}"}
+	export VCPKG_ROOT
+	export PATH="$PATH:$VCPKG_ROOT"
+
+	# Add the installed DLL paths to PATH
+	# Otherwise autotest-bin will fail to run
+	for dir in "${VCPKG_ROOT}"/installed/*/bin; do
+		if [ -d "$dir" ]; then
+			export PATH="$PATH:$dir"
+		fi
+	done
 fi
 
 
@@ -155,8 +166,20 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	CMAKEOPTS_linux="  -DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
 	CMAKEOPTS_osx="    -DCMAKE_INSTALL_PREFIX=/usr/local/opt/uhub -DPLUGIN_DIR=/usr/local/opt/uhub/lib
 	                   -DCONFIG_DIR=/usr/local/opt/uhub/etc -DLOG_DIR=/usr/local/opt/uhub/log"
-	CMAKEOPTS_windows="-DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
-	                   -DCTEST_OUTPUT_ON_FAILURE=1"
+	CMAKEOPTS_windows="-DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+
+	if [ "$OS_NAME" = "windows" ] && [ -n "$ARCH" ]; then
+		export VCPKG_DEFAULT_TRIPLET="${ARCH}-windows"
+		export CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE="$ARCH"
+		CMAKEOPTS_windows+=" -DVCPKG_TARGET_TRIPLET=$VCPKG_DEFAULT_TRIPLET
+		                     -T host=${ARCH}"
+
+		if [ "$ARCH" = "x86" ]; then
+			CMAKEOPTS_windows+=" -A Win32"
+		else
+			CMAKEOPTS_windows+=" -A $ARCH"
+		fi
+	fi
 
 	# Config and OS specific cmake options
 	if [ -z "$NO_SYSTEMD" ]; then
@@ -178,12 +201,14 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 
 	ret=0
 	if [ "$OS_NAME" = "windows" ]; then
+		BUILD_ARGS="--build . --config $BUILD_TYPE"
+
 		export VERBOSE=1
-		cmake --build . --target ALL_BUILD --config $BUILD_TYPE -j3
+		cmake $BUILD_ARGS --target ALL_BUILD -j3
 		unset VERBOSE
 
 		du -shc */autotest-bin.exe */mod_*.dll */uhub.exe */uhub-passwd.exe
-		cmake --build . --target RUN_TESTS --config $BUILD_TYPE || ret=$?
+		cmake $BUILD_ARGS --target RUN_TESTS || ret=$?
 	else
 		make VERBOSE=1 -j3
 
@@ -193,7 +218,7 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 
 	# Display the test log on failure before exiting
 	if [ "$ret" != 0 ]; then
-		cat test.log || true
+		nofail cat test.log
 		exit $ret
 	fi
 

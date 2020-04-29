@@ -18,6 +18,7 @@ set -e
 
 quiet() { "$@" >/dev/null 2>&1; }
 exists() { quiet which "$@"; }
+nofail() { "$@" || true; }
 
 # Check if we have a working "which"
 if ! exists bash; then
@@ -70,6 +71,41 @@ if [ -z "$CONFIG" ]; then
 fi
 
 export BRANCH CONFIG DIST OS_NAME
+
+if [ "$OS_NAME" = windows ]; then
+	: ${VCPKG_ROOT="$HOME/vcpkg${CONFIG+-$CONFIG}${ARCH+-$ARCH}"}
+	export VCPKG_ROOT
+	export PATH="$PATH:$VCPKG_ROOT"
+fi
+
+stop_spinner() {
+	# Stop the keep-alive spinner process
+	nofail kill $SPINNER_PID
+	nofail unset SPINNER_PID
+	nofail trap - EXIT # Restore the default exit handler
+}
+
+start_spinner() {
+	# Start a process that runs as a keep-alive to avoid travis quitting
+	# if there is no output (for up to 20 mins)
+	(
+		set +x
+		echo "Spinner started"
+		for ((i=1; i<=20; i++)); do
+			sleep 60
+			kill -0 "$$" # Ensure the parent bash shell is still running
+			echo "Still building ($i) ..." >&2
+		done
+	) &
+
+	SPINNER_PID=$!
+	# Stop the spinner if bash exits prematurely
+	trap stop_spinner EXIT
+
+	if ! kill -0 $SPINNER_PID; then
+		echo "WARNING: Spinner $SPINNER_PID is not running" >&2
+	fi
+}
 
 
 if [ "$OS_NAME" = "linux" ]; then
@@ -198,29 +234,48 @@ elif [ "$OS_NAME" = "windows" ]; then
 
 	choco install -y $CHOC_PKGS
 
-	# Download and install vcpkg if it's missing
-	export VCPKG_ROOT="$HOME/vcpkg-$CONFIG"
-	export PATH="$PATH:$VCPKG_ROOT"
-	if [ ! -e "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" ] || ! exists vcpkg; then
+	# x86 or x64
+	if [ -n "$ARCH" ]; then
+		export VCPKG_DEFAULT_TRIPLET="${ARCH}-windows"
+	fi
+
+	# Download and install vcpkg if it's missing or if this script changes
+	if [ ! -s "${VCPKG_ROOT}/uhub_ci.md5" ] || ! md5sum -c "${VCPKG_ROOT}/uhub_ci.md5"; then
 		rm -rf $VCPKG_ROOT
 		git clone https://github.com/Microsoft/vcpkg.git $VCPKG_ROOT
 		pushd $VCPKG_ROOT
 
-		# Try checking out the latest tag
-		TAG=$(git describe --abbrev=0 --tags) || true
-		git checkout "${TAG}" || true
-		git status || true
+		# Try checking out the latest tag (don't care if these commands fail)
+		set +e
+
+		git config advice.detachedHead false
+		TAG=$(git describe --abbrev=0 --tags) && git checkout "$TAG"
+		git status
+
+		# Exit on failure below here
+		set -e
 
 		# Reduce the build times by not building debug variants of the dependencies
-		echo "set(VCPKG_BUILD_TYPE release)" | tee -a triplets/*-windows.cmake
+		printf '\n%s\n' "set(VCPKG_BUILD_TYPE release)" \
+			| quiet tee -a triplets/*windows*.cmake triplets/community/*windows*.cmake
 
 		cmd "/C bootstrap-vcpkg.bat"
 		popd
+
+		md5sum autotest/ci/install-build-depends.sh | tee "${VCPKG_ROOT}/uhub_ci.md5"
 	fi
+
+	# User-wide vcpkg integration
+	nofail vcpkg integrate install
+
+	# OpenSSL takes a while to build
+	start_spinner
 
 	for pkg in $VC_PKGS; do
 		vcpkg install $pkg
 	done
+
+	stop_spinner
 
 else
 	echo "Unknown OS: ${OS_NAME}" >&2

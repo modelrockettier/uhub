@@ -13,26 +13,37 @@ jobs:
   allow_failures:
     # Just in case we exceed the coverity scan limits
     - name: Coverity scan
-    # vcpkg openssl has issues
-#   - os: windows
-#     env: CONFIG=full
 
   # Additional builds to do (outside the build matrix)
   include:
 
     # Windows builds
-#   - name: Windows full
-#     os: windows
-#     env: CONFIG=full
-#     cache:
-#       directories:
-#         - "$HOME/vcpkg-full"
-    - name: Windows minimal
+    - name: Windows full x64
       os: windows
-      env: CONFIG=minimal
+      env:
+        - CONFIG=full
+        - ARCH=x64
       cache:
         directories:
-          - "$HOME/vcpkg-minimal"
+          - "$HOME/vcpkg-full-x64"
+
+    - name: Windows minimal x64
+      os: windows
+      env:
+        - CONFIG=minimal
+        - ARCH=x64
+      cache:
+        directories:
+          - "$HOME/vcpkg-minimal-x64"
+
+    - name: Windows minimal x86
+      os: windows
+      env:
+        - CONFIG=minimal
+        - ARCH=x86
+      cache:
+        directories:
+          - "$HOME/vcpkg-minimal-x86"
 
     # Mac OS X builds
     - name: Mac OSX full
@@ -85,7 +96,7 @@ jobs:
       dist: bionic
       env: CONFIG=minimal
 
-    # Debian package builds
+    # Debian package build
     - name: debian package
       env: CONFIG=deb
 
@@ -99,14 +110,11 @@ jobs:
     - name: Coverity scan
       # The COVERITY_SCAN_TOKEN env var is set in the travis repository settings
       env: CONFIG=full
-      branches:
-        only:
-          - master
-          - coverity_scan
       # Don't build for pull requests or if the token isn't set
       if: |
-          env(COVERITY_SCAN_TOKEN) IS present AND \
-          type = push
+          env(COVERITY_SCAN_TOKEN) IS NOT blank AND \
+          branch IN (master, coverity_scan) AND \
+          type != pull_request
       addons:
         coverity_scan:
           project:
@@ -135,15 +143,11 @@ jobs:
     # SonarCloud build
     - name: SonarCloud scan
       env: CONFIG=full
-      branches:
-        only:
-          - master
-          - staging
-          - sonarcloud
       # Don't build for pull requests or if the token isn't set
       if: |
-          env(SONAR_TOKEN) IS present AND \
-          type = push
+          env(SONAR_TOKEN) IS NOT blank AND \
+          branch IN (master, staging, sonarcloud) AND \
+          type != pull_request
       addons:
         sonarcloud:
           organization: "modelrockettier"
@@ -179,3 +183,5 @@ install:
   - autotest/ci/install-build-depends.sh
 script:
   - autotest/ci/build-and-test.sh
+
+# vi: syn=yaml et ts=2 sw=2 :

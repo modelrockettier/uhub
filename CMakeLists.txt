@@ -379,9 +379,12 @@ elseif(LOWLEVEL_DEBUG)
 	message(FATAL_ERROR "Can't use LOWLEVEL_DEBUG with a Release build, try -DCMAKE_BUILD_TYPE=RelWithDebInfo")
 endif()
 
+math(EXPR POINTER_SIZE "${CMAKE_SIZEOF_VOID_P} * 8")
+
 message(STATUS "**** Build Configuration ***")
 message(STATUS "  CMAKE_BUILD_TYPE:     ${CMAKE_BUILD_TYPE}")
 message(STATUS "  CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "  POINTER_SIZE:         ${POINTER_SIZE}-bits")
 message(STATUS "  BIN_DIR:              ${BIN_DIR}")
 message(STATUS "  CONFIG_DIR:           ${CONFIG_DIR}")
 message(STATUS "  COVERAGE:             ${COVERAGE}")
