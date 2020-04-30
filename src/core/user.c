@@ -430,7 +430,7 @@ char* user_flags_to_string(struct hub_user* user)
 		return hub_strdup("");
 
 	buf = cbuf_create(160);
-	for (i = 0; i < (sizeof(user_flags) / sizeof(user_flags[0])); i++)
+	for (i = 0; i < ARRAY_SIZE(user_flags); i++)
 	{
 		if (flags & user_flags[i].value)
 		{

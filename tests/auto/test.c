@@ -1787,16 +1787,6 @@ int main(int argc, char** argv)
 
 static void exotic_version();
 
-#ifndef __EXOTIC__STANDALONE__
-#include "autotest.h"
-static void exotic_version()
-{
-	printf("Extatic.org Test Infrastructure: exotic " "${version}" "\n\n");
-	printf("Copyright (C) 2007 Jan Vidar Krey, janvidar@extatic.org\n");
-	printf("This is free software with ABSOLUTELY NO WARRANTY.\n\n");
-}
-#endif
-
 struct exo_test_data
 {
 	exo_test_t test;
@@ -1838,7 +1828,8 @@ static void exotic_help(const char* program)
 int exotic_initialize(struct exotic_handle* handle, int argc, char** argv)
 {
 	int n;
-	if (!handle || !argv) return -1;
+	if (!handle || !argv)
+		return -1;
 
 	memset(handle, 0, sizeof(struct exotic_handle));
 
@@ -1876,30 +1867,39 @@ int exotic_initialize(struct exotic_handle* handle, int argc, char** argv)
 
 		fprintf(stderr, "Unknown argument: %s\n\n", argv[n]);
 		exotic_help(argv[0]);
-		exit(0);
+		exit(1);
 	}
 
 	if (handle->config_show_summary == cfg_on)
 	{
-		if (handle->config_show_pass == cfg_default) handle->config_show_pass = cfg_off;
-		if (handle->config_show_fail == cfg_default) handle->config_show_fail = cfg_off;
+		if (handle->config_show_pass == cfg_default)
+			handle->config_show_pass = cfg_off;
+		if (handle->config_show_fail == cfg_default)
+			handle->config_show_fail = cfg_off;
 
 	}
 	else if (handle->config_show_pass == cfg_on)
 	{
-		if (handle->config_show_summary == cfg_default) handle->config_show_summary = cfg_off;
-		if (handle->config_show_fail    == cfg_default) handle->config_show_fail = cfg_off;
+		if (handle->config_show_summary == cfg_default)
+			handle->config_show_summary = cfg_off;
+		if (handle->config_show_fail    == cfg_default)
+			handle->config_show_fail = cfg_off;
 	}
 	else if (handle->config_show_fail == cfg_on)
 	{
-		if (handle->config_show_summary == cfg_default) handle->config_show_summary = cfg_off;
-		if (handle->config_show_fail    == cfg_default) handle->config_show_fail = cfg_off;
+		if (handle->config_show_summary == cfg_default)
+			handle->config_show_summary = cfg_off;
+		if (handle->config_show_fail    == cfg_default)
+			handle->config_show_fail = cfg_off;
 	}
 	else
 	{
-		if (handle->config_show_summary == cfg_default) handle->config_show_summary = cfg_on;
-		if (handle->config_show_fail    == cfg_default) handle->config_show_fail = cfg_on;
-		if (handle->config_show_pass    == cfg_default) handle->config_show_pass = cfg_on;
+		if (handle->config_show_summary == cfg_default)
+			handle->config_show_summary = cfg_on;
+		if (handle->config_show_fail    == cfg_default)
+			handle->config_show_fail = cfg_on;
+		if (handle->config_show_pass    == cfg_default)
+			handle->config_show_pass = cfg_on;
 	}
 	return 0;
 }
@@ -1956,10 +1956,12 @@ int exotic_run(struct exotic_handle* handle)
 		tmp = handle->current;
 
 		if (handle->current->test()) {
-			if (handle->config_show_pass == cfg_on) printf("* PASS test '%s'\n", tmp->name);
+			if (handle->config_show_pass == cfg_on)
+				printf("* PASS test '%s'\n", tmp->name);
 			handle->pass++;
 		} else {
-			if (handle->config_show_fail == cfg_on) printf("* FAIL test '%s'\n", tmp->name);
+			if (handle->config_show_fail == cfg_on)
+				printf("* FAIL test '%s'\n", tmp->name);
 			handle->fail++;
 		}
 

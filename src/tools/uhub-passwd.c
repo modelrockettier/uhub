@@ -19,6 +19,7 @@
  */
 
 #include "uhub.h"
+#include "util/credentials.h"
 #include "util/misc.h"
 #include <sqlite3.h>
 
@@ -29,6 +30,8 @@ static const char* command = NULL;
 static const char* filename = NULL;
 static const char* binary = NULL;
 
+static void main_usage();
+
 typedef int (*command_func_t)(size_t, const char**);
 
 static int create(size_t argc, const char** argv);
@@ -37,6 +40,7 @@ static int pass(size_t argc, const char** argv);
 static int add(size_t argc, const char** argv);
 static int del(size_t argc, const char** argv);
 static int mod(size_t argc, const char** argv);
+static int help(size_t argc, const char** argv);
 
 #define die(...) \
 	do { \
@@ -44,20 +48,24 @@ static int mod(size_t argc, const char** argv);
 		exit(1); \
 	} while (0)
 
-static struct commands
+struct commands
 {
 	command_func_t handle;
 	const char* command;
 	size_t min_args;
 	size_t max_args;
 	const char* usage;
-} COMMANDS[6] = {
+};
+
+static struct commands COMMANDS[] = {
 	{ &create, "create", 0, 0, "" },
 	{ &list,   "list",   0, 1, "[nick search]" },
 	{ &add,    "add",    2, 3, "username password [credentials = user]" },
 	{ &del,    "del",    1, 1, "username" },
 	{ &mod,    "mod",    2, 2, "username credentials" },
 	{ &pass,   "pass",   2, 2, "username password" },
+	{ &help,   "help",   0, SIZE_MAX, "" },
+	{ &help,   "-h",     0, SIZE_MAX, "" },
 };
 
 NO_RETURN static void print_usage(const char* str)
@@ -72,37 +80,29 @@ NO_RETURN static void print_usage(const char* str)
 /**
  * Validate credentials.
  */
-static const char* validate_cred(const char* cred_str)
+static const char* validate_cred(char const* cred_str)
 {
-	if (!strcmp(cred_str, "admin") || !strcmp(cred_str, "root"))
-		return "admin";
+	enum auth_credentials cred;
+	if (!auth_string_to_cred(cred_str, &cred))
+		die("Invalid user credentials.\nMust be one of: 'user', 'operator', 'super', 'admin', or '[op][u]bot'\n");
 
-	if (!strcmp(cred_str, "super"))
-		return "super";
-
-	if (!strcmp(cred_str, "op") || !strcmp(cred_str, "operator"))
-		return "operator";
-
-	if (!strcmp(cred_str, "user") || !strcmp(cred_str, "reg"))
-		return "user";
-
-	if (!strcmp(cred_str, "bot"))
-		return "bot";
-
-	if (!strcmp(cred_str, "ubot"))
-		return "ubot";
-
-	if (!strcmp(cred_str, "opbot"))
-		return "opbot";
-
-	if (!strcmp(cred_str, "opubot"))
-		return "opubot";
+	/*
+	 * Replace the cred_str with its auth_cred_to_string variant in case
+	 * the user used an alias like "reg" which becomes "user".
+	 */
+	cred_str = auth_cred_to_string(cred);
 
 	// credentials that are valid in uhub commands, but not for sqlite users
-	if (!strcmp(cred_str, "guest") || !strcmp(cred_str, "none") || !strcmp(cred_str, "link"))
-		die("Cannot use '%s' credentials for a sqlite user.\n", cred_str);
+	switch (cred)
+	{
+		case auth_cred_none:
+		case auth_cred_guest:
+		case auth_cred_link:
+			die("Cannot use '%s' credentials for a sqlite user.\n", cred_str);
 
-	die("Invalid user credentials.\nMust be one of: 'user', 'operator', 'super', 'admin', 'bot', 'ubot', 'opbot', or 'opubot'\n");
+		default:
+			return cred_str;
+	}
 }
 
 static const char* validate_username(const char* username)
@@ -153,8 +153,6 @@ static void open_database()
 		die("Unable to open database: %s (result=%d)\n", filename, res);
 }
 
-static int sql_callback(void* ptr, int argc, char **argv, char **colName) { return 0; }
-
 static int sql_execute(const char* sql, ...)
 {
 	va_list args;
@@ -172,7 +170,7 @@ static int sql_execute(const char* sql, ...)
 
 	open_database();
 
-	rc = sqlite3_exec(db, query, sql_callback, NULL, &errMsg);
+	rc = sqlite3_exec(db, query, NULL, NULL, &errMsg);
 	sqlite3_free(query);
 	if (rc != SQLITE_OK) {
 		fprintf(stderr, "ERROR: %s\n", errMsg);
@@ -186,6 +184,13 @@ static int sql_execute(const char* sql, ...)
 
 static int command_dispatch(struct commands* cmd, size_t argc, const char** argv)
 {
+	size_t i;
+	for (i = 0; i < argc; i++)
+	{
+		if (strcmp(argv[i], "-h") == 0)
+			print_usage(cmd->usage);
+	}
+
 	if (argc < cmd->min_args || argc > cmd->max_args)
 		print_usage(cmd->usage);
 
@@ -378,7 +383,13 @@ static int del(size_t argc, const char** argv)
 	return 0;
 }
 
-void main_usage()
+static int help(size_t argc, const char** argv)
+{
+	main_usage();
+	return 0;
+}
+
+static void main_usage()
 {
 	printf(
 			"Usage: %s filename command [...]\n"
@@ -395,7 +406,7 @@ void main_usage()
 			"  'filename' is a database file\n"
 			"  'username' is a nickname (UTF-8, up to %i bytes)\n"
 			"  'password' is a password (UTF-8, up to %i bytes)\n"
-			"  'credentials' is one of 'bot', 'ubot', 'opbot', 'opubot', 'admin', 'super', 'op' or 'user'\n"
+			"  'credentials' is one of 'user', 'op', 'super', 'admin', 'bot', 'ubot', 'opbot', or 'opubot'\n"
 			"\n"
 		, binary, MAX_NICK_LEN, MAX_PASS_LEN);
 }
@@ -407,13 +418,19 @@ int main(int argc, char** argv)
 	filename = argv[1];
 	command = argv[2];
 
+	if (argc == 1 || strcmp(filename, "-h") == 0)
+	{
+		main_usage();
+		return 0;
+	}
+
 	if (argc < 3)
 	{
 		main_usage();
 		return 1;
 	}
 
-	for (; n < sizeof(COMMANDS) / sizeof(COMMANDS[0]); n++)
+	for (; n < ARRAY_SIZE(COMMANDS); n++)
 	{
 		if (!strcmp(command, COMMANDS[n].command))
 			return command_dispatch(&COMMANDS[n], argc - 3, (const char**) &argv[3]);

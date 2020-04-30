@@ -27,7 +27,7 @@ static int check_cmd_bool(const char* cmd, struct linked_list* list, char* line,
 {
 	char* data;
 
-	if (!strncmp(line, cmd, strlen(cmd)))
+	if (!strcmp(line, cmd))
 	{
 		data = &line[strlen(cmd)];
 		data[0] = '\0';
@@ -53,7 +53,7 @@ static int check_cmd_user(const char* cmd, int status, struct linked_list* list,
 	char* data_extra;
 	struct auth_info* info = 0;
 
-	if (!strncmp(line, cmd, strlen(cmd)))
+	if (!strcmp(line, cmd))
 	{
 		data = &line[strlen(cmd)];
 		data_extra = 0;
@@ -123,7 +123,7 @@ static int check_cmd_addr(const char* cmd, struct linked_list* list, char* line,
 	char* data;
 	struct ip_range* range = 0;
 
-	if (!strncmp(line, cmd, strlen(cmd)))
+	if (!strcmp(line, cmd))
 	{
 		data = &line[strlen(cmd)];
 		data[0] = '\0';

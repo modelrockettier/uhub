@@ -32,7 +32,7 @@ struct hub_info* g_hub = 0;
 		break; \
 	}
 
-#define ROUTE_MSG \
+#define ROUTE_MSG() \
 	if (user_is_logged_in(u)) \
 	{ \
 		ret = route_message(hub, u, cmd); \
@@ -40,8 +40,7 @@ struct hub_info* g_hub = 0;
 	else \
 	{ \
 		ret = -1; \
-	} \
-	break;
+	}
 
 int hub_handle_message(struct hub_info* hub, struct hub_user* u, const char* line, size_t length)
 {
@@ -100,7 +99,8 @@ int hub_handle_message(struct hub_info* hub, struct hub_user* u, const char* lin
 				if (plugin_handle_search(hub, u, cmd->cache) == st_deny)
 					break;
 				CHECK_FLOOD(search, 1);
-				ROUTE_MSG;
+				ROUTE_MSG();
+				break;
 
 			case ADC_CMD_FRES: // spam
 			case ADC_CMD_BRES: // spam
@@ -113,21 +113,24 @@ int hub_handle_message(struct hub_info* hub, struct hub_user* u, const char* lin
 				if (plugin_handle_search_result(hub, u, uman_get_user_by_sid(hub->users, cmd->target), cmd->cache) == st_deny)
 					break;
 				/* CHECK_FLOOD(search, 0); */
-				ROUTE_MSG;
+				ROUTE_MSG();
+				break;
 
 			case ADC_CMD_DRCM:
 				cmd->priority = -1;
 				if (plugin_handle_revconnect(hub, u, uman_get_user_by_sid(hub->users, cmd->target)) == st_deny)
 					break;
 				CHECK_FLOOD(connect, 1);
-				ROUTE_MSG;
+				ROUTE_MSG();
+				break;
 
 			case ADC_CMD_DCTM:
 				cmd->priority = -1;
 				if (plugin_handle_connect(hub, u, uman_get_user_by_sid(hub->users, cmd->target)) == st_deny)
 					break;
 				CHECK_FLOOD(connect, 1);
-				ROUTE_MSG;
+				ROUTE_MSG();
+				break;
 
 			case ADC_CMD_BCMD:
 			case ADC_CMD_DCMD:
@@ -139,7 +142,7 @@ int hub_handle_message(struct hub_info* hub, struct hub_user* u, const char* lin
 
 			default:
 				CHECK_FLOOD(extras, 1);
-				ROUTE_MSG;
+				ROUTE_MSG();
 		}
 		adc_msg_free(cmd);
 	}

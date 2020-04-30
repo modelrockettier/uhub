@@ -127,7 +127,7 @@ static int copy_nickname(struct plugin_handle* plugin, struct auth_info* userinf
 {
 	size_t nickname_length = strlen(nickname);
 
-	if (nickname_length <= 0 || MAX_NICK_LEN < nickname_length)
+	if (nickname_length <= 0 || nickname_length > MAX_NICK_LEN)
 	{
 		snprintf(error, errlen, "Nickname must be between 1 and %d characters long.",
 			MAX_NICK_LEN);

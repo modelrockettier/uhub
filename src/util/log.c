@@ -179,7 +179,7 @@ const struct log_info log_levels[] = {
 	{ .verb = log_protocol, .str = "protocol" },
 	{ .verb = log_plugin,   .str = "plugin"   },
 };
-#define NUM_LOG_LEVELS (sizeof(log_levels) / sizeof(log_levels[0]))
+#define NUM_LOG_LEVELS ARRAY_SIZE(log_levels)
 
 char const* hub_log_verbosity_to_string(int verb)
 {

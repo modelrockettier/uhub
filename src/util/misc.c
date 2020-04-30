@@ -384,7 +384,7 @@ const char* format_size(size_t bytes, char* buf, size_t bufsize)
 		factor++;
 		b >>= 10;
 	}
-	uhub_assert(factor < (sizeof(quant) / sizeof(quant[0])));
+	uhub_assert(factor < ARRAY_SIZE(quant));
 
 	/* Only calculate the remainder when b < 10 (want 2 digits precision) */
 	if (b < 10)
