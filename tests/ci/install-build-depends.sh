@@ -262,7 +262,7 @@ elif [ "$OS_NAME" = "windows" ]; then
 		cmd "/C bootstrap-vcpkg.bat"
 		popd
 
-		md5sum autotest/ci/install-build-depends.sh | tee "${VCPKG_ROOT}/uhub_ci.md5"
+		md5sum tests/ci/install-build-depends.sh | tee "${VCPKG_ROOT}/uhub_ci.md5"
 	fi
 
 	# User-wide vcpkg integration

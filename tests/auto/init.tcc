@@ -8,8 +8,12 @@
 #define TEST_LOG_LEVEL log_info
 #endif
 
+#ifndef TEST_LOG_FILE
+#define TEST_LOG_FILE "test.log"
+#endif
+
 EXO_TEST(init_log, {
-	hub_log_initialize("test.log", 0);
+	hub_log_initialize(TEST_LOG_FILE, 0);
 	return 1;
 });
 

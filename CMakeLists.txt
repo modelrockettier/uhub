@@ -271,7 +271,7 @@ set_property(TARGET network PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 set_property(TARGET utils   PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 
 add_executable(uhub ${PROJECT_SOURCE_DIR}/core/main.c ${uhub_SOURCES})
-add_executable(autotest-bin ${CMAKE_SOURCE_DIR}/autotest/test.c ${uhub_SOURCES})
+add_executable(autotest-bin ${CMAKE_SOURCE_DIR}/tests/auto/test.c ${uhub_SOURCES})
 add_executable(uhub-passwd ${PROJECT_SOURCE_DIR}/tools/uhub-passwd.c)
 
 foreach(p IN LISTS PLUGINS)

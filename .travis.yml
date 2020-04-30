@@ -180,8 +180,8 @@ jobs:
     # End SonarCloud build
 
 install:
-  - autotest/ci/install-build-depends.sh
+  - tests/ci/install-build-depends.sh
 script:
-  - autotest/ci/build-and-test.sh
+  - tests/ci/build-and-test.sh
 
 # vi: syn=yaml et ts=2 sw=2 :

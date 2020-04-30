@@ -10,8 +10,8 @@ task:
   freebsd_instance:
     image_family: freebsd-$RELEASEVER
   install_bash_script: pkg install -y bash
-  install_build_depends_script: bash ./autotest/ci/install-build-depends.sh
-  build_and_test_script: bash ./autotest/ci/build-and-test.sh
+  install_build_depends_script: bash ./tests/ci/install-build-depends.sh
+  build_and_test_script: bash ./tests/ci/build-and-test.sh
 
 task:
   env:
@@ -25,8 +25,8 @@ task:
   name: CentOS-$RELEASEVER-$CONFIG
   container:
     image: centos:$RELEASEVER
-  install_build_depends_script: bash ./autotest/ci/install-build-depends.sh
-  build_and_test_script: bash ./autotest/ci/build-and-test.sh
+  install_build_depends_script: bash ./tests/ci/install-build-depends.sh
+  build_and_test_script: bash ./tests/ci/build-and-test.sh
 
 task:
   env:
@@ -50,10 +50,10 @@ task:
       - echo "CONFIG: ${CONFIG}"
       - echo "ARCH: ${ARCH}"
       - echo "PR: ${CIRRUS_PR}"
-      - md5sum autotest/ci/install-build-depends.sh
+      - md5sum tests/ci/install-build-depends.sh
     reupload_on_changes: true
   environment_script: env
-  install_build_depends_script: ./autotest/ci/install-build-depends.sh
-  build_and_test_script: ./autotest/ci/build-and-test.sh
+  install_build_depends_script: ./tests/ci/install-build-depends.sh
+  build_and_test_script: ./tests/ci/build-and-test.sh
 
 # vi: syn=yaml et ts=2 sw=2 :

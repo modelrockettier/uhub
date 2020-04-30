@@ -44,7 +44,7 @@ extern int  exotic_run(struct exotic_handle* handle);
 
 #endif /* HAVE_EXOTIC_AUTOTEST_H */
 
-#include "test_aa_init.tcc"
+#include "init.tcc"
 #include "test_cbuffer.tcc"
 #include "test_commands.tcc"
 #include "test_config.tcc"
@@ -65,7 +65,7 @@ extern int  exotic_run(struct exotic_handle* handle);
 #include "test_timer.tcc"
 #include "test_tokenizer.tcc"
 #include "test_usermanager.tcc"
-#include "test_zz_exit.tcc"
+#include "exit.tcc"
 
 int main(int argc, char** argv)
 {
