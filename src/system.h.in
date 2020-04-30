@@ -312,6 +312,9 @@ typedef unsigned __int64 uint64_t;
 #define close _close
 #define read _read
 #define write _write
+#define popen _popen
+#define pclose _pclose
+#define unlink _unlink
 #define NEED_GETOPT
 #endif
 

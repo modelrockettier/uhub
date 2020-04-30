@@ -9,7 +9,7 @@
 #endif
 
 #ifndef TEST_LOG_FILE
-#define TEST_LOG_FILE "test.log"
+#define TEST_LOG_FILE "autotest.log"
 #endif
 
 EXO_TEST(init_log, {

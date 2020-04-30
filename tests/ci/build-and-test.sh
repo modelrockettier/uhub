@@ -124,7 +124,7 @@ elif [ "${CONFIG}" = "rpm" ]; then
 	cmake ${CMAKEOPTS}
 	make VERBOSE=1 -j3
 
-	du -shc autotest-bin mod_*.so uhub uhub-admin uhub-passwd
+	du -shc autotest-bin passwd-test mod_*.so uhub uhub-admin uhub-passwd
 	make test
 
 	cpack -G RPM #-DCPACK_RPM_PACKAGE_DEBUG=1
@@ -207,18 +207,26 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 		cmake $BUILD_ARGS --target ALL_BUILD -j3
 		unset VERBOSE
 
-		du -shc */autotest-bin.exe */mod_*.dll */uhub.exe */uhub-passwd.exe
+		du -shc */autotest-bin.exe */passwd-test.exe */mod_*.dll */uhub.exe */uhub-passwd.exe
 		cmake $BUILD_ARGS --target RUN_TESTS || ret=$?
 	else
 		make VERBOSE=1 -j3
 
-		du -shc autotest-bin mod_*.so uhub uhub-admin uhub-passwd
+		du -shc autotest-bin passwd-test mod_*.so uhub uhub-admin uhub-passwd
 		make test || ret=$?
 	fi
 
 	# Display the test log on failure before exiting
 	if [ "$ret" != 0 ]; then
-		nofail cat test.log
+		set +x
+		for log in *test*.log; do
+			echo "========================================"
+			echo "==> $log <=="
+			nofail cat "$log"
+			echo "==> $log <=="
+			echo "========================================"
+		done
+		set -x
 		exit $ret
 	fi
 

@@ -271,8 +271,9 @@ set_property(TARGET network PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 set_property(TARGET utils   PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 
 add_executable(uhub ${PROJECT_SOURCE_DIR}/core/main.c ${uhub_SOURCES})
-add_executable(autotest-bin ${CMAKE_SOURCE_DIR}/tests/auto/test.c ${uhub_SOURCES})
 add_executable(uhub-passwd ${PROJECT_SOURCE_DIR}/tools/uhub-passwd.c)
+add_executable(autotest-bin ${CMAKE_SOURCE_DIR}/tests/auto/test.c ${uhub_SOURCES})
+add_executable(passwd-test ${CMAKE_SOURCE_DIR}/tests/passwd/test.c)
 
 foreach(p IN LISTS PLUGINS)
 	add_library(${p} MODULE ${PROJECT_SOURCE_DIR}/plugins/${p}.c)
@@ -291,10 +292,11 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -ggdb3")
 endif()
 
+target_link_libraries(utils network)
 target_link_libraries(uhub ${CMAKE_DL_LIBS} adc network utils)
 target_link_libraries(uhub-passwd ${SQLITE3_LIBRARIES} utils)
 target_link_libraries(autotest-bin ${CMAKE_DL_LIBS} adc network utils)
-target_link_libraries(utils network)
+target_link_libraries(passwd-test ${SQLITE3_LIBRARIES} utils)
 
 if(WIN32)
 	target_link_libraries(uhub ws2_32)
@@ -352,15 +354,11 @@ if(SSL_SUPPORT)
 endif()
 
 if(SYSTEMD_SUPPORT)
+	target_link_libraries(utils ${SD_LIBRARIES})
 	target_link_libraries(uhub ${SD_LIBRARIES})
-	target_link_libraries(autotest-bin ${SD_LIBRARIES})
-	target_link_libraries(uhub-passwd ${SD_LIBRARIES})
-	target_link_libraries(uhub-admin ${SD_LIBRARIES})
+
 	include_directories(${SD_INCLUDE_DIRS})
 	add_definitions(-DSYSTEMD)
-	if(ADC_STRESS)
-		target_link_libraries(adcrush ${SD_LIBRARIES})
-	endif()
 endif()
 
 configure_file("${PROJECT_SOURCE_DIR}/version.h.in" "${PROJECT_BINARY_DIR}/version.h")
@@ -397,7 +395,17 @@ message(STATUS "  SYSTEMD_SUPPORT:      ${SYSTEMD_SUPPORT}")
 message(STATUS "**** End Build Configuration ***")
 
 enable_testing()
-add_test(NAME autotest COMMAND autotest-bin)
+# By default, only print failing tests and a test summary
+add_test(NAME autotest COMMAND autotest-bin -f -s)
+if(${CMAKE_VERSION} VERSION_LESS "3.0.0")
+	# CMake < v3.0 doesn't support generators in the working directory, so
+	# fall back to just using the current directory
+	add_test(NAME passwd-test COMMAND passwd-test -f -s)
+else()
+	# The passwd-test uses the uhub-passwd in the current working directory
+	add_test(NAME passwd-test COMMAND passwd-test -f -s
+			WORKING_DIRECTORY $<TARGET_FILE_DIR:uhub-passwd>)
+endif()
 
 if(UNIX)
 	install(TARGETS ${BINARIES} RUNTIME DESTINATION ${BIN_DIR})
