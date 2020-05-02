@@ -240,8 +240,8 @@ NO_RETURN static void print_usage(char* program)
 #endif
 		"   -u <user>   Run as given user\n"
 		"   -g <group>  Run with given group permissions\n"
-		"   -p <file>   Store pid in file (process id)\n"
 #endif
+		"   -p <file>   Store pid in file (process id)\n"
 		"   -V          Show version number.\n"
 	);
 
@@ -417,6 +417,7 @@ int drop_privileges()
 
 	return 0;
 }
+#endif /* WIN32 */
 
 int pidfile_create()
 {
@@ -443,8 +444,6 @@ int pidfile_destroy()
 	}
 	return 0;
 }
-
-#endif /* WIN32 */
 
 
 int main(int argc, char** argv)
@@ -484,19 +483,19 @@ int main(int argc, char** argv)
 			return 0;
 		}
 	}
+#endif
 
 	if (pidfile_create() == -1)
 		return -1;
 
+#ifndef WIN32
 	if (drop_privileges() == -1)
 		return -1;
 #endif /* WIN32 */
 
 	ret = main_loop();
 
-#ifndef WIN32
 	pidfile_destroy();
-#endif
 
 	return ret;
 }

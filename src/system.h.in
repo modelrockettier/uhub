@@ -308,6 +308,7 @@ typedef unsigned __int64 uint64_t;
 #define strncasecmp _strnicmp
 #define atoll _atoi64
 #include <io.h>
+#include <process.h>
 #define open _open
 #define close _close
 #define read _read
@@ -315,6 +316,7 @@ typedef unsigned __int64 uint64_t;
 #define popen _popen
 #define pclose _pclose
 #define unlink _unlink
+#define getpid _getpid
 #define NEED_GETOPT
 #endif
 
