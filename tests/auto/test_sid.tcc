@@ -8,7 +8,7 @@ struct dummy_user
 };
 
 static struct dummy_user* last = 0;
-sid_t last_sid = 0;
+static sid_t last_sid = 0;
 
 EXO_TEST(sid_create_pool, {
 	sid_pool = sid_pool_create(4);

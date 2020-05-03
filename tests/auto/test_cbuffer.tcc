@@ -1,9 +1,9 @@
 #include <uhub.h>
 
-struct cbuffer* buf1;
-struct cbuffer* buf2;
-struct cbuffer* buf3;
-struct tm now;
+static struct cbuffer* buf1;
+static struct cbuffer* buf2;
+static struct cbuffer* buf3;
+static struct tm now;
 
 EXO_TEST(cbuf_create_const_1, {
 	buf1 = cbuf_create_const("Hello World!");

@@ -352,42 +352,50 @@ static int test_format(size_t bytes, const char* expect)
 	return str_match(buf, expect);
 }
 
-EXO_TEST(format_size_1,  { return test_format(0, "0 B"); });
-EXO_TEST(format_size_2,  { return test_format(1, "1 B"); });
-EXO_TEST(format_size_3,  { return test_format(21, "21 B"); });
-EXO_TEST(format_size_4,  { return test_format(325, "325 B"); });
-EXO_TEST(format_size_5,  { return test_format(999, "999 B"); });
-EXO_TEST(format_size_6,  { return test_format(1000, "1000 B"); });
-EXO_TEST(format_size_7,  { return test_format(1023, "1023 B"); });
-EXO_TEST(format_size_8,  { return test_format(1024, "1 KiB"); });
-EXO_TEST(format_size_9,  { return test_format(1025, "1 KiB"); });
-EXO_TEST(format_size_10, { return test_format(1130, "1.1 KiB"); });
-EXO_TEST(format_size_11, { return test_format(2047, "1.9 KiB"); });
-EXO_TEST(format_size_12, { return test_format(2048, "2 KiB"); });
-EXO_TEST(format_size_13, { return test_format(10240-1, "9.9 KiB"); });
-EXO_TEST(format_size_14, { return test_format(10240, "10 KiB"); });
-EXO_TEST(format_size_15, { return test_format(10240+1, "10 KiB"); });
-EXO_TEST(format_size_16, { return test_format(51200, "50 KiB"); });
-EXO_TEST(format_size_17, { return test_format(99 * 1024, "99 KiB"); });
-EXO_TEST(format_size_18, { return test_format(100 * 1024, "100 KiB"); });
-EXO_TEST(format_size_19, { return test_format(200 * 1024 + 1, "200 KiB"); });
-EXO_TEST(format_size_20, { return test_format(1000 * 1024, "1000 KiB"); });
-EXO_TEST(format_size_21, { return test_format(1024 * 1024, "1 MiB"); });
-EXO_TEST(format_size_22, { return test_format(1130 * 1024, "1.1 MiB"); });
-EXO_TEST(format_size_23, { return test_format(1536 * 1024, "1.5 MiB"); });
-EXO_TEST(format_size_24, { return test_format(8196 * 1024, "8 MiB"); });
-EXO_TEST(format_size_25, { return test_format(10 * (1 << 20), "10 MiB"); });
-EXO_TEST(format_size_26, { return test_format(49 * (1 << 20), "49 MiB"); });
-EXO_TEST(format_size_27, { return test_format(100 * (1 << 20), "100 MiB"); });
-EXO_TEST(format_size_28, { return test_format(512 * (1 << 20), "512 MiB"); });
-EXO_TEST(format_size_29, { return test_format(1000 * (1 << 20), "1000 MiB"); });
-EXO_TEST(format_size_30, { return test_format(1024 * (1 << 20), "1 GiB"); });
-EXO_TEST(format_size_31, { return test_format(2048 * (size_t)(1 << 20), "2 GiB"); });
-EXO_TEST(format_size_32, { return test_format(3072 * (size_t)(1 << 20), "3 GiB"); });
-EXO_TEST(format_size_33, { return test_format(3584 * (size_t)(1 << 20), "3.5 GiB"); });
-EXO_TEST(format_size_34, { return sizeof(size_t) < 8 || test_format(1 * ((size_t)1 << 40), "1 TiB"); });
-EXO_TEST(format_size_35, { return sizeof(size_t) < 8 || test_format(1 * ((size_t)1 << 50), "1 PiB"); });
-EXO_TEST(format_size_36, { return sizeof(size_t) < 8 || test_format(1 * ((size_t)1 << 60), "1 EiB"); });
-EXO_TEST(format_size_37, { return sizeof(size_t) < 8 || test_format(9 * ((size_t)1 << 60), "9 EiB"); });
-EXO_TEST(format_size_38, { return sizeof(size_t) < 8 || test_format(10140 * ((size_t)1 << 50), "9.9 EiB"); });
-EXO_TEST(format_size_39, { return sizeof(size_t) < 8 || test_format(15 * ((size_t)1 << 60), "15 EiB"); });
+EXO_TEST(format_size_1,  { return test_format(    0,    "0 B"); });
+EXO_TEST(format_size_2,  { return test_format(    1,    "1 B"); });
+EXO_TEST(format_size_3,  { return test_format(   21,   "21 B"); });
+EXO_TEST(format_size_4,  { return test_format(  325,  "325 B"); });
+EXO_TEST(format_size_5,  { return test_format(  999,  "999 B"); });
+EXO_TEST(format_size_6,  { return test_format( 1000, "1000 B"); });
+EXO_TEST(format_size_7,  { return test_format( 1023, "1023 B"); });
+
+EXO_TEST(format_size_8,  { return test_format( 1024,               "1 KiB"); });
+EXO_TEST(format_size_9,  { return test_format( 1024 + 1,           "1 KiB"); });
+EXO_TEST(format_size_10, { return test_format( 1130,             "1.1 KiB"); });
+EXO_TEST(format_size_11, { return test_format( 2048 - 1,         "1.9 KiB"); });
+EXO_TEST(format_size_12, { return test_format( 2048,               "2 KiB"); });
+EXO_TEST(format_size_13, { return test_format(10240 - 1,         "9.9 KiB"); });
+EXO_TEST(format_size_14, { return test_format(10240,              "10 KiB"); });
+EXO_TEST(format_size_15, { return test_format(10240 + 1,          "10 KiB"); });
+EXO_TEST(format_size_16, { return test_format(50  << 10,          "50 KiB"); });
+EXO_TEST(format_size_17, { return test_format(99  << 10,          "99 KiB"); });
+EXO_TEST(format_size_18, { return test_format(100 << 10,         "100 KiB"); });
+EXO_TEST(format_size_19, { return test_format(200 << 10,         "200 KiB"); });
+EXO_TEST(format_size_20, { return test_format((1000 << 10) - 1,  "999 KiB"); });
+EXO_TEST(format_size_21, { return test_format( 1000 << 10,      "1000 KiB"); });
+EXO_TEST(format_size_22, { return test_format((1000 << 10) + 1, "1000 KiB"); });
+
+EXO_TEST(format_size_23, { return test_format(1    << 20,    "1 MiB"); });
+EXO_TEST(format_size_24, { return test_format(1130 << 10,  "1.1 MiB"); });
+EXO_TEST(format_size_25, { return test_format(1536 << 10,  "1.5 MiB"); });
+EXO_TEST(format_size_26, { return test_format(8    << 20,    "8 MiB"); });
+EXO_TEST(format_size_27, { return test_format(10   << 20,   "10 MiB"); });
+EXO_TEST(format_size_28, { return test_format(49   << 20,   "49 MiB"); });
+EXO_TEST(format_size_29, { return test_format(100  << 20,  "100 MiB"); });
+EXO_TEST(format_size_30, { return test_format(512  << 20,  "512 MiB"); });
+EXO_TEST(format_size_31, { return test_format(1000 << 20, "1000 MiB"); });
+
+EXO_TEST(format_size_32, { return test_format((size_t)1 << 30,      "1 GiB"); });
+EXO_TEST(format_size_33, { return test_format((size_t)2 << 30,      "2 GiB"); });
+EXO_TEST(format_size_34, { return test_format((size_t)3 << 30,      "3 GiB"); });
+EXO_TEST(format_size_35, { return test_format((size_t)3584 << 20, "3.5 GiB"); });
+
+#define test_format64(bytes, expect) (sizeof(size_t) < 8 || test_format((size_t)bytes, expect))
+
+EXO_TEST(format_size_36, { return test_format64(1 << 40,       "1 TiB"); });
+EXO_TEST(format_size_37, { return test_format64(1 << 50,       "1 PiB"); });
+EXO_TEST(format_size_38, { return test_format64(1 << 60,       "1 EiB"); });
+EXO_TEST(format_size_39, { return test_format64(9 << 60,       "9 EiB"); });
+EXO_TEST(format_size_40, { return test_format64(10140 << 50, "9.9 EiB"); });
+EXO_TEST(format_size_41, { return test_format64(15 << 60,     "15 EiB"); });

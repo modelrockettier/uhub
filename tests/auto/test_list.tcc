@@ -10,6 +10,7 @@ static char A2[2] = { 'a', 0 };
 static char B2[2] = { 'b', 0 };
 static char C2[2] = { 'c', 0 };
 
+static int g_remove_flag = 0;
 
 
 static void null_free(void* ptr)
@@ -195,7 +196,6 @@ EXO_TEST(list_clear_3, {
 });
 
 
-static int g_remove_flag = 0;
 static void null_free_inc_flag(void* ptr)
 {
 	(void) ptr;

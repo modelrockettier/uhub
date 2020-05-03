@@ -107,9 +107,10 @@ static enum command_parse_status command_extract_arguments(struct hub_info* hub,
 			token = list_get_first(tokens);
 		}
 
-		if (!token || !*token)
+		/* If arg_code is '+' or '?', ignore the token this iteration */
+		if ((!token || !*token) && arg_code != '?' && arg_code != '+')
 		{
-			if (arg_code == '?' || opt == 1)
+			if (opt == 1)
 				status = cmd_status_ok;
 			else
 				status = cmd_status_missing_args;
@@ -123,8 +124,16 @@ static enum command_parse_status command_extract_arguments(struct hub_info* hub,
 				continue;
 
 			case '+':
+				/*
+				 * If it's not already greedy, forget about the first token
+				 * (it will be combined with the rest of the args in the
+				 * single greedy token).
+				 */
 				if (!greedy)
 					token = NULL;
+				else
+					LOG_WARN("Multiple greedy directives may not work as intended");
+
 				greedy = 1;
 				continue;
 

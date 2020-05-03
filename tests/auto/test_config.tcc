@@ -1,3 +1,5 @@
+#include <uhub.h>
+
 static struct hub_config config1;
 static struct hub_config config2;
 static struct hub_config config3;

@@ -1,10 +1,16 @@
 #include <uhub.h>
+
 static struct hub_user* g_user = 0;
 static const char* test_string1 = "IINF AAfoo BBbar CCwhat\n";
 static const char* test_string2 = "BMSG AAAB Hello\\sWorld!\n";
 static const char* test_string3 = "BINF AAAB IDAN7ZMSLIEBL53OPTM7WXGSTXUS3XOY6KQS5LBGX NIFriend DEstuff SL3 SS0 SF0 VEQuickDC/0.4.17 US6430 SUADC0,TCP4,UDP4 I4127.0.0.1 HO5 HN1 AW\n";
 static const char* test_string4 = "BMSG AAAB\n";
 static const char* test_string5 = "BMSG AAAB \n";
+
+static struct adc_message* updater1 = NULL;
+static struct adc_message* updater2 = NULL;
+static const char* update_info1 = "BINF AAAB IDABCDEFGHIJKLMNOPQRSTUVWXYZ1234567ABCDEF NItester SL10 SS12817126127 SF4125 HN3 HR0 HO0 VE++\\s0.698 US104857600 DS81911808 SUTCP4,UDP4 I4127.0.0.1\n";
+static const char* update_info2 = "BINF AAAB HN34 SF4126 SS12817526127\n";
 
 static void create_test_user()
 {
@@ -496,11 +502,6 @@ EXO_TEST(adc_message_copy_4, {
 	return ok;
 });
 
-
-static struct adc_message* updater1 = NULL;
-static struct adc_message* updater2 = NULL;
-static const char* update_info1 = "BINF AAAB IDABCDEFGHIJKLMNOPQRSTUVWXYZ1234567ABCDEF NItester SL10 SS12817126127 SF4125 HN3 HR0 HO0 VE++\\s0.698 US104857600 DS81911808 SUTCP4,UDP4 I4127.0.0.1\n";
-static const char* update_info2 = "BINF AAAB HN34 SF4126 SS12817526127\n";
 
 EXO_TEST(adc_message_update_1, {
 	updater1 = adc_msg_parse_verify(g_user, update_info1, strlen(update_info1));

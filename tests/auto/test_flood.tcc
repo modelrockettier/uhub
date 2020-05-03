@@ -1,6 +1,6 @@
 #include <uhub.h>
 
-struct flood_control flood;
+static struct flood_control flood;
 
 EXO_TEST(flood_reset, { flood_control_reset(&flood); return 1; });
 

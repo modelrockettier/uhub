@@ -1,6 +1,6 @@
 #include <uhub.h>
 
-static int ipv6 = 0;
+static int ipv6;
 
 static struct ip_addr_encap ip4_a;
 static struct ip_addr_encap ip4_b;
@@ -11,8 +11,8 @@ static struct ip_addr_encap ip6_c;
 static struct ip_addr_encap mask;
 static struct ip_range ban6;
 static struct ip_range ban4;
-struct ip_range range1;
-struct ip_range range2;
+static struct ip_range range1;
+static struct ip_range range2;
 
 EXO_TEST(prepare_network, {
 	return net_initialize() == 0;

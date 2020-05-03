@@ -18,12 +18,19 @@ static struct command_handle* c_test11 = NULL;
 static struct command_handle* c_test12 = NULL;
 static struct command_handle* c_test13 = NULL;
 
+static int ipv6;
+
 // for results:
-static int result = 0;
+static int handler_called = 0;
 
 // for address and ip range argument processing
 EXO_TEST(cmd_prepare_network, {
 	return net_initialize() == 0;
+});
+
+EXO_TEST(cmd_check_ipv6, {
+	ipv6 = net_is_ipv6_supported();
+	return ipv6 != -1;
 });
 
 EXO_TEST(setup, {
@@ -37,7 +44,7 @@ EXO_TEST(setup, {
 static int test_handler(struct command_base* cbase, struct hub_user* user, struct hub_command* hcmd)
 {
 	printf("test_handler\n");
-	result = 1;
+	handler_called = 1;
 	return 0;
 }
 
@@ -88,8 +95,8 @@ EXO_TEST(command_create, {
 	ADD_TEST(c_test7,  "test7",  "C",      auth_cred_guest);
 	ADD_TEST(c_test8,  "test8",  "n",      auth_cred_guest);
 	ADD_TEST(c_test9,  "test9",  "+m",     auth_cred_guest);
-	ADD_TEST(c_test10, "test10", "?+p", auth_cred_guest);
-	/* Weird arg string to test the parser, the arg is required since + is before the ? */
+	ADD_TEST(c_test10, "test10", "?+p",    auth_cred_guest);
+	/* Weird arg string to test the parser */
 	ADD_TEST(c_test11, "test11", "++?+?p", auth_cred_guest);
 	ADD_TEST(c_test12, "test12", "a",      auth_cred_guest);
 	ADD_TEST(c_test13, "test13", "r",      auth_cred_guest);
@@ -152,6 +159,8 @@ static int verify_arg_range(struct hub_command* cmd, const char* lo, const char*
 		!ip_compare(data ? &data->data.range->lo : NULL, &range.lo) &&
 		!ip_compare(data ? &data->data.range->hi : NULL, &range.hi);
 }
+
+#define verify6(...) (ipv6 ? verify(__VA_ARGS__) : 1)
 
 EXO_TEST(command_access_1, { return verify("!test1", cmd_status_ok); });
 EXO_TEST(command_access_2, { return verify("!test2", cmd_status_access_error); });
@@ -222,8 +231,8 @@ EXO_TEST(command_string_25, { return verify("!test10 tester",               cmd_
 EXO_TEST(command_string_26, { return verify("!test10 admin",                cmd_status_ok); });
 EXO_TEST(command_string_27, { return verify("!test10 tester 123 127.0.0.1", cmd_status_ok); });
 
-EXO_TEST(command_string_28, { return verify("!test11",                      cmd_status_missing_args); });
-EXO_TEST(command_string_29, { return verify("!test11 ",                     cmd_status_missing_args); });
+EXO_TEST(command_string_28, { return verify("!test11",                      cmd_status_ok); });
+EXO_TEST(command_string_29, { return verify("!test11 ",                     cmd_status_ok); });
 EXO_TEST(command_string_30, { return verify("!test11 hello",                cmd_status_ok); });
 EXO_TEST(command_string_31, { return verify("!test11 hello world",          cmd_status_ok); });
 EXO_TEST(command_string_32, { return verify("!test11 123",                  cmd_status_ok); });
@@ -232,38 +241,39 @@ EXO_TEST(command_string_34, { return verify("!test11 tester",               cmd_
 EXO_TEST(command_string_35, { return verify("!test11 admin",                cmd_status_ok); });
 EXO_TEST(command_string_36, { return verify("!test11 tester 123 127.0.0.1", cmd_status_ok); });
 
-EXO_TEST(command_addr_1,  { return verify("!test12 0.0.0.0",                 cmd_status_ok); });
-EXO_TEST(command_addr_2,  { return verify("!test12 255.255.255.255",         cmd_status_ok); });
-EXO_TEST(command_addr_3,  { return verify("!test12 127.0.0.1",               cmd_status_ok); });
-EXO_TEST(command_addr_4,  { return verify("!test12 10.18.1.178",             cmd_status_ok); });
-EXO_TEST(command_addr_5,  { return verify("!test12 224.0.0.1",               cmd_status_ok); });
-EXO_TEST(command_addr_6,  { return verify("!test12 224.0.0. ",               cmd_status_arg_address); });
-EXO_TEST(command_addr_7,  { return verify("!test12 invalid",                 cmd_status_arg_address); });
-EXO_TEST(command_addr_8,  { return verify("!test12 localhost",               cmd_status_arg_address); });
-EXO_TEST(command_addr_9,  { return verify("!test12 123.45.67.890",           cmd_status_arg_address); });
-EXO_TEST(command_addr_10, { return verify("!test12 777.777.777.777",         cmd_status_arg_address); });
-EXO_TEST(command_addr_11, { return verify("!test12 224.0.0.0-224.0.0.255",   cmd_status_arg_address); });
-EXO_TEST(command_addr_12, { return verify("!test12 224.0.0.0/24",            cmd_status_arg_address); });
-EXO_TEST(command_addr_13, { return verify("!test12 ::",                      cmd_status_ok); });
-EXO_TEST(command_addr_14, { return verify("!test12 0:0:0:0:0:0:0:0",         cmd_status_ok); });
-EXO_TEST(command_addr_15, { return verify("!test12 ::1",                     cmd_status_ok); });
-EXO_TEST(command_addr_16, { return verify("!test12 ::ffff:0.0.0.0",          cmd_status_ok); });
-EXO_TEST(command_addr_17, { return verify("!test12 ::ffff:127.0.0.1",        cmd_status_ok); });
-EXO_TEST(command_addr_18, { return verify("!test12 ::ffff:255.255.255.255",  cmd_status_ok); });
-EXO_TEST(command_addr_19, { return verify("!test12 2001::",                  cmd_status_ok); });
-EXO_TEST(command_addr_20, { return verify("!test12 2001::201:2ff:fefa:fffe", cmd_status_ok); });
-EXO_TEST(command_addr_21, { return verify("!test12 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", cmd_status_ok); });
-EXO_TEST(command_addr_22, { return verify("!test12 2001:",                   cmd_status_arg_address); });
-EXO_TEST(command_addr_23, { return verify("!test12 :2001",                   cmd_status_arg_address); });
-EXO_TEST(command_addr_24, { return verify("!test12 :ffff:0.0.0.0",           cmd_status_arg_address); });
-EXO_TEST(command_addr_25, { return verify("!test12 2001::x01:2ff:fefa:fffe", cmd_status_arg_address); });
-EXO_TEST(command_addr_26, { return verify("!test12 2001::201:2ff:fefa::",    cmd_status_arg_address); });
-EXO_TEST(command_addr_27, { return verify("!test12 2.0.0.1::2ff",            cmd_status_arg_address); });
-EXO_TEST(command_addr_28, { return verify("!test12 ::ffff:224.0.0.",         cmd_status_arg_address); });
-EXO_TEST(command_addr_29, { return verify("!test12 0:0:0:0:0:0:0:0:0",       cmd_status_arg_address); });
-EXO_TEST(command_addr_30, { return verify("!test12 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", cmd_status_arg_address); });
-EXO_TEST(command_addr_31, { return verify("!test12 2001::/120",              cmd_status_arg_address); });
-EXO_TEST(command_addr_32, { return verify("!test12 2001::-2002::",           cmd_status_arg_address); });
+EXO_TEST(command_ipv4_addr_1,  { return verify("!test12 0.0.0.0",               cmd_status_ok); });
+EXO_TEST(command_ipv4_addr_2,  { return verify("!test12 255.255.255.255",       cmd_status_ok); });
+EXO_TEST(command_ipv4_addr_3,  { return verify("!test12 127.0.0.1",             cmd_status_ok); });
+EXO_TEST(command_ipv4_addr_4,  { return verify("!test12 10.18.1.178",           cmd_status_ok); });
+EXO_TEST(command_ipv4_addr_5,  { return verify("!test12 224.0.0.1",             cmd_status_ok); });
+EXO_TEST(command_ipv4_addr_6,  { return verify("!test12 224.0.0. ",             cmd_status_arg_address); });
+EXO_TEST(command_ipv4_addr_7,  { return verify("!test12 invalid",               cmd_status_arg_address); });
+EXO_TEST(command_ipv4_addr_8,  { return verify("!test12 localhost",             cmd_status_arg_address); });
+EXO_TEST(command_ipv4_addr_9,  { return verify("!test12 123.45.67.890",         cmd_status_arg_address); });
+EXO_TEST(command_ipv4_addr_10, { return verify("!test12 777.777.777.777",       cmd_status_arg_address); });
+EXO_TEST(command_ipv4_addr_11, { return verify("!test12 224.0.0.0-224.0.0.255", cmd_status_arg_address); });
+EXO_TEST(command_ipv4_addr_12, { return verify("!test12 224.0.0.0/24",          cmd_status_arg_address); });
+
+EXO_TEST(command_ipv6_addr_1,  { return verify6("!test12 ::",                      cmd_status_ok); });
+EXO_TEST(command_ipv6_addr_2,  { return verify6("!test12 0:0:0:0:0:0:0:0",         cmd_status_ok); });
+EXO_TEST(command_ipv6_addr_3,  { return verify6("!test12 ::1",                     cmd_status_ok); });
+EXO_TEST(command_ipv6_addr_4,  { return verify6("!test12 ::ffff:0.0.0.0",          cmd_status_ok); });
+EXO_TEST(command_ipv6_addr_5,  { return verify6("!test12 ::ffff:127.0.0.1",        cmd_status_ok); });
+EXO_TEST(command_ipv6_addr_6,  { return verify6("!test12 ::ffff:255.255.255.255",  cmd_status_ok); });
+EXO_TEST(command_ipv6_addr_7,  { return verify6("!test12 2001::",                  cmd_status_ok); });
+EXO_TEST(command_ipv6_addr_8,  { return verify6("!test12 2001::201:2ff:fefa:fffe", cmd_status_ok); });
+EXO_TEST(command_ipv6_addr_9,  { return verify6("!test12 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", cmd_status_ok); });
+EXO_TEST(command_ipv6_addr_10, { return verify6("!test12 2001:",                   cmd_status_arg_address); });
+EXO_TEST(command_ipv6_addr_11, { return verify6("!test12 :2001",                   cmd_status_arg_address); });
+EXO_TEST(command_ipv6_addr_12, { return verify6("!test12 :ffff:0.0.0.0",           cmd_status_arg_address); });
+EXO_TEST(command_ipv6_addr_13, { return verify6("!test12 2001::x01:2ff:fefa:fffe", cmd_status_arg_address); });
+EXO_TEST(command_ipv6_addr_14, { return verify6("!test12 2001::201:2ff:fefa::",    cmd_status_arg_address); });
+EXO_TEST(command_ipv6_addr_15, { return verify6("!test12 2.0.0.1::2ff",            cmd_status_arg_address); });
+EXO_TEST(command_ipv6_addr_16, { return verify6("!test12 ::ffff:224.0.0.",         cmd_status_arg_address); });
+EXO_TEST(command_ipv6_addr_17, { return verify6("!test12 0:0:0:0:0:0:0:0:0",       cmd_status_arg_address); });
+EXO_TEST(command_ipv6_addr_18, { return verify6("!test12 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", cmd_status_arg_address); });
+EXO_TEST(command_ipv6_addr_19, { return verify6("!test12 2001::/120",              cmd_status_arg_address); });
+EXO_TEST(command_ipv6_addr_20, { return verify6("!test12 2001::-2002::",           cmd_status_arg_address); });
 
 EXO_TEST(command_ipv4_range_1,  { return verify("!test13 0.0.0.0/0",                       cmd_status_ok); });
 EXO_TEST(command_ipv4_range_2,  { return verify("!test13 0.0.0.0-255.255.255.255",         cmd_status_ok); });
@@ -291,51 +301,51 @@ EXO_TEST(command_ipv4_range_23, { return verify("!test13 123.45.67.89-123.45.67.
 EXO_TEST(command_ipv4_range_24, { return verify("!test13 123.45.67.890/12",                cmd_status_arg_address); });
 EXO_TEST(command_ipv4_range_25, { return verify("!test13 777.777.777.777",                 cmd_status_arg_address); });
 
-EXO_TEST(command_ipv6_range_1,  { return verify("!test13 ::",                                              cmd_status_ok); });
-EXO_TEST(command_ipv6_range_2,  { return verify("!test13 ::/0",                                            cmd_status_ok); });
-EXO_TEST(command_ipv6_range_3,  { return verify("!test13 ::/32",                                           cmd_status_ok); });
-EXO_TEST(command_ipv6_range_4,  { return verify("!test13 ::/128",                                          cmd_status_ok); });
-EXO_TEST(command_ipv6_range_5,  { return verify("!test13 0:0:0:0:0:0:0:0",                                 cmd_status_ok); });
-EXO_TEST(command_ipv6_range_6,  { return verify("!test13 0:0:0:0:0:0:0:0-0:0:0:0:0:0:0:ffff",              cmd_status_ok); });
-EXO_TEST(command_ipv6_range_7,  { return verify("!test13 0:0:0:0:0:0:0:0/100",                             cmd_status_ok); });
-EXO_TEST(command_ipv6_range_8,  { return verify("!test13 ::-::ffff",                                       cmd_status_ok); });
-EXO_TEST(command_ipv6_range_9,  { return verify("!test13 ::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",      cmd_status_ok); });
-EXO_TEST(command_ipv6_range_10, { return verify("!test13 ::1",                                             cmd_status_ok); });
-EXO_TEST(command_ipv6_range_11, { return verify("!test13 ::1/128",                                         cmd_status_ok); });
-EXO_TEST(command_ipv6_range_12, { return verify("!test13 ::ffff:0.0.0.0/96",                               cmd_status_ok); });
-EXO_TEST(command_ipv6_range_13, { return verify("!test13 ::ffff:0.0.0.0-::ffff:255.255.255.255",           cmd_status_ok); });
-EXO_TEST(command_ipv6_range_14, { return verify("!test13 ::ffff:0.0.0.0/97",                               cmd_status_ok); });
-EXO_TEST(command_ipv6_range_15, { return verify("!test13 ::ffff:0.0.0.0-::ffff:127.255.255.255",           cmd_status_ok); });
-EXO_TEST(command_ipv6_range_16, { return verify("!test13 ::ffff:127.0.0.1",                                cmd_status_ok); });
-EXO_TEST(command_ipv6_range_17, { return verify("!test13 ::ffff:255.255.255.255/128",                      cmd_status_ok); });
-EXO_TEST(command_ipv6_range_18, { return verify("!test13 2001::",                                          cmd_status_ok); });
-EXO_TEST(command_ipv6_range_19, { return verify("!test13 2001::/16",                                       cmd_status_ok); });
-EXO_TEST(command_ipv6_range_20, { return verify("!test13 2001::-2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  cmd_status_ok); });
-EXO_TEST(command_ipv6_range_21, { return verify("!test13 2001::201:2ff:fefa:fff4/126",                     cmd_status_ok); });
-EXO_TEST(command_ipv6_range_22, { return verify("!test13 2001::201:2ff:fefa:fff4-2001::201:2ff:fefa:fff7", cmd_status_ok); });
-EXO_TEST(command_ipv6_range_23, { return verify("!test13 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",         cmd_status_ok); });
-EXO_TEST(command_ipv6_range_24, { return verify("!test13 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128",     cmd_status_ok); });
-EXO_TEST(command_ipv6_range_25, { return verify("!test13 2001:",                                           cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_26, { return verify("!test13 2001::x01:2ff:fefa:fffe",                         cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_27, { return verify("!test13 2001::x01:2ff:fefa:fffe/128",                     cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_28, { return verify("!test13 2001::201:2ff:fefa::",                            cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_29, { return verify("!test13 2001::201:2ff:fefa::/120",                        cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_30, { return verify("!test13 2.0.0.1::2ff",                                    cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_31, { return verify("!test13 2.0.0.1::2ff/128",                                cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_32, { return verify("!test13 ::ffff:224.0.0.",                                 cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_33, { return verify("!test13 ::ffff:224.0.0./120",                             cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_34, { return verify("!test13 2001::-2001",                                     cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_35, { return verify("!test13 2001::-2001:",                                    cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_36, { return verify("!test13 2001:0:0:0:0:0:0:0:0/120",                        cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_37, { return verify("!test13 2001:0:0:0:0:0:0:0:0-2002:0:0:0:0:0:0:0",         cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_38, { return verify("!test13 2001:0:0:0:0:0:0:0-2002:0:0:0:0:0:0:0:0",         cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_39, { return verify("!test13 2001:0:0:0:0:0:0:0:0-2002::",                     cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_40, { return verify("!test13 2001::-2002:0:0:0:0:0:0:0:0",                     cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_41, { return verify("!test13 2001::-",                                         cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_42, { return verify("!test13 2001::/",                                         cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_43, { return verify("!test13 2001::/a",                                        cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_44, { return verify("!test13 127.0.0.0-::ffff:127.0.0.255",                    cmd_status_arg_address); });
-EXO_TEST(command_ipv6_range_45, { return verify("!test13 ::ffff:127.0.0.0-127.0.0.255",                    cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_1,  { return verify6("!test13 ::",                                              cmd_status_ok); });
+EXO_TEST(command_ipv6_range_2,  { return verify6("!test13 ::/0",                                            cmd_status_ok); });
+EXO_TEST(command_ipv6_range_3,  { return verify6("!test13 ::/32",                                           cmd_status_ok); });
+EXO_TEST(command_ipv6_range_4,  { return verify6("!test13 ::/128",                                          cmd_status_ok); });
+EXO_TEST(command_ipv6_range_5,  { return verify6("!test13 0:0:0:0:0:0:0:0",                                 cmd_status_ok); });
+EXO_TEST(command_ipv6_range_6,  { return verify6("!test13 0:0:0:0:0:0:0:0-0:0:0:0:0:0:0:ffff",              cmd_status_ok); });
+EXO_TEST(command_ipv6_range_7,  { return verify6("!test13 0:0:0:0:0:0:0:0/100",                             cmd_status_ok); });
+EXO_TEST(command_ipv6_range_8,  { return verify6("!test13 ::-::ffff",                                       cmd_status_ok); });
+EXO_TEST(command_ipv6_range_9,  { return verify6("!test13 ::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",      cmd_status_ok); });
+EXO_TEST(command_ipv6_range_10, { return verify6("!test13 ::1",                                             cmd_status_ok); });
+EXO_TEST(command_ipv6_range_11, { return verify6("!test13 ::1/128",                                         cmd_status_ok); });
+EXO_TEST(command_ipv6_range_12, { return verify6("!test13 ::ffff:0.0.0.0/96",                               cmd_status_ok); });
+EXO_TEST(command_ipv6_range_13, { return verify6("!test13 ::ffff:0.0.0.0-::ffff:255.255.255.255",           cmd_status_ok); });
+EXO_TEST(command_ipv6_range_14, { return verify6("!test13 ::ffff:0.0.0.0/97",                               cmd_status_ok); });
+EXO_TEST(command_ipv6_range_15, { return verify6("!test13 ::ffff:0.0.0.0-::ffff:127.255.255.255",           cmd_status_ok); });
+EXO_TEST(command_ipv6_range_16, { return verify6("!test13 ::ffff:127.0.0.1",                                cmd_status_ok); });
+EXO_TEST(command_ipv6_range_17, { return verify6("!test13 ::ffff:255.255.255.255/128",                      cmd_status_ok); });
+EXO_TEST(command_ipv6_range_18, { return verify6("!test13 2001::",                                          cmd_status_ok); });
+EXO_TEST(command_ipv6_range_19, { return verify6("!test13 2001::/16",                                       cmd_status_ok); });
+EXO_TEST(command_ipv6_range_20, { return verify6("!test13 2001::-2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  cmd_status_ok); });
+EXO_TEST(command_ipv6_range_21, { return verify6("!test13 2001::201:2ff:fefa:fff4/126",                     cmd_status_ok); });
+EXO_TEST(command_ipv6_range_22, { return verify6("!test13 2001::201:2ff:fefa:fff4-2001::201:2ff:fefa:fff7", cmd_status_ok); });
+EXO_TEST(command_ipv6_range_23, { return verify6("!test13 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",         cmd_status_ok); });
+EXO_TEST(command_ipv6_range_24, { return verify6("!test13 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128",     cmd_status_ok); });
+EXO_TEST(command_ipv6_range_25, { return verify6("!test13 2001:",                                           cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_26, { return verify6("!test13 2001::x01:2ff:fefa:fffe",                         cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_27, { return verify6("!test13 2001::x01:2ff:fefa:fffe/128",                     cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_28, { return verify6("!test13 2001::201:2ff:fefa::",                            cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_29, { return verify6("!test13 2001::201:2ff:fefa::/120",                        cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_30, { return verify6("!test13 2.0.0.1::2ff",                                    cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_31, { return verify6("!test13 2.0.0.1::2ff/128",                                cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_32, { return verify6("!test13 ::ffff:224.0.0.",                                 cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_33, { return verify6("!test13 ::ffff:224.0.0./120",                             cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_34, { return verify6("!test13 2001::-2001",                                     cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_35, { return verify6("!test13 2001::-2001:",                                    cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_36, { return verify6("!test13 2001:0:0:0:0:0:0:0:0/120",                        cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_37, { return verify6("!test13 2001:0:0:0:0:0:0:0:0-2002:0:0:0:0:0:0:0",         cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_38, { return verify6("!test13 2001:0:0:0:0:0:0:0-2002:0:0:0:0:0:0:0:0",         cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_39, { return verify6("!test13 2001:0:0:0:0:0:0:0:0-2002::",                     cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_40, { return verify6("!test13 2001::-2002:0:0:0:0:0:0:0:0",                     cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_41, { return verify6("!test13 2001::-",                                         cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_42, { return verify6("!test13 2001::/",                                         cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_43, { return verify6("!test13 2001::/a",                                        cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_44, { return verify6("!test13 127.0.0.0-::ffff:127.0.0.255",                    cmd_status_arg_address); });
+EXO_TEST(command_ipv6_range_45, { return verify6("!test13 ::ffff:127.0.0.0-127.0.0.255",                    cmd_status_arg_address); });
 
 
 // command not found
@@ -465,25 +475,30 @@ static int test_addr(const char* command, const char* expected)
 	return verify_arg_addr(cmd, expected);
 }
 
-EXO_TEST(command_argument_addr_1,  { return test_addr("!test12 0.0.0.0",                 "0.0.0.0"); });
-EXO_TEST(command_argument_addr_2,  { return test_addr("!test12 255.255.255.255",         "255.255.255.255"); });
-EXO_TEST(command_argument_addr_3,  { return test_addr("!test12 127.0.0.1",               "127.0.0.1"); });
-EXO_TEST(command_argument_addr_4,  { return test_addr("!test12 10.18.1.178",             "10.18.1.178"); });
-EXO_TEST(command_argument_addr_5,  { return test_addr("!test12 224.0.0.1",               "224.0.0.1"); });
-EXO_TEST(command_argument_addr_6,  { return test_addr("!test12 ::",                      "::"); });
-EXO_TEST(command_argument_addr_7,  { return test_addr("!test12 ::1",                     "::1"); });
-EXO_TEST(command_argument_addr_8,  { return test_addr("!test12 ::ffff:0.0.0.0",          "::ffff:0.0.0.0"); });
-EXO_TEST(command_argument_addr_9,  { return test_addr("!test12 ::ffff:127.0.0.1",        "::ffff:127.0.0.1"); });
-EXO_TEST(command_argument_addr_10, { return test_addr("!test12 ::ffff:255.255.255.255",  "::ffff:255.255.255.255"); });
-EXO_TEST(command_argument_addr_11, { return test_addr("!test12 2001::",                  "2001::"); });
-EXO_TEST(command_argument_addr_12, { return test_addr("!test12 2001::201:2ff:fefa:fffe", "2001::201:2ff:fefa:fffe"); });
-EXO_TEST(command_argument_addr_13, { return test_addr("!test12 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+#define test_addr6(...) (ipv6 ? test_addr(__VA_ARGS__) : 1)
+
+EXO_TEST(command_argument_addr_1,  { return test_addr("!test12 0.0.0.0",                  "0.0.0.0"); });
+EXO_TEST(command_argument_addr_2,  { return test_addr("!test12 255.255.255.255",          "255.255.255.255"); });
+EXO_TEST(command_argument_addr_3,  { return test_addr("!test12 127.0.0.1",                "127.0.0.1"); });
+EXO_TEST(command_argument_addr_4,  { return test_addr("!test12 10.18.1.178",              "10.18.1.178"); });
+EXO_TEST(command_argument_addr_5,  { return test_addr("!test12 224.0.0.1",                "224.0.0.1"); });
+
+EXO_TEST(command_argument_addr_6,  { return test_addr6("!test12 ::",                      "::"); });
+EXO_TEST(command_argument_addr_7,  { return test_addr6("!test12 ::1",                     "::1"); });
+EXO_TEST(command_argument_addr_8,  { return test_addr6("!test12 ::ffff:0.0.0.0",          "::ffff:0.0.0.0"); });
+EXO_TEST(command_argument_addr_9,  { return test_addr6("!test12 ::ffff:127.0.0.1",        "::ffff:127.0.0.1"); });
+EXO_TEST(command_argument_addr_10, { return test_addr6("!test12 ::ffff:255.255.255.255",  "::ffff:255.255.255.255"); });
+EXO_TEST(command_argument_addr_11, { return test_addr6("!test12 2001::",                  "2001::"); });
+EXO_TEST(command_argument_addr_12, { return test_addr6("!test12 2001::201:2ff:fefa:fffe", "2001::201:2ff:fefa:fffe"); });
+EXO_TEST(command_argument_addr_13, { return test_addr6("!test12 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
 
 static int test_range(const char* command, const char* lo, const char* hi)
 {
 	SETUP_COMMAND(command);
 	return verify_arg_range(cmd, lo, hi);
 }
+
+#define test_range6(...) (ipv6 ? test_range(__VA_ARGS__) : 1)
 
 EXO_TEST(command_argument_range4_1,  { return test_range("!test13 0.0.0.0/0",                       "0.0.0.0",         "255.255.255.255"); });
 EXO_TEST(command_argument_range4_2,  { return test_range("!test13 0.0.0.0-255.255.255.255",         "0.0.0.0",         "255.255.255.255"); });
@@ -499,32 +514,46 @@ EXO_TEST(command_argument_range4_11, { return test_range("!test13 10.18.1.100-10
 EXO_TEST(command_argument_range4_12, { return test_range("!test13 192.168.0.0/16",                  "192.168.0.0",     "192.168.255.255"); });
 EXO_TEST(command_argument_range4_13, { return test_range("!test13 192.168.0.0-192.168.255.255",     "192.168.0.0",     "192.168.255.255"); });
 
-EXO_TEST(command_argument_range6_1,  { return test_range("!test13 ::",                                              "::",                      "::"); });
-EXO_TEST(command_argument_range6_2,  { return test_range("!test13 ::/0",                                            "::",                      "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
-EXO_TEST(command_argument_range6_3,  { return test_range("!test13 ::/32",                                           "::",                      "::ffff:ffff:ffff:ffff:ffff:ffff"); });
-EXO_TEST(command_argument_range6_4,  { return test_range("!test13 ::/128",                                          "::",                      "::"); });
-EXO_TEST(command_argument_range6_5,  { return test_range("!test13 0:0:0:0:0:0:0:0",                                 "::",                      "::"); });
-EXO_TEST(command_argument_range6_6,  { return test_range("!test13 0:0:0:0:0:0:0:0-0:0:0:0:0:0:0:ffff",              "::",                      "::ffff"); });
-EXO_TEST(command_argument_range6_7,  { return test_range("!test13 0:0:0:0:0:0:0:0/112",                             "::",                      "::ffff"); });
-EXO_TEST(command_argument_range6_8,  { return test_range("!test13 ::-::ffff",                                       "::",                      "::ffff"); });
-EXO_TEST(command_argument_range6_9,  { return test_range("!test13 ::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",      "::",                      "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
-EXO_TEST(command_argument_range6_10, { return test_range("!test13 ::1",                                             "::1",                     "::1"); });
-EXO_TEST(command_argument_range6_11, { return test_range("!test13 ::1/128",                                         "::1",                     "::1"); });
-EXO_TEST(command_argument_range6_12, { return test_range("!test13 ::ffff:0.0.0.0/96",                               "::ffff:0.0.0.0",          "::ffff:255.255.255.255"); });
-EXO_TEST(command_argument_range6_13, { return test_range("!test13 ::ffff:0.0.0.0-::ffff:255.255.255.255",           "::ffff:0.0.0.0",          "::ffff:255.255.255.255"); });
-EXO_TEST(command_argument_range6_14, { return test_range("!test13 ::ffff:0.0.0.0/97",                               "::ffff:0.0.0.0",          "::ffff:127.255.255.255"); });
-EXO_TEST(command_argument_range6_15, { return test_range("!test13 ::ffff:0.0.0.0-::ffff:127.255.255.255",           "::ffff:0.0.0.0",          "::ffff:127.255.255.255"); });
-EXO_TEST(command_argument_range6_16, { return test_range("!test13 ::ffff:127.0.0.1",                                "::ffff:127.0.0.1",        "::ffff:127.0.0.1"); });
-EXO_TEST(command_argument_range6_17, { return test_range("!test13 ::ffff:255.255.255.255/128",                      "::ffff:255.255.255.255",  "::ffff:255.255.255.255"); });
-EXO_TEST(command_argument_range6_18, { return test_range("!test13 2001::",                                          "2001::",                  "2001::"); });
-EXO_TEST(command_argument_range6_19, { return test_range("!test13 2001::/16",                                       "2001::",                  "2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
-EXO_TEST(command_argument_range6_20, { return test_range("!test13 2001::-2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  "2001::",                  "2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
-EXO_TEST(command_argument_range6_21, { return test_range("!test13 2001::201:2ff:fefa:fff4/126",                     "2001::201:2ff:fefa:fff4", "2001::201:2ff:fefa:fff7"); });
-EXO_TEST(command_argument_range6_22, { return test_range("!test13 2001::201:2ff:fefa:fff4-2001::201:2ff:fefa:fff7", "2001::201:2ff:fefa:fff4", "2001::201:2ff:fefa:fff7"); });
-EXO_TEST(command_argument_range6_23, { return test_range("!test13 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",         "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
-EXO_TEST(command_argument_range6_24, { return test_range("!test13 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128",     "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(command_argument_range6_1,  { return test_range6("!test13 ::",                                              "::",                      "::"); });
+EXO_TEST(command_argument_range6_2,  { return test_range6("!test13 ::/0",                                            "::",                      "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(command_argument_range6_3,  { return test_range6("!test13 ::/32",                                           "::",                      "::ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(command_argument_range6_4,  { return test_range6("!test13 ::/128",                                          "::",                      "::"); });
+EXO_TEST(command_argument_range6_5,  { return test_range6("!test13 0:0:0:0:0:0:0:0",                                 "::",                      "::"); });
+EXO_TEST(command_argument_range6_6,  { return test_range6("!test13 0:0:0:0:0:0:0:0-0:0:0:0:0:0:0:ffff",              "::",                      "::ffff"); });
+EXO_TEST(command_argument_range6_7,  { return test_range6("!test13 0:0:0:0:0:0:0:0/112",                             "::",                      "::ffff"); });
+EXO_TEST(command_argument_range6_8,  { return test_range6("!test13 ::-::ffff",                                       "::",                      "::ffff"); });
+EXO_TEST(command_argument_range6_9,  { return test_range6("!test13 ::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",      "::",                      "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(command_argument_range6_10, { return test_range6("!test13 ::1",                                             "::1",                     "::1"); });
+EXO_TEST(command_argument_range6_11, { return test_range6("!test13 ::1/128",                                         "::1",                     "::1"); });
+EXO_TEST(command_argument_range6_12, { return test_range6("!test13 ::ffff:0.0.0.0/96",                               "::ffff:0.0.0.0",          "::ffff:255.255.255.255"); });
+EXO_TEST(command_argument_range6_13, { return test_range6("!test13 ::ffff:0.0.0.0-::ffff:255.255.255.255",           "::ffff:0.0.0.0",          "::ffff:255.255.255.255"); });
+EXO_TEST(command_argument_range6_14, { return test_range6("!test13 ::ffff:0.0.0.0/97",                               "::ffff:0.0.0.0",          "::ffff:127.255.255.255"); });
+EXO_TEST(command_argument_range6_15, { return test_range6("!test13 ::ffff:0.0.0.0-::ffff:127.255.255.255",           "::ffff:0.0.0.0",          "::ffff:127.255.255.255"); });
+EXO_TEST(command_argument_range6_16, { return test_range6("!test13 ::ffff:127.0.0.1",                                "::ffff:127.0.0.1",        "::ffff:127.0.0.1"); });
+EXO_TEST(command_argument_range6_17, { return test_range6("!test13 ::ffff:255.255.255.255/128",                      "::ffff:255.255.255.255",  "::ffff:255.255.255.255"); });
+EXO_TEST(command_argument_range6_18, { return test_range6("!test13 2001::",                                          "2001::",                  "2001::"); });
+EXO_TEST(command_argument_range6_19, { return test_range6("!test13 2001::/16",                                       "2001::",                  "2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(command_argument_range6_20, { return test_range6("!test13 2001::-2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff",  "2001::",                  "2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(command_argument_range6_21, { return test_range6("!test13 2001::201:2ff:fefa:fff4/126",                     "2001::201:2ff:fefa:fff4", "2001::201:2ff:fefa:fff7"); });
+EXO_TEST(command_argument_range6_22, { return test_range6("!test13 2001::201:2ff:fefa:fff4-2001::201:2ff:fefa:fff7", "2001::201:2ff:fefa:fff4", "2001::201:2ff:fefa:fff7"); });
+EXO_TEST(command_argument_range6_23, { return test_range6("!test13 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",         "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
+EXO_TEST(command_argument_range6_24, { return test_range6("!test13 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128",     "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"); });
 
 #undef SETUP_COMMAND
+
+EXO_TEST(command_handler_not_called, { return !handler_called; });
+
+EXO_TEST(command_handler_called, {
+	int ok = 0;
+	struct hub_command* cmd = command_parse(cbase, hub, &user, "!test8 hello");
+
+	if (cmd->status == cmd_status_ok && cmd->handler == &test_handler)
+		ok = cmd->handler(cbase, &user, cmd) == 0;
+
+	command_free(cmd);
+	return ok && handler_called;
+});
+
 
 EXO_TEST(command_user_destroy, { return uman_remove(hub->users, &user) == 0; });
 

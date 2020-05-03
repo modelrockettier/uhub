@@ -131,7 +131,7 @@ int ip_convert_address(const char* text_address, int port, struct sockaddr* addr
 		if (net_string_to_address(AF_INET6, taddr, &addr6.sin6_addr) <= 0)
 		{
 			LOG_ERROR("Unable to convert socket address (ipv6)");
-			return 0;
+			return -1;
 		}
 
 		memcpy(addr, &addr6, sockaddr_size);
@@ -146,7 +146,7 @@ int ip_convert_address(const char* text_address, int port, struct sockaddr* addr
 		if (net_string_to_address(AF_INET, taddr, &addr4.sin_addr) <= 0)
 		{
 			LOG_ERROR("Unable to convert socket address (ipv4)");
-			return 0;
+			return -1;
 		}
 		memcpy(addr, &addr4, sockaddr_size);
 		*addr_len = sockaddr_size;

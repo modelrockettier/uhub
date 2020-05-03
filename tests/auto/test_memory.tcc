@@ -1,6 +1,6 @@
 #include <uhub.h>
 
-struct adc_message* g_msg;
+static struct adc_message* g_msg;
 
 EXO_TEST(test_message_refc_1, {
 	g_msg = adc_msg_create("IMSG Hello\\sWorld!");
