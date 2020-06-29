@@ -2,8 +2,11 @@
 # Copyright (c) 2020, Tim Schlueter
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# The base image
+from alpine:3.11 as base
+
 # Transient build container
-FROM alpine:latest AS builder
+FROM base AS builder
 
 # Don't need "apk update" with "--no-cache".
 RUN \
@@ -66,7 +69,7 @@ du -shc /app/conf/* /app/bin/* /app/lib/* /app/man/*/*
 
 
 # Actual production container
-FROM alpine:latest
+FROM base
 # Add symlinks to /app/lib and /conf to work with existing configs
 RUN \
 echo "**** install dependencies ****" && \
