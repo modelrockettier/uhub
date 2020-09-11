@@ -354,6 +354,7 @@ int net_accept(int fd, struct ip_addr_encap* ipaddr)
 		{
 #if defined(__HAIKU__)
 			case ETIMEDOUT:
+				break;
 #endif
 #if defined(__linux__)
 			case ENETDOWN:
@@ -364,6 +365,7 @@ int net_accept(int fd, struct ip_addr_encap* ipaddr)
 			case EHOSTUNREACH:
 			case EOPNOTSUPP:
 				errno = EWOULDBLOCK;
+				break;
 #endif
 #ifdef WINSOCK
 			case WSAEWOULDBLOCK:

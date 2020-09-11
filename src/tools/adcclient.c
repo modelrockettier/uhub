@@ -296,7 +296,6 @@ static int ADC_client_on_recv_line(struct ADC_client* client, const char* line, 
 		case ADC_CMD_EMSG:
 		case ADC_CMD_DMSG:
 		case ADC_CMD_IMSG:
-		{
 			chat.from_sid       = msg->source;
 			chat.to_sid         = msg->target;
 			data.chat = &chat;
@@ -312,7 +311,6 @@ static int ADC_client_on_recv_line(struct ADC_client* client, const char* line, 
 			client->callback(client, ADC_CLIENT_MESSAGE, &data);
 			hub_free(chat.message);
 			break;
-		}
 
 		case ADC_CMD_IINF:
 		{
@@ -331,13 +329,10 @@ static int ADC_client_on_recv_line(struct ADC_client* client, const char* line, 
 
 		case ADC_CMD_BSCH:
 		case ADC_CMD_FSCH:
-		{
 			client->callback(client, ADC_CLIENT_SEARCH_REQ, 0);
 			break;
-		}
 
 		case ADC_CMD_BINF:
-		{
 			if (msg->source == client->sid)
 			{
 				if (client->state == ps_verify || client->state == ps_identify)
@@ -361,7 +356,6 @@ static int ADC_client_on_recv_line(struct ADC_client* client, const char* line, 
 					client->callback(client, ADC_CLIENT_USER_JOIN, &data);
 				}
 			}
-		}
 		break;
 
 		case ADC_CMD_IQUI:
@@ -668,8 +662,9 @@ static void ADC_client_on_connected(struct ADC_client* client)
 	}
 	else
 #endif
-	ADC_client_send_handshake(client);
-
+	{
+		ADC_client_send_handshake(client);
+	}
 }
 
 #ifdef SSL_SUPPORT

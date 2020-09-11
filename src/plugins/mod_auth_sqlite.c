@@ -140,7 +140,7 @@ static struct auth_sqlite* parse_config(const char* line, struct plugin_handle* 
 	pdata->exclusive = 0;
 	pdata->readonly = 0;
 	pdata->update_activity = 2; // default value = on, but different from manually set
-	strcpy(pdata->journal, "");
+	pdata->journal[0] = '\0';
 
 	while (token)
 	{

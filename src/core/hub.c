@@ -541,7 +541,6 @@ static void hub_event_dispatcher(void* callback_data, struct event_data* message
 	switch (message->id)
 	{
 		case UHUB_EVENT_USER_JOIN:
-		{
 			if (user_is_disconnecting(user))
 				break;
 
@@ -564,34 +563,27 @@ static void hub_event_dispatcher(void* callback_data, struct event_data* message
 				}
 			}
 			break;
-		}
 
 		case UHUB_EVENT_USER_QUIT:
-		{
 			uman_remove(hub->users, user);
 			uman_send_quit_message(hub, hub->users, user);
 			on_logout_user(hub, user);
 			hub_schedule_destroy_user(hub, user);
 			break;
-		}
 
 		case UHUB_EVENT_USER_DESTROY:
-		{
 			user_destroy(user);
 			break;
-		}
 
 		case UHUB_EVENT_HUB_SHUTDOWN:
-		{
-			struct hub_user* u = (struct hub_user*) list_get_first(hub->users->list);
-			while (u)
+			user = (struct hub_user*) list_get_first(hub->users->list);
+			while (user)
 			{
-				uman_remove(hub->users, u);
-				user_destroy(u);
-				u = (struct hub_user*) list_get_first(hub->users->list);
+				uman_remove(hub->users, user);
+				user_destroy(user);
+				user = (struct hub_user*) list_get_first(hub->users->list);
 			}
 			break;
-		}
 
 
 		default:
@@ -940,8 +932,10 @@ void hub_set_variables(struct hub_info* hub, struct acl_handle* acl)
 		hub->status = hub_status_shutdown;
 	}
 	else
+	{
+		hub->status = (hub->config->hub_enabled ? hub_status_running : hub_status_disabled);
+	}
 
-	hub->status = (hub->config->hub_enabled ? hub_status_running : hub_status_disabled);
 	hub_free(server);
 }
 

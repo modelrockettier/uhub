@@ -85,9 +85,9 @@ static int check_cmd_user(const char* cmd, int status, struct linked_list* list,
 			}
 		}
 
-		strncpy(info->nickname, data, MAX_NICK_LEN);
+		strlcpy(info->nickname, data, MAX_NICK_LEN + 1);
 		if (data_extra)
-			strncpy(info->password, data_extra, MAX_PASS_LEN);
+			strlcpy(info->password, data_extra, MAX_PASS_LEN + 1);
 		info->credentials = status;
 		list_append(list, info);
 		LOG_DEBUG("ACL: Added user '%s' (%s)", info->nickname, auth_cred_to_string(info->credentials));
@@ -229,20 +229,13 @@ int acl_initialize(struct hub_config* config, struct acl_handle* handle)
 static void acl_free_access_info(void* ptr)
 {
 	struct auth_info* info = (struct auth_info*) ptr;
-	if (info)
-	{
-		hub_free(info);
-	}
+	hub_free(info);
 }
 
 
 static void acl_free_ip_info(void* ptr)
 {
-	struct access_info* info = (struct access_info*) ptr;
-	if (info)
-	{
-		hub_free(info);
-	}
+	hub_free(ptr);
 }
 
 int acl_shutdown(struct acl_handle* handle)
