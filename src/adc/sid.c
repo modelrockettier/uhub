@@ -19,44 +19,76 @@
 
 #include "uhub.h"
 
+// Used to convert binary to uppercase ascii base32
 const char* BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
-char* sid_to_string(sid_t sid_)
+// Used to convert uppercase ascii base32 to binary
+const int8_t BASE32_VALUES[128] = {
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0x00
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0x10
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0x20
+	-1, -1, 26, 27, 28, 29, 30, 31, -1, -1, -1, -1, -1, -1, -1, -1, // 0x30
+	-1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, // 0x40
+	15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, // 0x50
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0x60
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0x70
+};
+
+
+char* sid_to_string(sid_t sid)
 {
-	static char t_sid[5];
-	sid_t sid = (sid_ & 0xFFFFF); /*  20 bits only */
-	sid_t A, B, C, D = 0;
-	D     = (sid % 32);
-	sid   = (sid - D) / 32;
-	C     = (sid % 32);
-	sid   = (sid - C) / 32;
-	B     = (sid % 32);
-	sid   = (sid - B) / 32;
-	A     = (sid % 32);
-	t_sid[0] = BASE32_ALPHABET[A];
-	t_sid[1] = BASE32_ALPHABET[B];
-	t_sid[2] = BASE32_ALPHABET[C];
-	t_sid[3] = BASE32_ALPHABET[D];
-	t_sid[4] = 0;
+    static char t_sid[5];
+
+    sid_t A;
+	sid_t B;
+	sid_t C;
+	sid_t D;
+
+	D    = (sid % 32);
+	sid /= 32;
+	C    = (sid % 32);
+	sid /= 32;
+	B    = (sid % 32);
+	sid /= 32;
+	A    = (sid % 32);
+	sid /= 32;
+
+	// sid too large
+	uhub_assert(sid == 0);
+
+    t_sid[0] = BASE32_ALPHABET[A];
+    t_sid[1] = BASE32_ALPHABET[B];
+    t_sid[2] = BASE32_ALPHABET[C];
+    t_sid[3] = BASE32_ALPHABET[D];
+    t_sid[4] = '\0';
+
 	return t_sid;
 }
 
 
 sid_t string_to_sid(const char* sid)
 {
-	sid_t nsid = 0;
-	sid_t n, x;
-	sid_t factors[] = { 32768, 1024, 32, 1};
+    sid_t nsid = 0;
+    sid_t n;
+	sid_t x;
+	uint8_t c;
 
-	if (!sid || strlen(sid) != 4) return 0;
+    if (!sid || strlen(sid) != 4)
+		return 0;
 
-	for (n = 0; n < 4; n++) {
-		for (x = 0; x < strlen(BASE32_ALPHABET); x++)
-			if (sid[n] == BASE32_ALPHABET[x]) break;
-		if (x == 32) return 0;
-		nsid += x * factors[n];
-	}
-	return nsid;
+    for (n = 0; n < 4; n++) {
+		c = sid[n];
+		if (c >= 128)
+			return 0;
+
+		x = (sid_t) BASE32_VALUES[c];
+        if (x == ((sid_t) -1))
+			return 0;
+
+        nsid = (nsid * 32) + x;
+    }
+
+    return nsid;
 }
 
 /*
