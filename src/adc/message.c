@@ -66,7 +66,7 @@ static void msg_free(void* ptr)
 
 static int msg_check_escapes(const char* string, size_t len)
 {
-	char* start = (char*) string;
+	char const* start = string;
 	while ((start = memchr(start, '\\', len - (start - string))))
 	{
 		if ((start + 1) == (string + len))
@@ -183,13 +183,17 @@ int adc_msg_get_arg_offset(struct adc_message* msg)
 			return 9;
 
 		case 'F':
-			return (10 + (list_size(msg->feature_cast_include) * 5) + (list_size(msg->feature_cast_exclude) * 5));
+			return (int)(10 +
+				(list_size(msg->feature_cast_include) * 5) +
+				(list_size(msg->feature_cast_exclude) * 5));
 
 		case 'D':
 		case 'E':
 			return 14;
+
+		default:
+			return -1;
 	}
-	return -1;
 }
 
 
@@ -356,9 +360,7 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 	}
 
 	if (line[length - 1] != '\n')
-	{
 		need_terminate = 1;
-	}
 
 	if (!adc_msg_grow(command, length + need_terminate))
 	{
@@ -387,7 +389,7 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 
 		case 'I':
 		case 'H':
-			// ok = (length > 3);
+			// ok, length is at least 4
 			break;
 
 		case 'B':
@@ -505,9 +507,7 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 	}
 
 	if (need_terminate)
-	{
 		command->cache[length] = '\n';
-	}
 
 	if (!ok)
 	{
@@ -621,18 +621,14 @@ int adc_msg_remove_named_argument(struct adc_message* cmd, const char prefix_[2]
 		endInfo = &cmd->cache[cmd->length];
 
 		if (&start[0] < &endInfo[0])
-		{
 			end = memchr(&start[1], ' ', &endInfo[0] - &start[1]);
-		}
 		else
-		{
 			end = NULL;
-		}
 
 		if (end)
 		{
 
-			temp_len = &end[0] - &start[0]; // strlen(start);
+			temp_len = &end[0] - &start[0]; // strlen(start)
 			endlen = strlen(end);
 
 			memmove(start, end, endlen);
@@ -703,9 +699,7 @@ char* adc_msg_get_named_argument(struct adc_message* cmd, const char prefix_[2])
 	argument = hub_strndup(start, length);
 
 	if (length > 0 && argument[length - 1] == '\n')
-	{
 		argument[length - 1] = 0;
-	}
 
 	return argument;
 }
@@ -716,14 +710,10 @@ int adc_msg_replace_named_argument(struct adc_message* cmd, const char prefix[2]
 	ADC_MSG_ASSERT(cmd);
 
 	while (adc_msg_has_named_argument(cmd, prefix))
-	{
 		adc_msg_remove_named_argument(cmd, prefix);
-	}
 
 	if (adc_msg_add_named_argument(cmd, prefix, string) == -1)
-	{
 		return -1;
-	}
 
 	ADC_MSG_ASSERT(cmd);
 
@@ -734,9 +724,8 @@ int adc_msg_replace_named_argument(struct adc_message* cmd, const char prefix[2]
 void adc_msg_terminate(struct adc_message* cmd)
 {
 	if (cmd->length < 1 || cmd->cache[cmd->length - 1] != '\n')
-	{
 		adc_msg_cache_append(cmd, "\n", 1);
-	}
+
 	ADC_MSG_ASSERT(cmd);
 }
 
@@ -949,8 +938,8 @@ char* adc_msg_unescape(const char* string)
 int adc_msg_unescape_to_target(const char* string, char* target, size_t target_size)
 {
 	size_t w = 0;
-	char* ptr = (char*) target;
-	char* str = (char*) string;
+	char const* str = string;
+	char* ptr = target;
 	int escaped = 0;
 
 	uhub_assert(string);
@@ -998,7 +987,7 @@ int adc_msg_unescape_to_target(const char* string, char* target, size_t target_s
 		LOG_WARN("Message has trailing escape");
 #endif
 
-	return w;
+	return (int) w;
 }
 
 char* adc_msg_escape(const char* string)
