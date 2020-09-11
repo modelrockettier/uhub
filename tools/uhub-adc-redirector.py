@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 A simple ADC redirector service.
 """
@@ -20,8 +20,8 @@ bind_port = 1411
 
 class AdcRedirector(SocketServer.BaseRequestHandler):
 
-	def escape(self, str):
-		modified = str.replace("\\", "\\\\").replace(" ", "\\s").replace("\n", "\\n")
+	def escape(self, s):
+		modified = s.replace("\\", "\\\\").replace(" ", "\\s").replace("\n", "\\n")
 		return modified;
 
 	def handle(self):
@@ -29,7 +29,7 @@ class AdcRedirector(SocketServer.BaseRequestHandler):
 		while True:
 			data = self.request.recv(1024)
 			if (data.startswith("HSUP") and not supports):
-				self.request.sendall("ISUP ADBASE ADTIGR\nISID AAAX\nIINF CT32 NI%(botname)s VEuhub-adc-redirector/0.1\n" % { "address": redirect_uri, "botname": self.escape(bot_name), "message": self.escape(message) })
+				self.request.sendall("ISUP ADBASE ADTIGR\nISID AAAX\nIINF CT32 NI%(botname)s VEuhub-adc-redirector/0.1\n" % { "botname": self.escape(bot_name) })
 				supports = True
 			elif (data.startswith("BINF") and supports):
 				self.request.sendall("IMSG %(message)s\nIQUI AAAX RD%(address)s\n" % {"message": self.escape(message), "address": redirect_uri })
