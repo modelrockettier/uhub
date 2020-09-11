@@ -13,7 +13,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 
-INCLUDE( FindPkgConfig )
+find_package( PkgConfig )
 # Take care about sqlite3.pc settings
 IF ( Sqlite3_FIND_REQUIRED )
   SET( _pkgconfig_REQUIRED "REQUIRED" )

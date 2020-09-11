@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # The base image
-from alpine:3.11 as base
+from alpine:3.12 as base
 
 # Transient build container
 FROM base AS builder
@@ -73,7 +73,7 @@ FROM base
 # Add symlinks to /app/lib and /conf to work with existing configs
 RUN \
 echo "**** install dependencies ****" && \
-apk add --no-cache bash man pwgen util-linux openssl-dev sqlite-dev && \
+apk add --no-cache bash mandoc pwgen util-linux openssl-dev sqlite-dev && \
 echo "**** remove unnecessary header files ****" && \
 rm -rf /usr/include /usr/lib/pkgconfig && \
 echo "**** create config directory ****" && \
