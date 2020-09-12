@@ -333,40 +333,38 @@ static int check_logged_in(struct hub_info* hub, struct hub_user* user, struct a
 	struct hub_user* lookup2 = uman_get_user_by_cid(hub->users, user->id.cid);
 
 	if (lookup1 == user)
-	{
 		return 0;
-	}
 
-	if (lookup1 || lookup2)
+	if (!lookup1 && !lookup2)
+		return 0;
+
+	if (lookup1 == lookup2)
 	{
-		if (lookup1 == lookup2)
+		if (user_flag_get(lookup1, flag_choke))
 		{
-			if (user_flag_get(lookup1, flag_choke))
-			{
-				LOG_DEBUG("check_logged_in: exact same user is already logged in, but likely ghost: %s", user->id.nick);
+			LOG_DEBUG("check_logged_in: exact same user is already logged in, but likely ghost: %s", user->id.nick);
 
-				// Old user unable to swallow data.
-				// Disconnect the existing user, and allow new user to enter.
-				hub_disconnect_user(hub, lookup1, quit_ghost_timeout);
-			}
-			else
-			{
-				LOG_DEBUG("check_logged_in: exact same user is already logged in: %s", user->id.nick);
-				return status_msg_inf_error_cid_taken;
-			}
+			// Old user unable to swallow data.
+			// Disconnect the existing user, and allow new user to enter.
+			hub_disconnect_user(hub, lookup1, quit_ghost_timeout);
 		}
 		else
 		{
-			if (lookup1)
-			{
-				LOG_DEBUG("check_logged_in: nickname is in use: %s", user->id.nick);
-				return status_msg_inf_error_nick_taken;
-			}
-			else
-			{
-				LOG_DEBUG("check_logged_in: CID is in use: %s", user->id.cid);
-				return status_msg_inf_error_cid_taken;
-			}
+			LOG_DEBUG("check_logged_in: exact same user is already logged in: %s", user->id.nick);
+			return status_msg_inf_error_cid_taken;
+		}
+	}
+	else
+	{
+		if (lookup1)
+		{
+			LOG_DEBUG("check_logged_in: nickname is in use: %s", user->id.nick);
+			return status_msg_inf_error_nick_taken;
+		}
+		else
+		{
+			LOG_DEBUG("check_logged_in: CID is in use: %s", user->id.cid);
+			return status_msg_inf_error_cid_taken;
 		}
 	}
 	return 0;
