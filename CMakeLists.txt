@@ -374,7 +374,7 @@ if(CMAKE_BUILD_TYPE STREQUAL Debug OR CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
 		add_definitions(-DLOWLEVEL_DEBUG)
 	endif()
 elseif(LOWLEVEL_DEBUG)
-	message(FATAL_ERROR "Can't use LOWLEVEL_DEBUG with a Release build, try -DCMAKE_BUILD_TYPE=RelWithDebInfo")
+	message(WARNING "Can't use LOWLEVEL_DEBUG with a Release build, try -DCMAKE_BUILD_TYPE=RelWithDebInfo")
 endif()
 
 math(EXPR POINTER_SIZE "${CMAKE_SIZEOF_VOID_P} * 8")

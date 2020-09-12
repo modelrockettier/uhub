@@ -18,6 +18,7 @@ mkdir /app /app/bin /app/conf /app/lib /app/man /app/man/man1
 
 WORKDIR /uhub
 
+# Possible build types: MinSizeRel, Release, RelWithDebInfo, and Debug
 ARG BUILD
 ENV BUILD=${BUILD:-Release}
 
@@ -40,7 +41,7 @@ COPY . .
 # Use /app/conf for configs here so the start script can install missing
 # configs on the first fun.
 RUN \
-if [ -z "$VERBOSE" ]; then export CMAKE_NO_VERBOSE=1; fi && \
+if [ -z "${VERBOSE}" ]; then export CMAKE_NO_VERBOSE=1; fi && \
 echo "**** configure uhub ****" && \
 cmake . \
 	-DCMAKE_INSTALL_PREFIX=/app \
