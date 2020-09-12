@@ -177,6 +177,10 @@ static int convert_support_fourcc(int fourcc)
 		case FOURCC('P','I','N','G'):
 			return feature_ping;
 
+		/* https://forum.dcbase.org/viewtopic.php?t=771 */
+		case FOURCC('H','B','R','I'):
+			return feature_hbri;
+
 		case FOURCC('L','I','N','K'):
 			return feature_link;
 
@@ -407,6 +411,7 @@ static struct user_flag const user_flags[] = {
 	{ .value = feature_link,    .desc = "LINK"       },
 	{ .value = feature_adcs,    .desc = "ADCS"       },
 	{ .value = feature_bas0,    .desc = "BAS0"       },
+	{ .value = feature_hbri,    .desc = "HBRI"       },
 	{ .value = flag_flood,      .desc = "flood"      },
 	{ .value = flag_muted,      .desc = "muted"      },
 	{ .value = flag_ignore,     .desc = "ignore"     },
