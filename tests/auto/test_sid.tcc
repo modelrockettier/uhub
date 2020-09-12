@@ -173,6 +173,19 @@ EXO_TEST(sid_to_str_32, { return SID_TO_STR(1048574, "7776"); });
 EXO_TEST(sid_to_str_33, { return SID_TO_STR(1048575, "7777"); });
 
 #define STR_TO_SID(STR, EXPECT) string_to_sid(STR) == EXPECT
+/* Invalid strings */
+EXO_TEST(sid_from_invalid_str_1,  { return STR_TO_SID("",           0); });
+EXO_TEST(sid_from_invalid_str_2,  { return STR_TO_SID("B",          0); });
+EXO_TEST(sid_from_invalid_str_3,  { return STR_TO_SID("BBB",        0); });
+EXO_TEST(sid_from_invalid_str_4,  { return STR_TO_SID("BBBBB",      0); });
+EXO_TEST(sid_from_invalid_str_5,  { return STR_TO_SID("BBB\x80",    0); });
+EXO_TEST(sid_from_invalid_str_6,  { return STR_TO_SID("BBB0",       0); });
+EXO_TEST(sid_from_invalid_str_7,  { return STR_TO_SID("B~BB",       0); });
+EXO_TEST(sid_from_invalid_str_8,  { return STR_TO_SID(" BBB",       0); });
+EXO_TEST(sid_from_invalid_str_9,  { return STR_TO_SID("BBB ",       0); });
+EXO_TEST(sid_from_invalid_str_10, { return STR_TO_SID("bbbb",       0); });
+EXO_TEST(sid_from_invalid_str_11, { return STR_TO_SID("\xc2\xb5HB", 0); }); /* µHB */
+/* Valid base32 strings */
 EXO_TEST(sid_from_str_1,  { return STR_TO_SID("AAAA",       0); });
 EXO_TEST(sid_from_str_2,  { return STR_TO_SID("AAAH",       7); });
 EXO_TEST(sid_from_str_3,  { return STR_TO_SID("AAAO",      14); });

@@ -1667,6 +1667,17 @@ int main(int argc, char** argv)
 	exotic_add_test(&handle, &exotic_test_sid_to_str_31, "sid_to_str_31");
 	exotic_add_test(&handle, &exotic_test_sid_to_str_32, "sid_to_str_32");
 	exotic_add_test(&handle, &exotic_test_sid_to_str_33, "sid_to_str_33");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_1, "sid_from_invalid_str_1");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_2, "sid_from_invalid_str_2");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_3, "sid_from_invalid_str_3");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_4, "sid_from_invalid_str_4");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_5, "sid_from_invalid_str_5");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_6, "sid_from_invalid_str_6");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_7, "sid_from_invalid_str_7");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_8, "sid_from_invalid_str_8");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_9, "sid_from_invalid_str_9");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_10, "sid_from_invalid_str_10");
+	exotic_add_test(&handle, &exotic_test_sid_from_invalid_str_11, "sid_from_invalid_str_11");
 	exotic_add_test(&handle, &exotic_test_sid_from_str_1, "sid_from_str_1");
 	exotic_add_test(&handle, &exotic_test_sid_from_str_2, "sid_from_str_2");
 	exotic_add_test(&handle, &exotic_test_sid_from_str_3, "sid_from_str_3");
