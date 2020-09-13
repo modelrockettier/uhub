@@ -17,12 +17,16 @@ task:
   env:
     matrix:
       - RELEASEVER: 7
+        CC: gcc
       - RELEASEVER: 8
+        CC: gcc
+      - RELEASEVER: 8
+        CC: clang
     matrix:
       - CONFIG: minimal
       - CONFIG: full
       - CONFIG: rpm
-  name: CentOS-$RELEASEVER-$CONFIG
+  name: CentOS-$RELEASEVER-$CONFIG-$CC
   container:
     image: centos:$RELEASEVER
   install_build_depends_script: bash ./tests/ci/install-build-depends.sh

@@ -18,7 +18,7 @@ endef
 define DOCKER_BUILD
 	$(call PRINT, $1, $3)
 	docker build -f $(strip $2) --build-arg CONFIG=$(strip $3) \
-		--build-arg PREPARE=$(PREPARE) --force-rm ../..
+		--build-arg PREPARE=$(PREPARE) --force-rm $(DOCKER_ARGS) ../..
 endef
 
 .PHONY: all

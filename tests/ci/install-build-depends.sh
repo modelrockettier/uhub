@@ -122,9 +122,13 @@ if [ "$OS_NAME" = "linux" ]; then
 				exit 5 ;;
 		esac
 
-		# Only install gcc if we don't already have a c compiler
-		if ! exists cc; then
-			PACKAGES="$PACKAGES gcc"
+		if [ "${CC:-cc}" = cc ]; then
+			CC=gcc
+		fi
+
+		# Make sure the compiler is installed
+		if ! exists "$CC"; then
+			PACKAGES="$PACKAGES $CC"
 		fi
 
 		sudo apt-get update -q
@@ -143,9 +147,13 @@ if [ "$OS_NAME" = "linux" ]; then
 				exit 5 ;;
 		esac
 
-		# Only install gcc if we don't already have a c compiler
-		if ! exists cc; then
-			PACKAGES="$PACKAGES gcc"
+		if [ "${CC:-cc}" = cc ]; then
+			CC=gcc
+		fi
+
+		# Make sure the compiler is installed
+		if ! exists "$CC"; then
+			PACKAGES="$PACKAGES $CC"
 		fi
 
 		if exists dnf; then
@@ -166,9 +174,13 @@ if [ "$OS_NAME" = "linux" ]; then
 				exit 5 ;;
 		esac
 
-		# Only install gcc if we don't already have a c compiler
-		if ! exists cc; then
-			PACKAGES="$PACKAGES gcc"
+		if [ "${CC:-cc}" = cc ]; then
+			CC=gcc
+		fi
+
+		# Make sure the compiler is installed
+		if ! exists "$CC"; then
+			PACKAGES="$PACKAGES $CC"
 		fi
 
 		apk add --no-cache $PACKAGES

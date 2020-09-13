@@ -14,6 +14,9 @@ COPY tests/ci/install-build-depends.sh tests/ci/
 ARG CONFIG
 ENV CONFIG=${CONFIG:-minimal}
 
+ARG CC
+ENV CC=${CC}
+
 RUN \
 echo "**** install build dependencies ****" && \
 bash ./tests/ci/install-build-depends.sh
