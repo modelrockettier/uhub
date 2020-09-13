@@ -1,6 +1,6 @@
 language: c
 os: linux
-dist: xenial
+dist: focal
 arch: amd64
 compiler:
   - gcc
@@ -8,11 +8,17 @@ compiler:
 env:
   - CONFIG=minimal
   - CONFIG=full
+  - CONFIG=deb
 
 jobs:
   allow_failures:
     # Just in case we exceed the coverity scan limits
     - name: Coverity scan
+
+  exclude:
+    # Don't bother building debs with clang
+    - compiler: clang
+      env: CONFIG=deb
 
   # Additional builds to do (outside the build matrix)
   include:
@@ -96,9 +102,20 @@ jobs:
       dist: bionic
       env: CONFIG=minimal
 
-    # Debian package build
-    - name: debian package
+    # Xenial builds
+    - name: xenial full
+      dist: xenial
+      env: CONFIG=full
+    - name: xenial minimal
+      dist: xenial
+      env: CONFIG=minimal
+    - name: xenial deb
+      dist: xenial
       env: CONFIG=deb
+    - name: xenial clang
+      dist: xenial
+      compiler: clang
+      env: CONFIG=full
 
     # Docker build
     - name: docker

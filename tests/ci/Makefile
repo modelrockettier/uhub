@@ -22,7 +22,7 @@ define DOCKER_BUILD
 endef
 
 .PHONY: all
-all: main ubuntu-latest centos-8 ubuntu-xenial centos-7
+all: main ubuntu-focal centos-8 ubuntu-bionic ubuntu-xenial centos-7
 # ubuntu-bionic debian-stretch
 
 .PHONY: centos-%
