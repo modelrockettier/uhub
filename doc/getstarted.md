@@ -89,13 +89,19 @@ Or, you can use (as root):
 ulimit -n 4096
 ```
 
-## Interact with uhub through your hub chat (only for operator/admin):
+## Interact with uhub through your hub chat:
 
 You can interact with uhub in your hub main chat using the `!` prefix,
 followed by a command:
 
-Example, to display help and the command you can use:
+E.g. to display help and the commands you can use:
 ```
 !help
 ```
+
+For more information about a specific command (e.g. `!myip`), you can use:
+```
+!help myip
+```
+
 Your mileage may vary -- Good luck!

@@ -8,21 +8,10 @@ for the hub.
 NOTE: uhub must be compiled with `SSL_SUPPORT` enabled in order for this to
 work (the default).
 
-## Configuring uhub
-
-If you have your certificates ready, just set these configuration values in
-your `uhub.conf` file:
-```
-tls_private_key="/path/to/domainname.key"
-tls_certificate="/path/to/domainname.crt"
-tls_enable=yes
-# Uncomment the following if you want to require ADCS connections
-#tls_require=yes
-```
-
-Now you can connect to the hub using the `adcs://` protocol handle.
-
 ## Creating certificates
+
+If you already have certificates ready for uHub, skip down to
+[Configuring uhub](#configuring-uhub) below.
 
 Create either a [self-signed certificate](#creating-a-self-signed-certificate),
 or a [certificate signed by a CA](#creating-a-certificate-with-a-ca)
@@ -92,16 +81,34 @@ Your e-mail address.
     Example: bob@example.com
 ```
 
-## Using Keyprint
+## Configuring uhub
 
-Now that you have tls activated on your hub, you may have to share the
-certificate fingerprint to your hub user:
-
-Find it by using the `tools/generate_keyprint.sh` helper script:
-```shell
-bash ./tools/generate_keyprint.sh "/path/to/domainname.crt"
+Now that you have your certificates generated, just set these configuration
+values in your `uhub.conf` file:
+```
+tls_private_key="/path/to/domainname.key"
+tls_certificate="/path/to/domainname.crt"
+tls_enable=yes
+# Uncomment the following if you want to require ADCS connections
+#tls_require=yes
 ```
 
-And change `localhost:1511` to your hub's address and port in the URL it prints:
+Now you can connect to the hub using the `adcs://` protocol handle.
 
-`adcs://localhost:1511?kp=SHA256/ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ`
+## Using Keyprint
+
+Now that you have TLS activated on your hub, some clients prefer to have the
+fingerprint of the hub's certificate in the URL (also called keyprint).
+
+You can use the `tools/generate_keyprint.sh` helper script to generate your
+server's keyprint URL. Change the certificate path and `example.com:1234`
+below to the certificate for your uhub server and the hostname:port users will
+use to connect to your uhub server.
+```shell
+bash ./tools/generate_keyprint.sh "/path/to/domainname.crt" "example.com:1234"
+```
+
+The script will print out your hub's URL complete with the keyprint, E.g.
+```
+adcs://example.com:1234?kp=SHA256/ABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEFGHIJKLMNOPQRST
+```
