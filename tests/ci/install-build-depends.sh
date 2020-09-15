@@ -73,9 +73,16 @@ fi
 export BRANCH CONFIG DIST OS_NAME
 
 if [ "$OS_NAME" = windows ]; then
-	: ${VCPKG_ROOT="$HOME/vcpkg${CONFIG+-$CONFIG}${ARCH+-$ARCH}"}
+	: ${VCPKG_ROOT="$HOME/vcpkg-${CONFIG}-${ARCH}"}
 	export VCPKG_ROOT
-	export PATH="$PATH:$VCPKG_ROOT"
+	: ${VCPKG_CACHE="$HOME/vcpkg-cache-${CONFIG}-${ARCH}"}
+	export VCPKG_CACHE
+	export PATH="$PATH:$VCPKG_CACHE"
+
+	# Convert the vcpkg cache path from a unix path to a windows path
+	WIN_VC_CACHE=$(sed 's#^/##;s#/#\\#g;s/^./\U&:/' <<<"$VCPKG_CACHE")
+	# Turn on binary caching for vcpkg
+	export VCPKG_BINARY_SOURCES="clear;files,$WIN_VC_CACHE,readwrite"
 fi
 
 stop_spinner() {
@@ -251,31 +258,53 @@ elif [ "$OS_NAME" = "windows" ]; then
 		export VCPKG_DEFAULT_TRIPLET="${ARCH}-windows"
 	fi
 
-	# Download and install vcpkg if it's missing or if this script changes
-	if [ ! -s "${VCPKG_ROOT}/uhub_ci.md5" ] || ! md5sum -c "${VCPKG_ROOT}/uhub_ci.md5"; then
-		rm -rf $VCPKG_ROOT
-		git clone https://github.com/Microsoft/vcpkg.git $VCPKG_ROOT
-		pushd $VCPKG_ROOT
+	# Ensure the vcpkg cache directory exists
+	mkdir -p "${VCPKG_CACHE}"
 
-		# Try checking out the latest tag (don't care if these commands fail)
-		set +e
+	echo "==> VCPKG_CACHE: ${VCPKG_CACHE} <=="
+	find "${VCPKG_CACHE}" | sort
+	echo
 
-		git config advice.detachedHead false
-		TAG=$(git describe --abbrev=0 --tags) && git checkout "$TAG"
-		git status
+	LATEST_TAG=$(git ls-remote -t --refs https://github.com/microsoft/vcpkg \
+		| sed 's#^\S\+\s\+refs/tags/##' | tail -n 1)
 
-		# Exit on failure below here
-		set -e
-
-		# Reduce the build times by not building debug variants of the dependencies
-		printf '\n%s\n' "set(VCPKG_BUILD_TYPE release)" \
-			| quiet tee -a triplets/*windows*.cmake triplets/community/*windows*.cmake
-
-		cmd "/C bootstrap-vcpkg.bat"
-		popd
-
-		md5sum tests/ci/install-build-depends.sh | tee "${VCPKG_ROOT}/uhub_ci.md5"
+	if [ -z "${LATEST_TAG}" ]; then
+		echo "ERROR: Could not find latest vcpkg release" >&2
+		exit 8
 	fi
+
+	git clone https://github.com/Microsoft/vcpkg.git "${VCPKG_ROOT}" \
+		--depth 1 --branch "${LATEST_TAG}"
+
+	pushd "${VCPKG_ROOT}"
+
+	# Reduce the build times by not building debug variants of the dependencies
+	printf '\n%s\n' "set(VCPKG_BUILD_TYPE release)" \
+		| quiet tee -a triplets/*windows*.cmake triplets/community/*windows*.cmake
+
+	# No tag saved for vcpkg, reinstall it
+	if [ ! -x "${VCPKG_CACHE}/vcpkg.exe" ]; then
+		REBUILD_VCPKG=1
+	elif [ ! -s "${VCPKG_CACHE}/uhub_ci.tag" ]; then
+		REBUILD_VCPKG=1
+	else
+		VCPKG_CACHE_TAG=$(cat "${VCPKG_CACHE}/uhub_ci.tag")
+		# There's a newer tag available, rebuild vcpkg
+		if [ "${LATEST_TAG}" != "${VCPKG_CACHE_TAG}" ]; then
+			REBUILD_VCPKG=1
+		fi
+	fi
+
+	if [ -n "${REBUILD_VCPKG}" ]; then
+		cmd "/C bootstrap-vcpkg.bat"
+
+		echo "${LATEST_TAG}" | tee "${VCPKG_CACHE}/uhub_ci.tag"
+
+		# Copy the built version of vcpkg to the cache
+		nofail cp -v "${VCPKG_ROOT}/vcpkg.exe" "${VCPKG_CACHE}/"
+	fi
+
+	popd
 
 	# User-wide vcpkg integration
 	nofail vcpkg integrate install

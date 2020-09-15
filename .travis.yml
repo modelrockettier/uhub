@@ -31,7 +31,7 @@ jobs:
         - ARCH=x64
       cache:
         directories:
-          - "$HOME/vcpkg-full-x64"
+          - "$HOME/vcpkg-cache-full-x64"
 
     - name: Windows minimal x64
       os: windows
@@ -40,7 +40,7 @@ jobs:
         - ARCH=x64
       cache:
         directories:
-          - "$HOME/vcpkg-minimal-x64"
+          - "$HOME/vcpkg-cache-minimal-x64"
 
     - name: Windows minimal x86
       os: windows
@@ -49,7 +49,7 @@ jobs:
         - ARCH=x86
       cache:
         directories:
-          - "$HOME/vcpkg-minimal-x86"
+          - "$HOME/vcpkg-cache-minimal-x86"
 
     # Mac OS X builds
     - name: Mac OSX full

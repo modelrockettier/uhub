@@ -74,9 +74,11 @@ fi
 export BRANCH CONFIG DIST OS_NAME
 
 if [ "$OS_NAME" = windows ]; then
-	: ${VCPKG_ROOT="$HOME/vcpkg${CONFIG+-$CONFIG}${ARCH+-$ARCH}"}
+	: ${VCPKG_ROOT="$HOME/vcpkg-${CONFIG}-${ARCH}"}
 	export VCPKG_ROOT
-	export PATH="$PATH:$VCPKG_ROOT"
+	: ${VCPKG_CACHE="$HOME/vcpkg-cache-${CONFIG}-${ARCH}"}
+	export VCPKG_CACHE
+	export PATH="$PATH:$VCPKG_CACHE"
 
 	# Add the installed DLL paths to PATH
 	# Otherwise autotest-bin will fail to run
@@ -238,7 +240,12 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 		du -shc /usr/local/opt/uhub/{bin/uhub,etc/,lib/}*
 	elif [ "$OS_NAME" = "windows" ]; then
 		# make install doesn't work on windows, so don't do anything here
-		true
+
+		# Remove old cache files
+		find "${VCPKG_CACHE}" \( -type f -mtime +60 \) -exec rm -fv {} +
+
+		# Remove empty directories
+		find "${VCPKG_CACHE}" \( -type d -empty \) -exec rmdir -pv {} + 2>/dev/null
 	else
 		echo "Unknown platform" >&2
 		exit 6

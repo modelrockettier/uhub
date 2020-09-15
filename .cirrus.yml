@@ -49,13 +49,10 @@ task:
     os_version: 2019
   vcpkg_cache:
     # For some reason, $HOME is weird here
-    folder: "C:\\Users\\ContainerAdministrator\\vcpkg-${CONFIG}-${ARCH}"
+    folder: "C:\\Users\\ContainerAdministrator\\vcpkg-cache-${CONFIG}-${ARCH}"
     fingerprint_script:
-      - echo "OS: ${CIRRUS_OS}"
       - echo "CONFIG: ${CONFIG}"
       - echo "ARCH: ${ARCH}"
-      - echo "PR: ${CIRRUS_PR}"
-      - md5sum tests/ci/install-build-depends.sh
     reupload_on_changes: true
   environment_script: bash ./tests/ci/print-env.sh
   install_build_depends_script: bash ./tests/ci/install-build-depends.sh
