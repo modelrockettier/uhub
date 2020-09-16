@@ -197,6 +197,7 @@ jobs:
     # End SonarCloud build
 
 install:
+  - tests/ci/print-env.sh
   - tests/ci/install-build-depends.sh
 script:
   - tests/ci/build-and-test.sh

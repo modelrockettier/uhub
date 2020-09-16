@@ -1,19 +1,20 @@
 task:
-  name: FreeBSD-$RELEASEVER-$CONFIG
+  name: FreeBSD-${RELEASEVER}-${CONFIG}
   env:
     CIRRUS_OS: freebsd
+    RELEASEVER: 12-1
     matrix:
       - CONFIG: minimal
       - CONFIG: full
-    matrix:
-      - RELEASEVER: 12-1
   freebsd_instance:
-    image_family: freebsd-$RELEASEVER
+    image_family: freebsd-${RELEASEVER}
   install_bash_script: pkg install -y bash
+  environment_script: bash ./tests/ci/print-env.sh
   install_build_depends_script: bash ./tests/ci/install-build-depends.sh
   build_and_test_script: bash ./tests/ci/build-and-test.sh
 
 task:
+  name: CentOS-${RELEASEVER}-${CONFIG}-${CC}
   env:
     matrix:
       - RELEASEVER: 7
@@ -26,13 +27,14 @@ task:
       - CONFIG: minimal
       - CONFIG: full
       - CONFIG: rpm
-  name: CentOS-$RELEASEVER-$CONFIG-$CC
   container:
-    image: centos:$RELEASEVER
+    image: centos:${RELEASEVER}
+  environment_script: bash ./tests/ci/print-env.sh
   install_build_depends_script: bash ./tests/ci/install-build-depends.sh
   build_and_test_script: bash ./tests/ci/build-and-test.sh
 
 task:
+  name: Windows-${CONFIG}-${ARCH}
   env:
     # Git bash
     CIRRUS_SHELL: "C:\\Program Files\\Git\\bin\\bash.exe"
@@ -42,7 +44,6 @@ task:
         ARCH: x86
       - CONFIG: full
         ARCH: x64
-  name: Windows-${CONFIG}-${ARCH}
   windows_container:
     image: cirrusci/windowsservercore:cmake
     os_version: 2019
@@ -56,8 +57,8 @@ task:
       - echo "PR: ${CIRRUS_PR}"
       - md5sum tests/ci/install-build-depends.sh
     reupload_on_changes: true
-  environment_script: env
-  install_build_depends_script: ./tests/ci/install-build-depends.sh
-  build_and_test_script: ./tests/ci/build-and-test.sh
+  environment_script: bash ./tests/ci/print-env.sh
+  install_build_depends_script: bash ./tests/ci/install-build-depends.sh
+  build_and_test_script: bash ./tests/ci/build-and-test.sh
 
 # vi: syn=yaml et ts=2 sw=2 :
