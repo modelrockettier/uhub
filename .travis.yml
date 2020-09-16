@@ -25,31 +25,26 @@ jobs:
 
     # Windows builds
     - name: Windows full x64
-      os: windows
+      <<: &win_base
+        os: windows
+        cache:
+          directories:
+            - "$HOME/vcpkg-cache-$CONFIG-$ARCH"
       env:
         - CONFIG=full
         - ARCH=x64
-      cache:
-        directories:
-          - "$HOME/vcpkg-cache-full-x64"
 
     - name: Windows minimal x64
-      os: windows
+      <<: *win_base
       env:
         - CONFIG=minimal
         - ARCH=x64
-      cache:
-        directories:
-          - "$HOME/vcpkg-cache-minimal-x64"
 
     - name: Windows minimal x86
-      os: windows
+      <<: *win_base
       env:
         - CONFIG=minimal
         - ARCH=x86
-      cache:
-        directories:
-          - "$HOME/vcpkg-cache-minimal-x86"
 
     # Mac OS X builds
     - name: Mac OSX full

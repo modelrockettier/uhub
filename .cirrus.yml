@@ -9,9 +9,10 @@ task:
   freebsd_instance:
     image_family: freebsd-${RELEASEVER}
   install_bash_script: pkg install -y bash
-  environment_script: bash ./tests/ci/print-env.sh
-  install_build_depends_script: bash ./tests/ci/install-build-depends.sh
-  build_and_test_script: bash ./tests/ci/build-and-test.sh
+  <<: &scripts
+    environment_script: bash ./tests/ci/print-env.sh
+    install_build_depends_script: bash ./tests/ci/install-build-depends.sh
+    build_and_test_script: bash ./tests/ci/build-and-test.sh
 
 task:
   name: CentOS-${RELEASEVER}-${CONFIG}-${CC}
@@ -29,9 +30,7 @@ task:
       - CONFIG: rpm
   container:
     image: centos:${RELEASEVER}
-  environment_script: bash ./tests/ci/print-env.sh
-  install_build_depends_script: bash ./tests/ci/install-build-depends.sh
-  build_and_test_script: bash ./tests/ci/build-and-test.sh
+  <<: *scripts
 
 task:
   name: Windows-${CONFIG}-${ARCH}
@@ -54,8 +53,6 @@ task:
       - echo "CONFIG: ${CONFIG}"
       - echo "ARCH: ${ARCH}"
     reupload_on_changes: true
-  environment_script: bash ./tests/ci/print-env.sh
-  install_build_depends_script: bash ./tests/ci/install-build-depends.sh
-  build_and_test_script: bash ./tests/ci/build-and-test.sh
+  <<: *scripts
 
 # vi: syn=yaml et ts=2 sw=2 :
