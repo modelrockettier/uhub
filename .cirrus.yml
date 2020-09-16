@@ -33,6 +33,16 @@ task:
   <<: *scripts
 
 task:
+  name: Mac-OSX-${CONFIG}
+  env:
+    matrix:
+      - CONFIG: minimal
+      - CONFIG: full
+  osx_instance:
+    image: catalina-xcode
+  <<: *scripts
+
+task:
   name: Windows-${CONFIG}-${ARCH}
   env:
     # Git bash

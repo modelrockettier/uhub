@@ -58,11 +58,11 @@ else
 	OS_NAME=$(uname -s)
 fi
 
-case "$OS_NAME" in
-	[Dd]arwin|osx)   OS_NAME=osx     ;;
-	freebsd|FreeBSD) OS_NAME=freebsd ;;
-	[Ll]inux)        OS_NAME=linux   ;;
-	[Ww]indows)      OS_NAME=windows ;;
+OS_LOWER=$(tr '[:upper:]' '[:lower:]' <<<"$OS_NAME")
+case "$OS_LOWER" in
+	darwin)                    OS_NAME=osx       ;;
+	freebsd|linux|osx|windows) OS_NAME=$OS_LOWER ;;
+
 	*) echo "Unknown OS name: $OS_NAME" >&2; exit 6 ;;
 esac
 

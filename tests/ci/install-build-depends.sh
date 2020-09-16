@@ -57,11 +57,11 @@ else
 	OS_NAME=$(uname -s)
 fi
 
-case "$OS_NAME" in
-	[Dd]arwin|osx)   OS_NAME=osx     ;;
-	freebsd|FreeBSD) OS_NAME=freebsd ;;
-	[Ll]inux)        OS_NAME=linux   ;;
-	[Ww]indows)      OS_NAME=windows ;;
+OS_LOWER=$(tr '[:upper:]' '[:lower:]' <<<"$OS_NAME")
+case "$OS_LOWER" in
+	darwin)                    OS_NAME=osx       ;;
+	freebsd|linux|osx|windows) OS_NAME=$OS_LOWER ;;
+
 	*) echo "Unknown OS name: $OS_NAME" >&2; exit 6 ;;
 esac
 
@@ -197,19 +197,23 @@ if [ "$OS_NAME" = "linux" ]; then
 	fi
 
 elif [ "$OS_NAME" = "osx" ]; then
+    PACKAGES="cmake pkg-config" # mac os comes with sqlite3 already
+
 	case "${CONFIG}" in
-		minimal|full) exit 0 ;;
+		minimal) ;;
+		full) PACKAGES="$PACKAGES openssl" ;;
 		*)
 			echo "Unknown config: ${CONFIG}" >&2
 			exit 5 ;;
 	esac
 
-	if [ "$TRAVIS" = true ]; then
-		# The travis brew addon currently handles dependencies
-		exit 0
-	else
-		brew update
-		brew install cmake openssl pkg-config sqlite
+	# The travis brew addon currently handles dependencies
+	if [ "$TRAVIS" != true ]; then
+		# brew update can take a while, try installing without it
+		if ! brew install $PACKAGES; then
+			nofail brew update
+			brew install $PACKAGES
+		fi
 	fi
 
 elif [ "$OS_NAME" = "freebsd" ]; then
