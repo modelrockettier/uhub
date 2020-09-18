@@ -17,11 +17,21 @@ set(UHUB_VERSION_PATCH 1)
 
 set(CMAKE_PROJECT_HOMEPAGE_URL "https://uhub.org/")
 
-include(GNUInstallDirs)
-
 set(PROJECT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/src")
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
+
+set(CPACK_GENERATOR "TGZ" CACHE STRING
+	"What type of package to generate (optional, e.g. TGZ, RPM, or DEB)")
+
+# Default to using /usr for the installation prefix for DEB and RPM packages
+if(CPACK_GENERATOR MATCHES "(DEB|RPM)" AND CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	message(STATUS "Building package, setting CMAKE_INSTALL_PREFIX to /usr")
+	set(CMAKE_INSTALL_PREFIX "/usr"
+		CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
+endif()
+
+include(GNUInstallDirs)
 set(PLUGIN_DIR ${CMAKE_INSTALL_FULL_LIBDIR}/uhub CACHE PATH "Where to install the uhub plugins")
 set(CONFIG_DIR /etc/uhub                         CACHE PATH "Where to install the uhub configs")
 set(LOG_DIR    /var/log                          CACHE PATH "The default log location for uhub")
@@ -82,7 +92,6 @@ set(CPACK_BINARY_TGZ "ON")
 set(CPACK_BINARY_ZIP "OFF")
 set(CPACK_DEBIAN_PACKAGE_SECTION "net")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS True)
-set(CPACK_GENERATOR "TGZ")
 set(CPACK_INSTALL_CMAKE_PROJECTS "${PROJECT_BINARY_DIR};uhub;ALL;/")
 set(CPACK_PACKAGE_CONTACT "Jan Vidar Krey <janvidar@extatic.org>")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/doc/description.txt")
