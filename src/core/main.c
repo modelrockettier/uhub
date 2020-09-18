@@ -19,7 +19,7 @@
 
 #include "uhub.h"
 
-#ifdef SYSTEMD
+#ifdef SYSTEMD_SUPPORT
 #include <systemd/sd-daemon.h>
 #endif
 
@@ -150,13 +150,13 @@ int main_loop()
 			}
 #if !defined(WIN32)
 			setup_signal_handlers(hub);
-#ifdef SYSTEMD
+#ifdef SYSTEMD_SUPPORT
 			/* Notify the service manager that this daemon has
 			 * been successfully initialized and shall enter the
 			 * main loop.
 			 */
 			sd_notifyf(0, "READY=1\nMAINPID=%lu", (unsigned long) getpid());
-#endif /* SYSTEMD */
+#endif /* SYSTEMD_SUPPORT */
 
 #endif /* ! WIN32 */
 		}
@@ -233,7 +233,7 @@ NO_RETURN static void print_usage(char* program)
 		"   -S          Show configuration parameters, but ignore defaults\n"
 		"   -h          This message\n"
 #ifndef WIN32
-#ifdef SYSTEMD
+#ifdef SYSTEMD_SUPPORT
 		"   -L          Log messages to journal\n"
 #else
 		"   -L          Log messages to syslog\n"

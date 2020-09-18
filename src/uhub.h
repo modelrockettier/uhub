@@ -27,12 +27,10 @@
 
 #include "system.h"
 
-#ifndef WIN32
-#define SERVER_CONFIG    "/etc/uhub/uhub.conf"
-#define SERVER_ACL_FILE  "/etc/uhub/users.conf"
-#else
-#define SERVER_CONFIG    "uhub.conf"
-#define SERVER_ACL_FILE  "users.conf"
+#define SERVER_CONFIG   CONFIG_DIR "uhub.conf"
+#define SERVER_ACL_FILE CONFIG_DIR "users.conf"
+
+#ifdef WIN32
 #ifndef stderr
 #define stderr stdout
 #endif

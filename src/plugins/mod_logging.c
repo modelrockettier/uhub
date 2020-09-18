@@ -334,7 +334,7 @@ static void log_message(struct log_data* data, const char *format, ...)
 
 	if (data->logmode == mode_file)
 	{
-#if DEBUG
+#ifdef DEBUG
 		if ((size_t) size != strlen(logmsg))
 		{
 			LOG_WARN("size != strlen(logmsg): %" PRIsz " / %" PRIsz,

@@ -20,6 +20,13 @@
 #ifndef HAVE_UHUB_SYSTEM_H
 #define HAVE_UHUB_SYSTEM_H
 
+#cmakedefine ARCH_BIGENDIAN
+#cmakedefine DEBUG
+#cmakedefine LOWLEVEL_DEBUG
+
+#cmakedefine SSL_SUPPORT
+#cmakedefine SYSTEMD_SUPPORT
+
 #define _FILE_OFFSET_BITS 64
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__DragonFly__) || (defined(__APPLE__) && defined(__MACH__)) || defined(__FreeBSD_kernel__)
@@ -337,6 +344,11 @@ typedef unsigned __int64 uint64_t;
 #else
 #define PRINTF_ARG(...)
 #define STRFTIME_ARG(...)
+#endif
+
+#cmakedefine CONFIG_DIR "@CONFIG_DIR@/"
+#ifndef CONFIG_DIR
+#define CONFIG_DIR ""
 #endif
 
 #endif /* HAVE_UHUB_SYSTEM_H */

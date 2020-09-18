@@ -982,7 +982,7 @@ int adc_msg_unescape_to_target(const char* string, char* target, size_t target_s
 		LOG_WARN("Message exceeded target size: ~%" PRIsz " / %" PRIsz,
 			(w + strlen(str)), target_size);
 	}
-#if DEBUG
+#ifdef DEBUG
 	else if (escaped)
 		LOG_WARN("Message has trailing escape");
 #endif

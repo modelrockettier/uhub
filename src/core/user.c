@@ -318,7 +318,7 @@ int user_is_registered(struct hub_user* user)
  */
 int user_is_tls_connected(struct hub_user* user)
 {
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
 	if (net_con_is_ssl(user->connection))
 		return 1;
 	else
