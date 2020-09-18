@@ -19,7 +19,7 @@ have to listen to both TCP and UDP.
 If client receives the packet, it knows it can receive UDP connections, and will advertise it in the INF message as
 a supported feature.
 
-If the client does not receive any UDP packets within a few seconds, it MAY try to reconfigure the router using 
+If the client does not receive any UDP packets within a few seconds, it MAY try to reconfigure the router using
 UPnP/ZeroConf, and issue a HCHK command to the server again.
 
 If the client still doesn't receive any UDP packets, hole punching can be tried.

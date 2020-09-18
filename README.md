@@ -37,17 +37,12 @@ Uhub uses the ADC protocol, and is compatible with DC++ and other ADC clients.
 ## Download
 
 You can find zip / tar.gz files of different uHub versions on
-https://github.com/janvidar/uhub/releases
+https://github.com/modelrockettier/uhub/releases
 
 You can also use git to use the last up-to-date version:
 ```shell
 git clone https://github.com/modelrockettier/uhub.git
 ```
-
-### Ubuntu and Debian packages
-
-Tehnick has provided an up to date uHub PPA for Debian and Ubuntu based
-distributions: https://tehnick.github.io/uhub/
 
 ## Docker
 
@@ -65,6 +60,18 @@ docker run -v /uhub:/conf -p 1511:1511 modelrockettier/uhub
 
 See the [doc/compile.md](doc/compile.md) document
 ([permalink](https://github.com/modelrockettier/uhub/blob/master/doc/compile.md))
+
+#### Create a .deb package
+
+See the [doc/deb-package.md](doc/deb-package.md) document
+([permalink](https://github.com/modelrockettier/uhub/blob/master/doc/deb-package.md))
+for info on creating an installable package for Debian, Ubuntu, etc.
+
+#### Create an .rpm package
+
+See the [doc/rpm-package.md](doc/rpm-package.md) document
+([permalink](https://github.com/modelrockettier/uhub/blob/master/doc/rpm-package.md))
+for info on creating an installable package for Fedora, CentOS, etc.
 
 ### Getting started
 

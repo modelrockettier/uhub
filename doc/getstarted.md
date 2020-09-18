@@ -1,9 +1,23 @@
 # Getting started guide
 
+[Docker](docker.md) is the quickest and easiest way to set up a uhub server
+([instructions permalink][1]).
+
+This guide describes how to set up a uhub server *without* using docker.
+
 ## Compile it at first
 
-See the [compile.md](compile.md) document
-([permalink](https://github.com/modelrockettier/uhub/blob/master/doc/compile.md))
+If you're on a Debian-based distribution (such as Ubuntu), see the
+[deb-package.md](deb-package.md) document ([permalink][2])
+for instructions on creating an installable .deb package.
+
+If you're on an RPM-based distribution (such as CentOS or Fedora), see the
+[rpm-package.md](rpm-package.md) document ([permalink][3])
+for instructions on creating an installable .rpm package.
+
+If you're on a different platform, or don't want to create an installable
+package, see the [compile.md](compile.md) document ([permalink][4]) for
+instructions on how to compile uhub.
 
 ## Create configuration files
 
@@ -105,3 +119,8 @@ For more information about a specific command (e.g. `!myip`), you can use:
 ```
 
 Your mileage may vary -- Good luck!
+
+[1]: https://github.com/modelrockettier/uhub/blob/master/doc/docker.md
+[2]: https://github.com/modelrockettier/uhub/blob/master/doc/deb-package.md
+[3]: https://github.com/modelrockettier/uhub/blob/master/doc/rpm-package.md
+[4]: https://github.com/modelrockettier/uhub/blob/master/doc/compile.md

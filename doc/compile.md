@@ -24,11 +24,6 @@ make
 sudo make install
 ```
 
-If you have an old gcc compiler, try disabling pre-compiled headers like this:
-```shell
-make USE_PCH=NO
-```
-
 ### Default install directories:
 
 | What                | Where                      |
