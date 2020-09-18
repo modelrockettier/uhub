@@ -187,9 +187,8 @@ static int convert_support_fourcc(int fourcc)
 		case FOURCC('A','D','C','S'):
 			return feature_adcs;
 
-		// ignore these extensions, they are not useful for the hub.
 		case FOURCC('D','H','T','0'):
-			return 0;
+			return feature_dht;
 
 		default:
 			LOG_DEBUG("Unknown extension: %x", fourcc);
@@ -412,6 +411,7 @@ static struct user_flag const user_flags[] = {
 	{ .value = feature_adcs,    .desc = "ADCS"       },
 	{ .value = feature_bas0,    .desc = "BAS0"       },
 	{ .value = feature_hbri,    .desc = "HBRI"       },
+	{ .value = feature_dht,     .desc = "DHT"        },
 	{ .value = flag_flood,      .desc = "flood"      },
 	{ .value = flag_muted,      .desc = "muted"      },
 	{ .value = flag_ignore,     .desc = "ignore"     },
