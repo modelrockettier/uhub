@@ -9,6 +9,7 @@ fi
 set -e
 
 for i in auto passwd; do
+	echo "$i"
 	pushd "$i" >/dev/null
 
 	# Only update test.c if it changes. Write to a temp file first and

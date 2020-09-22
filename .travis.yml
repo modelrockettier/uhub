@@ -9,6 +9,7 @@ env:
   - CONFIG=minimal
   - CONFIG=full
   - CONFIG=deb
+  - CONFIG=dpkg-build
 
 jobs:
   allow_failures:
@@ -19,6 +20,8 @@ jobs:
     # Don't bother building debs with clang
     - compiler: clang
       env: CONFIG=deb
+    - compiler: clang
+      env: CONFIG=dpkg-build
 
   # Additional builds to do (outside the build matrix)
   include:
@@ -107,6 +110,9 @@ jobs:
     - name: xenial deb
       dist: xenial
       env: CONFIG=deb
+    - name: xenial dpkg-build
+      dist: xenial
+      env: CONFIG=dpkg-build
     - name: xenial clang
       dist: xenial
       compiler: clang

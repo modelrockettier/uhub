@@ -38,20 +38,10 @@ fi
 
 if [ "$TRAVIS" = true ]; then
 	OS_NAME="${TRAVIS_OS_NAME:-$(uname -s)}"
-	DIST=$TRAVIS_DIST
-	BRANCH=$TRAVIS_BRANCH
 
 elif [ "$CIRRUS_CI" = true ]; then
 	unset OS
 	OS_NAME=${CIRRUS_OS:-$(uname -s)}
-
-	if [ -n "$CIRRUS_TAG" ]; then
-		BRANCH=$CIRRUS_TAG
-	elif [ -n "$CIRRUS_BRANCH" ]; then
-		BRANCH=$CIRRUS_BRANCH
-	elif [ -n "$CIRRUS_BASE_BRANCH" ]; then
-		BRANCH=$CIRRUS_BASE_BRANCH
-	fi
 
 else
 	echo "WARNING: Unknown CI" >&2
@@ -71,7 +61,7 @@ if [ -z "$CONFIG" ]; then
 	CONFIG=minimal
 fi
 
-export BRANCH CONFIG DIST OS_NAME
+export CONFIG OS_NAME
 
 if [ "$OS_NAME" = windows ]; then
 	: ${VCPKG_ROOT="$HOME/vcpkg-${CONFIG}-${ARCH}"}
@@ -90,56 +80,131 @@ if [ "$OS_NAME" = windows ]; then
 fi
 
 
-# Test creating the docker image
-if [ "${CONFIG}" = "docker" ]; then
-	docker build -t uhub:$(uname -m) .
+ls_deb() {
+	du -shc "$1"
 
-# Test creating the debian package
-elif [ "${CONFIG}" = "deb" ]; then
-	dpkg-buildpackage -us -uc -b -jauto
+	#files=$(dpkg -c "$1")
+	#grep -qE "(^|\s)/etc/uhub/." <<<"$files"
+	#grep -qE "(^|\s)/usr/bin/uhub" <<<"$files"
+	#grep -qE "(^|\s)/usr/lib" <<<"$files"
+}
 
-	du -shc ../uhub*.deb
+ls_rpm() {
+	du -sh "$1"
 
-	sudo dpkg --install ../uhub*.deb
+	#files=$(rpm -q -l -p "$1")
+	#grep -q "^/etc/uhub/." <<<"$files"
+	#grep -q "^/usr/bin/uhub" <<<"$files"
+	#grep -q "^/usr/lib/uhub/." <<<"$files"
+}
 
-	PLUGIN_DIR=$(perl -ne 'm@^#?plugin (/usr/lib.*/uhub)/mod_.*\.so@ and print $1,"\n" and exit 0' /etc/uhub/plugins.conf)
+ls_installed() {
+	local conffile=/etc/uhub/plugins.conf
+	local regex='^#?plugin (.*/)mod_[^/ ]+\.so( .*)?$'
+
+	PLUGIN_DIR=$(grep -E "$regex" <"$conffile" \
+		| sed -r "s@${regex}@\\1@" \
+		| head -n 1)
+
 	if [ -z "${PLUGIN_DIR}" ]; then
 		echo "Plugin dir not found" >&2
 		exit 2
 	fi
 
-	du -shc /etc/uhub/* /usr/bin/uhub* "${PLUGIN_DIR}"/*
+	# Strip the trailing / if plugin dir isn't "/"
+	if [ "$PLUGIN_DIR" != "/" ]; then
+		PLUGIN_DIR=${PLUGIN_DIR/%\/}
+	fi
 
-# Test creating the rpm package with cmake
-elif [ "${CONFIG}" = "rpm" ]; then
+	du -shc /etc/uhub/* /usr/bin/uhub* "${PLUGIN_DIR}"/*
+}
+
+print_test_logs() {
+	local r=$?
+	for log in *test*.log; do
+		echo "========================================"
+		if [ "$log" = "*test*.log" ]; then
+			echo "= No test log files"
+		else
+			echo "==> $log <=="
+			nofail cat "$log"
+			echo "==> $log <=="
+		fi
+		echo "========================================"
+	done
+	return $r
+}
+
+build_and_test() {
+	# If the tests fail, print the test output to the logs to help debugging
+	export CTEST_OUTPUT_ON_FAILURE=1
+
+	# Configure
+	cmake ${CMAKEOPTS}
+
+	# Build
+	if [ "$OS_NAME" = "windows" ]; then
+		VERBOSE=1 cmake --build . --config $BUILD_TYPE --target ALL_BUILD -j3
+		du -shc */autotest-bin.exe */passwd-test.exe */mod_*.dll */uhub.exe */uhub-passwd.exe
+
+	else
+		make VERBOSE=1 -j3
+		du -shc autotest-bin passwd-test mod_*.so uhub uhub-admin uhub-passwd
+	fi
+
+	# Test (print test logs on failure)
+	trap print_test_logs EXIT
+	if [ "$OS_NAME" = "windows" ]; then
+		cmake --build . --config $BUILD_TYPE --target RUN_TESTS
+	else
+		make test
+	fi
+	trap - EXIT
+}
+
+
+# Test creating the docker image
+if [ "${CONFIG}" = "docker" ]; then
+	docker build -t uhub:$(uname -m) .
+
+# Test creating the raw debian package
+elif [ "${CONFIG}" = "dpkg-build" ]; then
+	dpkg-buildpackage -us -uc -b -jauto
+
+	ls_deb ../uhub_*.deb
+
+	sudo dpkg -i ../uhub_*.deb
+
+	ls_installed
+
+# Test creating the deb and rpm packages with cmake
+elif [ "${CONFIG}" = "deb" ] || [ "${CONFIG}" = "rpm" ]; then
 	rm -rf build
 	mkdir build
 	cd build
 
 	CMAKEOPTS=".. -DCMAKE_BUILD_TYPE=Release
-	           -DSSL_SUPPORT=ON -DHARDENING=ON -DSYSTEMD_SUPPORT=ON
-	           -DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
+	           -DSSL_SUPPORT=ON -DHARDENING=ON -DSYSTEMD_SUPPORT=ON"
 
-	# If the tests fail, print the test output to the logs to help debugging
-	export CTEST_OUTPUT_ON_FAILURE=1
+	if [ "${CONFIG}" = "deb" ]; then
+		CMAKEOPTS="${CMAKEOPTS} -DCPACK_GENERATOR=DEB"
+	elif [ "${CONFIG}" = "rpm" ]; then
+		CMAKEOPTS="${CMAKEOPTS} -DCPACK_GENERATOR=RPM"
+	fi
 
-	cmake ${CMAKEOPTS}
-	make VERBOSE=1 -j3
+	build_and_test
 
-	du -shc autotest-bin passwd-test mod_*.so uhub uhub-admin uhub-passwd
-	make test
+	make package
 
-	cpack -G RPM #-DCPACK_RPM_PACKAGE_DEBUG=1
-	du -sh uhub-*.rpm
+	if [ "${CONFIG}" = "deb" ]; then
+		ls_deb uhub-*.deb
+		sudo dpkg -i uhub-*.deb
+	elif [ "${CONFIG}" = "rpm" ]; then
+		ls_rpm uhub-*.rpm
+		sudo rpm -i uhub-*.rpm
+	fi
 
-	#files=$(rpm -q -l -p uhub-*.rpm)
-
-	#grep -q "^/etc/uhub/." <<<"$files"
-	#grep -q "^/usr/bin/uhub" <<<"$files"
-	#grep -q "^/usr/lib/uhub/." <<<"$files"
-
-	sudo rpm -i uhub*.rpm
-	du -shc /etc/uhub/* /usr/bin/uhub* /usr/lib/uhub/*
+	ls_installed
 
 # Test the vanilla cmake build+install
 elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
@@ -164,8 +229,8 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 	                -DSSL_SUPPORT=ON"
 
 	# OS-specific cmake options
-	CMAKEOPTS_freebsd="-DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
-	CMAKEOPTS_linux="  -DCMAKE_INSTALL_PREFIX=/usr -DPLUGIN_DIR=/usr/lib/uhub"
+	CMAKEOPTS_freebsd="-DCMAKE_INSTALL_PREFIX=/usr"
+	CMAKEOPTS_linux="  -DCMAKE_INSTALL_PREFIX=/usr"
 	CMAKEOPTS_osx="    -DCMAKE_INSTALL_PREFIX=/usr/local/opt/uhub -DPLUGIN_DIR=/usr/local/opt/uhub/lib
 	                   -DCONFIG_DIR=/usr/local/opt/uhub/etc -DLOG_DIR=/usr/local/opt/uhub/log"
 	CMAKEOPTS_windows="-DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
@@ -196,56 +261,24 @@ elif [ "${CONFIG}" = "full" ] || [ "${CONFIG}" = "minimal" ]; then
 		CMAKEOPTS+=" ${!i} "
 	done
 
-	# If the tests fail, print the test output to the logs to help debugging
-	export CTEST_OUTPUT_ON_FAILURE=1
-
-	cmake ${CMAKEOPTS}
-
-	ret=0
-	if [ "$OS_NAME" = "windows" ]; then
-		BUILD_ARGS="--build . --config $BUILD_TYPE"
-
-		export VERBOSE=1
-		cmake $BUILD_ARGS --target ALL_BUILD -j3
-		unset VERBOSE
-
-		du -shc */autotest-bin.exe */passwd-test.exe */mod_*.dll */uhub.exe */uhub-passwd.exe
-		cmake $BUILD_ARGS --target RUN_TESTS || ret=$?
-	else
-		make VERBOSE=1 -j3
-
-		du -shc autotest-bin passwd-test mod_*.so uhub uhub-admin uhub-passwd
-		make test || ret=$?
-	fi
-
-	# Display the test log on failure before exiting
-	if [ "$ret" != 0 ]; then
-		set +x
-		for log in *test*.log; do
-			echo "========================================"
-			echo "==> $log <=="
-			nofail cat "$log"
-			echo "==> $log <=="
-			echo "========================================"
-		done
-		set -x
-		exit $ret
-	fi
+	build_and_test
 
 	if [ "$OS_NAME" = "linux" ] || [ "$OS_NAME" = "freebsd" ]; then
 		sudo make install
-		du -shc /etc/uhub/* /usr/bin/uhub* /usr/lib/uhub/*
+		ls_installed
+
 	elif [ "$OS_NAME" = "osx" ]; then
 		sudo make install
-		du -shc /usr/local/opt/uhub/{bin/uhub,etc/,lib/}*
+		PFX=/usr/local/opt/uhub
+		du -shc ${PFX}/bin/uhub* ${PFX}/etc/* ${PFX}/lib/*
+
 	elif [ "$OS_NAME" = "windows" ]; then
 		# make install doesn't work on windows, so don't do anything here
 
-		# Remove old cache files
+		# Remove old cache files + empty directories
 		find "${VCPKG_CACHE}" \( -type f -mtime +60 \) -exec rm -fv {} +
-
-		# Remove empty directories
 		find "${VCPKG_CACHE}" \( -type d -empty \) -exec rmdir -pv {} + 2>/dev/null
+
 	else
 		echo "Unknown platform" >&2
 		exit 6

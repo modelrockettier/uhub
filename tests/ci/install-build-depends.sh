@@ -37,20 +37,10 @@ fi
 
 if [ "$TRAVIS" = true ]; then
 	OS_NAME="${TRAVIS_OS_NAME:-$(uname -s)}"
-	DIST=$TRAVIS_DIST
-	BRANCH=$TRAVIS_BRANCH
 
 elif [ "$CIRRUS_CI" = true ]; then
 	unset OS
 	OS_NAME=${CIRRUS_OS:-$(uname -s)}
-
-	if [ -n "$CIRRUS_TAG" ]; then
-		BRANCH=$CIRRUS_TAG
-	elif [ -n "$CIRRUS_BRANCH" ]; then
-		BRANCH=$CIRRUS_BRANCH
-	elif [ -n "$CIRRUS_BASE_BRANCH" ]; then
-		BRANCH=$CIRRUS_BASE_BRANCH
-	fi
 
 else
 	echo "WARNING: Unknown CI" >&2
@@ -70,7 +60,7 @@ if [ -z "$CONFIG" ]; then
 	CONFIG=minimal
 fi
 
-export BRANCH CONFIG DIST OS_NAME
+export CONFIG OS_NAME
 
 if [ "$OS_NAME" = windows ]; then
 	: ${VCPKG_ROOT="$HOME/vcpkg-${CONFIG}-${ARCH}"}
@@ -120,8 +110,9 @@ if [ "$OS_NAME" = "linux" ]; then
 		PACKAGES="cmake libsqlite3-dev make"
 
 		case "${CONFIG}" in
-			deb)  PACKAGES="$PACKAGES build-essential debhelper fakeroot git libssl-dev" ;;
-			full) PACKAGES="$PACKAGES git libssl-dev libsystemd-dev pkg-config" ;;
+			deb)        PACKAGES="$PACKAGES debhelper git libssl-dev libsystemd-dev pkg-config" ;;
+			dpkg-build) PACKAGES="$PACKAGES build-essential debhelper fakeroot git libssl-dev" ;;
+			full)       PACKAGES="$PACKAGES git libssl-dev libsystemd-dev pkg-config" ;;
 			minimal) ;;
 			docker) exit 0 ;;
 			*)

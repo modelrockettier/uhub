@@ -4,7 +4,7 @@ PREPARE ?= 0
 
 #IMAGE_centos-7 = registry.centos.org/centos/centos:7
 
-PRE_alpine-latest = RUN apk add --no-cache bash\nENV NO_SYSTEMD=1
+PRE_alpine = RUN apk add --no-cache bash\nENV NO_SYSTEMD=1
 
 # 1 = name
 # 2 = message
@@ -37,6 +37,7 @@ ubuntu-%: Dockerfile.ubuntu-%
 	$(call DOCKER_BUILD, $@, $<, minimal)
 	$(call DOCKER_BUILD, $@, $<, full)
 	$(call DOCKER_BUILD, $@, $<, deb)
+	$(call DOCKER_BUILD, $@, $<, dpkg-build)
 	$(call PRINT, $@, done)
 
 .PHONY: debian-%
@@ -44,6 +45,7 @@ debian-%: Dockerfile.debian-%
 	$(call DOCKER_BUILD, $@, $<, minimal)
 	$(call DOCKER_BUILD, $@, $<, full)
 	$(call DOCKER_BUILD, $@, $<, deb)
+	$(call DOCKER_BUILD, $@, $<, dpkg-build)
 	$(call PRINT, $@, done)
 
 .PHONY: alpine-%
@@ -60,9 +62,10 @@ main:
 
 .SECONDARY: Dockerfile.%
 Dockerfile.%: BASE_IMAGE = $(or $(IMAGE_$*),$(subst -,:,$*))
+Dockerfile.%: DISTRO = $(firstword $(subst -, ,$*))
 Dockerfile.%: Dockerfile
 	sed -re 's/base:image/$(subst /,\/,$(BASE_IMAGE))/' \
-		-e 's/^#PRE/$(subst /,\/,$(PRE_$*))/' \
+		-e 's/^#PRE/$(subst /,\/,$(or $(PRE_$*), $(PRE_$(DISTRO))))/' \
 		$< > $@
 
 .PHONY: clean
