@@ -721,22 +721,27 @@ static void server_alt_port_stop(struct hub_info* hub)
 #ifdef SSL_SUPPORT
 static int load_ssl_certificates(struct hub_info* hub, struct hub_config* config)
 {
-	if (config->tls_enable)
-	{
-		hub->ctx = net_ssl_context_create(config->tls_version, config->tls_ciphersuite);
+	if (!config->tls_enable)
+		return 1;
 
-		if (!hub->ctx)
-		  return 0;
+	hub->ctx = net_ssl_context_create(config->tls_version, config->tls_ciphersuite);
 
-		if (ssl_load_certificate(hub->ctx, config->tls_certificate) &&
-			ssl_load_private_key(hub->ctx, config->tls_private_key) &&
-			ssl_check_private_key(hub->ctx))
-		{
-			LOG_INFO("Enabling TLS (%s), using certificate: %s, private key: %s", net_ssl_get_provider(), config->tls_certificate, config->tls_private_key);
-			return 1;
-		}
+	if (!hub->ctx)
+	  return 0;
+
+	if (!ssl_load_certificate(hub->ctx, config->tls_certificate))
 		return 0;
-	}
+
+	if (!ssl_load_private_key(hub->ctx, config->tls_private_key))
+		return 0;
+
+	if (!ssl_check_private_key(hub->ctx))
+		return 0;
+
+	LOG_INFO("Enabling TLS (%s), using certificate: %s, private key: %s", net_ssl_get_provider(), config->tls_certificate, config->tls_private_key);
+
+	ssl_keyprint_info(hub->ctx, config->server_port);
+
 	return 1;
 }
 

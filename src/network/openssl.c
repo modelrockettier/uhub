@@ -293,6 +293,33 @@ int ssl_check_private_key(struct ssl_context_handle* ctx_)
 	return 1;
 }
 
+void ssl_keyprint_info(struct ssl_context_handle* ctx_, int port)
+{
+	struct net_context_openssl* ctx = (struct net_context_openssl*) ctx_;
+
+	unsigned int n;
+	unsigned char md[EVP_MAX_MD_SIZE];
+	char keyp[EVP_MAX_MD_SIZE * 8 / 5 + 2];
+	const EVP_MD *fdig;
+	X509 *cert;
+
+	if (hub_get_log_verbosity() < log_info)
+		return;
+
+	cert = SSL_CTX_get0_certificate(ctx->ssl);
+	if (cert == NULL)
+		return;
+
+	fdig = EVP_sha256();
+	if (!X509_digest(cert, fdig, md, &n))
+		return;
+
+	base32_encode(md, (size_t)n, keyp);
+
+	// E.g. adcs://localhost:1511/?kp=SHA256/CHCX3O6OIOFV4SPYZ36JLASNEOFRXLFA4CRS2GCRSIGY4OJB5NCA
+	LOG_INFO("Secure ADCS URL: adcs://localhost:%d/?kp=SHA256/%s\n", port, keyp);
+}
+
 static int handle_openssl_error(struct net_connection* con, int ret, int read)
 {
 	struct net_ssl_openssl* handle = get_handle(con);

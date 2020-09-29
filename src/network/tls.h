@@ -77,6 +77,11 @@ extern int ssl_load_private_key(struct ssl_context_handle* ctx, const char* pem_
 extern int ssl_check_private_key(struct ssl_context_handle* ctx);
 
 /**
+ * Prints the KEYP connect link for the server. Returns 1.
+ */
+extern void ssl_keyprint_info(struct ssl_context_handle* ctx, int port);
+
+/**
  * Start SSL_accept()
  */
 extern ssize_t net_con_ssl_accept(struct net_connection*);
