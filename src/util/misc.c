@@ -19,7 +19,20 @@
 
 #include "uhub.h"
 
-static const char* BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+// Used to convert binary to uppercase ascii base32
+const char* BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+// Used to convert uppercase ascii base32 to binary
+const int8_t BASE32_VALUES[128] = {
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0x00
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0x10
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0x20
+	-1, -1, 26, 27, 28, 29, 30, 31, -1, -1, -1, -1, -1, -1, -1, -1, // 0x30
+	-1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, // 0x40
+	15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, // 0x50
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0x60
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 0x70
+};
 
 int is_space(char c)
 {
@@ -204,12 +217,14 @@ void base32_decode(const char* src, unsigned char* dst, size_t len)
 	memset(dst, 0, len);
 	for (i = 0; src[i]; i++)
 	{
-		unsigned char n = 0;
-		for (; n < 32; n++)
-			if (src[i] == BASE32_ALPHABET[n])
-				break;
-		if (n == 32)
+		unsigned char n = src[i];
+		if (n >= 128)
 			continue;
+
+		n = (unsigned char)BASE32_VALUES[n];
+		if (n == (unsigned char)-1)
+			continue;
+
 		if (index <= 3)
 		{
 			index = (index + 5) % 8;

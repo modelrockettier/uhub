@@ -95,6 +95,9 @@ extern int split_string(const char* string, const char* split, struct linked_lis
 typedef int (*string_split_handler_t)(char* string, int count, void* data);
 extern int string_split(const char* string, const char* split, void* data, string_split_handler_t handler);
 
+extern const char* BASE32_ALPHABET;
+extern const int8_t BASE32_VALUES[128];
+
 #endif /* HAVE_UHUB_MISC_H */
 
 
