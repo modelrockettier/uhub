@@ -325,6 +325,36 @@ struct adc_message* adc_msg_parse_verify(struct hub_user* u, const char* line, s
 }
 
 
+/* Extracts a sid from the line into sid and returns bool status
+ * NOTE: line[0] is expected to start at the space after the previous
+ * command or arg so the first sid will actually be: start=4
+ */
+static int extract_sid(const char* line, size_t length, size_t start, sid_t* sid)
+{
+	int ok;
+
+	ok = (length > (start + 4) &&
+		is_space(line[start]) &&
+		is_valid_base32_char(line[start + 1]) &&
+		is_valid_base32_char(line[start + 2]) &&
+		is_valid_base32_char(line[start + 3]) &&
+		is_valid_base32_char(line[start + 4]));
+
+	if (ok)
+	{
+		char temp_sid[5];
+		temp_sid[0] = line[start + 1];
+		temp_sid[1] = line[start + 2];
+		temp_sid[2] = line[start + 3];
+		temp_sid[3] = line[start + 4];
+		temp_sid[4] = '\0';
+
+		*sid = string_to_sid(temp_sid);
+	}
+
+	return ok;
+}
+
 struct adc_message* adc_msg_parse(const char* line, size_t length)
 {
 	struct adc_message* command = (struct adc_message*) msg_malloc_zero(sizeof(struct adc_message));
@@ -364,8 +394,9 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 
 	if (!adc_msg_grow(command, length + need_terminate))
 	{
+		LOG_DEBUG("Dropped message (OOM!).");
 		msg_free(command);
-		return NULL; /* OOM */
+		return NULL;
 	}
 
 	adc_msg_set_length(command, length + need_terminate);
@@ -393,43 +424,13 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 			break;
 
 		case 'B':
-			ok = (length > 8 &&
-				is_space(line[4]) &&
-				is_valid_base32_char(line[5]) &&
-				is_valid_base32_char(line[6]) &&
-				is_valid_base32_char(line[7]) &&
-				is_valid_base32_char(line[8]));
-
-			if (!ok)
-				break;
-
-			temp_sid[0] = line[5];
-			temp_sid[1] = line[6];
-			temp_sid[2] = line[7];
-			temp_sid[3] = line[8];
-			temp_sid[4] = '\0';
-
-			command->source = string_to_sid(temp_sid);
+			ok = extract_sid(line, length, 4, &(command->source));
 			break;
 
 		case 'F':
-			ok = (length > 8 &&
-				is_space(line[4]) &&
-				is_valid_base32_char(line[5]) &&
-				is_valid_base32_char(line[6]) &&
-				is_valid_base32_char(line[7]) &&
-				is_valid_base32_char(line[8]));
-
+			ok = extract_sid(line, length, 4, &(command->source));
 			if (!ok)
 				break;
-
-			temp_sid[0] = line[5];
-			temp_sid[1] = line[6];
-			temp_sid[2] = line[7];
-			temp_sid[3] = line[8];
-			temp_sid[4] = '\0';
-
-			command->source = string_to_sid(temp_sid);
 
 			/* Create feature cast lists */
 			command->feature_cast_include = list_create();
@@ -470,67 +471,41 @@ struct adc_message* adc_msg_parse(const char* line, size_t length)
 
 		case 'D':
 		case 'E':
-			ok = (length > 13 &&
-				is_space(line[4]) &&
-				is_valid_base32_char(line[5]) &&
-				is_valid_base32_char(line[6]) &&
-				is_valid_base32_char(line[7]) &&
-				is_valid_base32_char(line[8]) &&
-				is_space(line[9]) &&
-				is_valid_base32_char(line[10]) &&
-				is_valid_base32_char(line[11]) &&
-				is_valid_base32_char(line[12]) &&
-				is_valid_base32_char(line[13]));
-
-			if (!ok)
-				break;
-
-			temp_sid[0] = line[5];
-			temp_sid[1] = line[6];
-			temp_sid[2] = line[7];
-			temp_sid[3] = line[8];
-			temp_sid[4] = '\0';
-
-			command->source = string_to_sid(temp_sid);
-
-			temp_sid[0] = line[10];
-			temp_sid[1] = line[11];
-			temp_sid[2] = line[12];
-			temp_sid[3] = line[13];
-			temp_sid[4] = '\0';
-
-			command->target = string_to_sid(temp_sid);
+			ok = extract_sid(line, length, 4, &(command->source));
+			if (ok)
+				ok = extract_sid(line, length, 9, &(command->target));
 			break;
 
 		default:
 			ok = 0;
 	}
 
+	/* NOTE: Need to do this before the ok check to ensure the
+	 * ADC_MSG_ASSERT() passes in adc_msg_free()
+	 */
 	if (need_terminate)
 		command->cache[length] = '\n';
 
 	if (!ok)
 	{
+		LOG_DEBUG("Dropped message (malformed).");
 		adc_msg_free(command);
 		return NULL;
 	}
 
 	/* At this point the arg_offset should point to a space, or the end of message */
 	n = adc_msg_get_arg_offset(command);
-	uhub_assert(n < length);
 
-	if (command->cache[n] == ' ')
-	{
-		if (command->cache[n + 1] == ' ')
-			ok = 0;
-	}
-	else if (command->cache[n] == '\n')
-		ok = 1;
-	else
+	if (n >= length)
+		ok = 0; /* message too short */
+	else if (command->cache[n] != ' ' && command->cache[n] != '\n')
 		ok = 0;
+	else
+		ok = 1;
 
 	if (!ok)
 	{
+		LOG_DEBUG("Dropped message (invalid termination).");
 		adc_msg_free(command);
 		return NULL;
 	}
@@ -815,32 +790,37 @@ char* adc_msg_get_argument(struct adc_message* cmd, int offset)
 	while (start)
 	{
 		end = strchr(&start[1], ' ');
-		if (count == offset)
+		if (count != offset)
+			goto next_arg;
+
+		if (end)
 		{
-			if (end)
-			{
-				argument = hub_strndup(&start[1], (&end[0] - &start[1]));
-			}
-			else
-			{
-				argument = hub_strdup(&start[1]);
-				if (argument && *argument && argument[strlen(argument) - 1] == '\n')
-					argument[strlen(argument) - 1] = 0;
-			}
-
+			argument = hub_strndup(&start[1], (&end[0] - &start[1]));
 			if (!argument)
-				return 0; // FIXME: OOM
-
-			if (*argument)
-			{
-				adc_msg_terminate(cmd);
-				return argument;
-			}
-			else
-			{
-				hub_free(argument);
-			}
+				return 0;
 		}
+		else
+		{
+			size_t len;
+			argument = hub_strdup(&start[1]);
+			if (!argument)
+				return 0;
+
+			len = strlen(argument);
+			if (len > 0 && argument[len - 1] == '\n')
+				argument[len - 1] = '\0';
+		}
+
+		if (*argument)
+		{
+			adc_msg_terminate(cmd);
+			return argument;
+		}
+
+		/* Try the next arg */
+		hub_free(argument);
+
+next_arg:
 		count++;
 		start = end;
 	}

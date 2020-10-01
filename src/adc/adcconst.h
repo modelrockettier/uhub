@@ -30,7 +30,7 @@ typedef uint32_t fourcc_t;
 /* Internal uhub limit */
 #define MAX_ADC_CMD_LEN 4096
 
-#define FOURCC(a,b,c,d) (fourcc_t) ((a << 24) | (b << 16) | (c << 8) | d)
+#define FOURCC(a,b,c,d) (((fourcc_t)(a) << 24) | ((fourcc_t)(b) << 16) | ((fourcc_t)(c) << 8) | (fourcc_t)(d))
 
 /* default welcome protocol support message, as sent by this server */
 #define ADC_PROTO_SUPPORT "ADBASE ADTIGR ADPING ADUCMD"
