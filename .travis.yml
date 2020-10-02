@@ -26,6 +26,12 @@ jobs:
   # Additional builds to do (outside the build matrix)
   include:
 
+    # Docker build
+    - name: docker
+      language: minimal
+      services: docker
+      env: CONFIG=docker
+
     # Windows builds
     - name: Windows full x64
       <<: &win_base
@@ -67,62 +73,6 @@ jobs:
           packages:
           - cmake
           - sqlite
-
-    # 64-bit ARM builds
-    - name: arm64 full
-      arch: arm64
-      env: config=full
-    - name: arm64 minimal
-      arch: arm64
-      env: config=minimal
-
-    # 64-bit Little-Endian PPC builds
-    - name: ppc64le full
-      arch: ppc64le
-      env: config=full
-    - name: ppc64le minimal
-      arch: ppc64le
-      env: config=minimal
-
-    # s390x (big-endian) builds
-    - name: s390x full
-      arch: s390x
-      env: config=full
-    - name: s390x minimal
-      arch: s390x
-      env: config=minimal
-
-    # Bionic builds
-    - name: bionic full
-      dist: bionic
-      env: CONFIG=full
-    - name: bionic minimal
-      dist: bionic
-      env: CONFIG=minimal
-
-    # Xenial builds
-    - name: xenial full
-      dist: xenial
-      env: CONFIG=full
-    - name: xenial minimal
-      dist: xenial
-      env: CONFIG=minimal
-    - name: xenial deb
-      dist: xenial
-      env: CONFIG=deb
-    - name: xenial dpkg-build
-      dist: xenial
-      env: CONFIG=dpkg-build
-    - name: xenial clang
-      dist: xenial
-      compiler: clang
-      env: CONFIG=full
-
-    # Docker build
-    - name: docker
-      language: minimal
-      services: docker
-      env: CONFIG=docker
 
     # Coverity build
     - name: Coverity scan
@@ -196,6 +146,56 @@ jobs:
         directories:
           - "$HOME/.sonar/cache"
     # End SonarCloud build
+
+    # 64-bit ARM builds
+    - name: arm64 full
+      arch: arm64
+      env: config=full
+    - name: arm64 minimal
+      arch: arm64
+      env: config=minimal
+
+    # 64-bit Little-Endian PPC builds
+    - name: ppc64le full
+      arch: ppc64le
+      env: config=full
+    - name: ppc64le minimal
+      arch: ppc64le
+      env: config=minimal
+
+    # s390x (big-endian) builds
+    - name: s390x full
+      arch: s390x
+      env: config=full
+    - name: s390x minimal
+      arch: s390x
+      env: config=minimal
+
+    # Bionic builds
+    #- name: bionic full
+    #  dist: bionic
+    #  env: CONFIG=full
+    #- name: bionic minimal
+    #  dist: bionic
+    #  env: CONFIG=minimal
+
+    # Xenial builds
+    - name: xenial full
+      dist: xenial
+      env: CONFIG=full
+    - name: xenial minimal
+      dist: xenial
+      env: CONFIG=minimal
+    #- name: xenial deb
+    #  dist: xenial
+    #  env: CONFIG=deb
+    #- name: xenial dpkg-build
+    #  dist: xenial
+    #  env: CONFIG=dpkg-build
+    #- name: xenial clang
+    #  dist: xenial
+    #  compiler: clang
+    #  env: CONFIG=full
 
 install:
   - tests/ci/print-env.sh
