@@ -724,7 +724,7 @@ static int load_ssl_certificates(struct hub_info* hub, struct hub_config* config
 	if (!config->tls_enable)
 		return 1;
 
-	hub->ctx = net_ssl_context_create(config->tls_version, config->tls_ciphersuite);
+	hub->ctx = net_ssl_context_create(config->tls_version, config->tls_cipher_list, config->tls_ciphersuites);
 
 	if (!hub->ctx)
 	  return 0;

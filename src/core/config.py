@@ -38,11 +38,12 @@ class Option(object):
 		self.advanced = self._attr(node, 'advanced', False)
 		self.is_string = self.otype in ["string", "message", "file"]
 
-		self._get(node, "short");
+		self._get(node, "alias");
 		self._get(node, "description");
-		self._get(node, "syntax");
-		self._get(node, "since");
 		self._get(node, "example");
+		self._get(node, "short");
+		self._get(node, "since");
+		self._get(node, "syntax");
 
 		check = node.getElementsByTagName("check")
 		if (check):
@@ -127,7 +128,11 @@ class CSourceGenerator(SourceGenerator):
 		self.f.write(s)
 
 	def _write_apply_impl(self, option):
-		s = "\tif (!strcmp(key, \"%s\"))\n\t{\n" % option.name
+		if option.alias:
+			s = "\tif (!strcmp(key, \"%s\") || !strcmp(key, \"%s\"))\n" % (option.name, option.alias)
+		else:
+			s = "\tif (!strcmp(key, \"%s\"))\n" % option.name
+		s += "\t{\n"
 		s_type = option.otype
 		s_default = option.default
 		s_min_str = ""

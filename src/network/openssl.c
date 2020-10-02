@@ -212,7 +212,7 @@ static int alpn_server_select_protocol(SSL *ssl, const unsigned char **out, unsi
 /**
  * Create a new SSL context.
  */
-struct ssl_context_handle* net_ssl_context_create(const char* tls_version, const char* tls_ciphersuite)
+struct ssl_context_handle* net_ssl_context_create(const char* tls_version, const char* tls_cipher_list, const char* tls_ciphersuites)
 {
 	struct net_context_openssl* ctx = (struct net_context_openssl*) hub_malloc_zero(sizeof(struct net_context_openssl));
 	long flags = 0;
@@ -238,14 +238,33 @@ struct ssl_context_handle* net_ssl_context_create(const char* tls_version, const
 	// Set flags
 	SSL_CTX_set_options(ctx->ssl, flags);
 
-	/* Set preferred cipher suite */
-	if (SSL_CTX_set_cipher_list(ctx->ssl, tls_ciphersuite) != 1)
+	if (tls_cipher_list[0] == '\0')
+		tls_cipher_list = "DEFAULT";
+
+	/* Set preferred ciphers list for <= TLSv1.2 */
+	if (SSL_CTX_set_cipher_list(ctx->ssl, tls_cipher_list) != 1)
 	{
-		LOG_ERROR("Unable to set cipher suite.");
+		LOG_ERROR("Unable to set cipher list.");
 		SSL_CTX_free(ctx->ssl);
 		hub_free(ctx);
 		return 0;
 	}
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	if (tls_ciphersuites[0] != '\0')
+		LOG_WARN("TLSv1.3 is not supported by this version of OpenSSL, ignoring tls_ciphersuites.");
+
+#else
+	/* Set preferred ciphersuites list for TLSv1.3+ */
+	if (tls_ciphersuites[0] != '\0' && SSL_CTX_set_ciphersuites(ctx->ssl, tls_ciphersuites) != 1)
+	{
+		LOG_ERROR("Unable to set ciphersuites.");
+		SSL_CTX_free(ctx->ssl);
+		hub_free(ctx);
+		return 0;
+	}
+
+#endif
 
 	SSL_CTX_set_alpn_select_cb(ctx->ssl, alpn_server_select_protocol, NULL);
 

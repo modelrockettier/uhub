@@ -460,20 +460,36 @@
 		<since>0.3.0</since>
 	</option>
 
-	<option name="tls_ciphersuite" type="string" default="ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS">
-		<short>List of TLS ciphers to use</short>
+	<option name="tls_cipher_list" type="string" default="DEFAULT:@SECLEVEL=2:!ARIA:!CAMELLIA:!DSS:!MD5:!PSK:!SRP:!aNULL:!eNULL">
+		<short>List of TLS ciphers to use with TLSv1.2 and below</short>
 		<description><![CDATA[
 			This is a colon separated list of preferred ciphers in the OpenSSL format.
+			NOTE: Empty string means use the OpenSSL default value.
+			See the OpenSSL ciphers manpage for more information.
 		]]></description>
-		<since>0.5.0</since>
+		<since>0.5.1</since>
 		<example><![CDATA[
 			<p>
-			High security with emphasis on forward secrecy:<br />
-			tls_ciphersuite = "ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS"
+			Prefer ChaCha20/Poly1305 suites which are secure and generally faster:<br />
+			tls_cipher_list = "CHACHA20:ALL:!COMPLEMENTOFDEFAULT:@SECLEVEL=5:!ARIA:!CAMELLIA:!DSS:!MD5:!PSK:!SRP:!aNULL:!eNULL"
 			</p>
+		]]></example>
+		<!-- This used to be named tls_ciphersuite, but was renamed to avoid confusion with tls_ciphersuites -->
+		<alias>tls_ciphersuite</alias>
+	</option>
+
+	<option name="tls_ciphersuites" type="string" default="">
+		<short>List of TLS ciphersuites to use with TLSv1.3+</short>
+		<description><![CDATA[
+			This is a colon separated list of preferred ciphersuites in the OpenSSL format (requires OpenSSL 1.1 or later).
+			NOTE: Empty string means use the OpenSSL default value.
+			See the OpenSSL ciphers manpage for more information.
+		]]></description>
+		<since>0.5.1</since>
+		<example><![CDATA[
 			<p>
-			Allow ChaCha20/Poly1305 which are secure, yet generally faster:<br />
-			tls_ciphersuite = "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:DHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA"
+			Prefer ChaCha20/Poly1305 which is secure and generally faster:<br />
+			tls_ciphersuites = "TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256"
 			</p>
 		]]></example>
 	</option>

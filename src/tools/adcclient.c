@@ -25,6 +25,11 @@
 #define TIGERSIZE 24
 #define MAX_RECV_BUFFER 65536
 
+// The ciphers to use with TLSv1.2 and earlier
+#define TLS_CIPHER_LIST "DEFAULT"
+// The ciphersuites to use with TLSv1.3+ (requires OpenSSL 1.1)
+#define TLS_CIPHERSUITES ""
+
 // #define ADCC_DEBUG
 // #define ADC_CLIENT_DEBUG_PROTO
 
@@ -560,8 +565,7 @@ struct ADC_client* ADC_client_create(const char* nickname, const char* descripti
 	{
 		g_adc_client = (struct ADC_client_global*) hub_malloc_zero(sizeof(struct ADC_client_global));
 #ifdef SSL_SUPPORT
-		g_adc_client->ctx = net_ssl_context_create("1.2", "HIGH");
-
+		g_adc_client->ctx = net_ssl_context_create("1.2", TLS_CIPHER_LIST, TLS_CIPHERSUITES);
 #endif
 	}
 	g_adc_client->references++;
