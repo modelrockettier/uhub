@@ -430,7 +430,7 @@ static ssize_t ADC_client_recv(struct ADC_client* client)
 			len = (ssize_t) (pos - start);
 
 #ifdef DEBUG_SENDQ
-			LOG_DUMP("PROC: \"%s\" (%" PRIssz ")\n", start, len);
+			LOG_DUMP("PROC: \"%s\" (%" PRIssz ")", start, len);
 #endif
 
 			if (client->flags & cflag_choke)

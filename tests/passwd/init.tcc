@@ -104,7 +104,7 @@ int run_passwd(const char* args)
 #ifdef DEBUG_TESTS
 	if (rc != 0)
 	{
-		LOG_INFO("run_passwd: \"%s\" returned %d\n", cmd, rc);
+		LOG_INFO("run_passwd: \"%s\" returned %d", cmd, rc);
 	}
 #endif
 

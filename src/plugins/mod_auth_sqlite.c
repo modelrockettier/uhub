@@ -500,7 +500,7 @@ static plugin_st register_user(struct plugin_handle* plugin, struct auth_info* u
 
 	if (rc <= 0)
 	{
-		LOG_ERROR("Unable to add user \"%s\": %s\n", nick, sqlite3_errstr(-rc));
+		LOG_ERROR("Unable to add user \"%s\": %s", nick, sqlite3_errstr(-rc));
 		return fail;
 	}
 	return st_allow;
@@ -527,12 +527,12 @@ static plugin_st update_user(struct plugin_handle* plugin, struct auth_info* use
 
 	if (rc <= 0)
 	{
-		LOG_ERROR("Unable to update user \"%s\": %s\n", nick, sqlite3_errstr(-rc));
+		LOG_ERROR("Unable to update user \"%s\": %s", nick, sqlite3_errstr(-rc));
 		return fail;
 	}
 	else if (rc > 1)
 	{
-		LOG_WARN("Updated %d users! \"%s\"\n", rc, nick);
+		LOG_WARN("Updated %d users! \"%s\"", rc, nick);
 	}
 	return st_allow;
 }
@@ -552,12 +552,12 @@ static plugin_st delete_user(struct plugin_handle* plugin, struct auth_info* use
 
 	if (rc <= 0)
 	{
-		LOG_ERROR("Unable to delete user \"%s\": %s\n", nick, sqlite3_errstr(-rc));
+		LOG_ERROR("Unable to delete user \"%s\": %s", nick, sqlite3_errstr(-rc));
 		return fail;
 	}
 	else if (rc > 1)
 	{
-		LOG_WARN("Deleted %d users! \"%s\"\n", rc, nick);
+		LOG_WARN("Deleted %d users! \"%s\"", rc, nick);
 	}
 	return st_allow;
 }
@@ -575,12 +575,12 @@ static void update_user_activity(struct plugin_handle* plugin, struct plugin_use
 
 		if (rc < 0 || (rc == 0 && pdata->exclusive))
 		{
-			LOG_ERROR("Unable to update login activity for user \"%s\": %s\n",
+			LOG_ERROR("Unable to update login activity for user \"%s\": %s",
 				user->nick, sqlite3_errstr(-rc));
 		}
 		else if (rc > 1)
 		{
-			LOG_WARN("Updated login activity for %d users! \"%s\"\n",
+			LOG_WARN("Updated login activity for %d users! \"%s\"",
 				rc, user->nick);
 		}
 	}

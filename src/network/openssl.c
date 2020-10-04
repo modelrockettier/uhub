@@ -336,7 +336,7 @@ void ssl_keyprint_info(struct ssl_context_handle* ctx_, int port)
 	base32_encode(md, (size_t)n, keyp);
 
 	// E.g. adcs://localhost:1511/?kp=SHA256/CHCX3O6OIOFV4SPYZ36JLASNEOFRXLFA4CRS2GCRSIGY4OJB5NCA
-	LOG_INFO("Secure ADCS URL: adcs://localhost:%d/?kp=SHA256/%s\n", port, keyp);
+	LOG_INFO("Secure ADCS URL: adcs://localhost:%d/?kp=SHA256/%s", port, keyp);
 }
 
 static int handle_openssl_error(struct net_connection* con, int ret, int read)
@@ -439,7 +439,7 @@ ssize_t net_con_ssl_handshake(struct net_connection* con, enum net_con_ssl_mode 
 		handle->ssl = SSL_new(ctx->ssl);
 		if (!handle->ssl)
 		{
-			LOG_ERROR("Unable to create new SSL stream\n");
+			LOG_ERROR("Unable to create new SSL stream");
 			hub_free(handle);
 			return -1;
 		}

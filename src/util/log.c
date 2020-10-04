@@ -223,7 +223,7 @@ void hub_log(int log_verbosity, const char *format, ...)
 	if (memfile && log_verbosity == log_memory)
 	{
 		va_start(args, format);
-		vsnprintf(logmsg, 1024, format, args);
+		vsnprintf(logmsg, sizeof(logmsg), format, args);
 		va_end(args);
 		fprintf(memfile, "%s\n", logmsg);
 		fflush(memfile);
@@ -235,7 +235,7 @@ void hub_log(int log_verbosity, const char *format, ...)
 	if (netdump && log_verbosity == log_protocol)
 	{
 		va_start(args, format);
-		vsnprintf(logmsg, 1024, format, args);
+		vsnprintf(logmsg, sizeof(logmsg), format, args);
 		va_end(args);
 		fprintf(netdump, "%s\n", logmsg);
 		fflush(netdump);
@@ -249,7 +249,7 @@ void hub_log(int log_verbosity, const char *format, ...)
 		localtime_r(&t, &tmp);
 		strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", &tmp);
 		va_start(args, format);
-		vsnprintf(logmsg, 1024, format, args);
+		vsnprintf(logmsg, sizeof(logmsg), format, args);
 		va_end(args);
 
 		if (logfile)
@@ -272,7 +272,7 @@ void hub_log(int log_verbosity, const char *format, ...)
 			return;
 
 		va_start(args, format);
-		vsnprintf(logmsg, 1024, format, args);
+		vsnprintf(logmsg, sizeof(logmsg), format, args);
 		va_end(args);
 
 		switch (log_verbosity)

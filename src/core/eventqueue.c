@@ -22,7 +22,7 @@
 #ifdef EQ_DEBUG
 static void eq_debug(const char* prefix, struct event_data* data)
 {
-	LOG_DUMP(">>> %s: %p, id: %x, flags=%d\n", prefix, data, data->id, data->flags);
+	LOG_DUMP(">>> %s: %p, id: %x, flags=%d", prefix, data, data->id, data->flags);
 }
 #else
 #define eq_debug(prefix, data) do {} while(0)

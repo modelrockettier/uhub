@@ -426,7 +426,7 @@ int pidfile_create()
 		FILE* pidfile = fopen(arg_pid, "w");
 		if (!pidfile)
 		{
-			LOG_FATAL("Unable to write pid file: %s\n", arg_pid);
+			LOG_FATAL("Unable to write pid file: %s", arg_pid);
 			return -1;
 		}
 
@@ -479,7 +479,7 @@ int main(int argc, char** argv)
 		else
 		{
 			/* parent process */
-			LOG_DEBUG("Forked to background\n");
+			LOG_DEBUG("Forked to background");
 			return 0;
 		}
 	}

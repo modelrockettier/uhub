@@ -62,7 +62,7 @@ int handle_net_read(struct hub_user* user)
 			len = (ssize_t) (pos - start);
 
 #ifdef DEBUG_SENDQ
-			LOG_DUMP("PROC: \"%s\" (%" PRIssz ")\n", start, len);
+			LOG_DUMP("PROC: \"%s\" (%" PRIssz ")", start, len);
 #endif
 
 			if (user_flag_get(user, flag_maxbuf))
