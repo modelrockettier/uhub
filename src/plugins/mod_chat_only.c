@@ -97,7 +97,7 @@ static plugin_st on_search(struct plugin_handle* plugin, struct plugin_user* use
 	struct user_info* info = get_user_info(data, user->sid);
 
 	if (user->credentials >= auth_cred_operator && data->operator_override)
-		return st_allow;
+		return st_default;
 
 	if (!(info->warnings & WARN_SEARCH))
 	{
@@ -113,7 +113,7 @@ static plugin_st on_p2p_connect(struct plugin_handle* plugin, struct plugin_user
 	struct user_info* info = get_user_info(data, from->sid);
 
 	if (from->credentials >= auth_cred_operator && data->operator_override)
-		return st_allow;
+		return st_default;
 
 	if (!(info->warnings & WARN_CONNECT))
 	{
