@@ -21,134 +21,152 @@
 #include "probe.h"
 
 #define PROBE_RECV_SIZE 12
-static char probe_recvbuf[PROBE_RECV_SIZE];
 
-static void probe_handle_http(struct net_connection* con);
+static void probe_handle_adc(struct hub_probe* probe, char* recvbuf, ssize_t recvlen);
+static void probe_handle_tls(struct hub_probe* probe, char* recvbuf, ssize_t recvlen);
+static void probe_handle_http(struct hub_probe* probe, char* recvbuf, ssize_t recvlen);
+static void probe_handle_irc(struct hub_probe* probe, char* recvbuf, ssize_t recvlen);
 
-static void probe_net_event(struct net_connection* con, int events, void *arg)
+static inline int probe_is_adc(char* recvbuf, ssize_t recvlen)
 {
-	struct hub_probe* probe = (struct hub_probe*) net_con_get_ptr(con);
-	if (events == NET_EVENT_TIMEOUT)
-	{
-		/* Send NMDC redirect if configured.
-		 *
-		 * NMDC is weird, the server is actually the first one to speak, so in
-		 * order to detect NMDC connections we have to wait a second or 2 to
-		 * see if the client sends us anything. If they don't and it times out,
-		 * we have to blindly assume it's an NMDC connection attempt.
-		 */
-		if (*probe->hub->config->nmdc_redirect_addr)
-		{
-			char buf[512];
-			int len = snprintf(buf, sizeof(buf), "<hub> Redirecting...|$ForceMove %s|", probe->hub->config->nmdc_redirect_addr);
-			if (len <= 0)
-			{
-				LOG_WARN("Error %d while sending NMDC redirect", len);
-			}
-			else if ((size_t) len >= sizeof(buf))
-			{
-				LOG_WARN("NMDC Redirect address is too long: %d", len);
-			}
-			else
-			{
-				net_con_send(con, buf, (size_t) len);
-				LOG_TRACE("Probe timed out, redirecting to %s (via NMDC).", probe->hub->config->nmdc_redirect_addr);
-			}
-		}
-		else
-		{
-			LOG_TRACE("Probe timed out");
-		}
+	return (recvlen >= 4 && memcmp(recvbuf, "HSUP", 4) == 0);
+}
 
+static inline int probe_is_tls(char* recvbuf, ssize_t recvlen)
+{
+	return (recvlen >= 11 &&
+		recvbuf[0] == 22 &&
+		recvbuf[1] == 3 && /* protocol major version */
+		recvbuf[5] == 1 && /* message type */
+		recvbuf[9] == recvbuf[1]);
+}
+
+static inline int probe_is_http(char* recvbuf, ssize_t recvlen)
+{
+	/* The smallest HTTP request is "GET / HTTP/1.0\r\n\r\n" (18 chars)
+	 * but the probe recv size might be less than that
+	 */
+	ssize_t min_size = PROBE_RECV_SIZE < 18 ? PROBE_RECV_SIZE : 18;
+	if (recvlen < min_size)
+		return 0;
+
+	switch (recvbuf[0])
+	{
+		case 'G':
+			return (memcmp(recvbuf, "GET ", 4) == 0);
+
+		case 'P':
+			if (memcmp(recvbuf, "PUT ", 4) == 0)
+				return 1;
+			else if (memcmp(recvbuf, "POST ", 5) == 0)
+				return 1;
+			else if (memcmp(recvbuf, "PATCH ", 6) == 0)
+				return 1;
+			else
+				return 0;
+
+		case 'H':
+			return (memcmp(recvbuf, "HEAD ", 5) == 0);
+
+		case 'O':
+			return (memcmp(recvbuf, "OPTIONS ", 8) == 0);
+
+		case 'D':
+			return (memcmp(recvbuf, "DELETE ", 7) == 0);
+
+		/* ignore "TRACE" and "CONNECT" */
+		default:
+			return 0;
+	}
+}
+
+static inline int probe_is_irc(char* recvbuf, ssize_t recvlen)
+{
+	return (recvlen >= 4 && memcmp(recvbuf, "NICK", 4) == 0);
+}
+
+
+static void probe_net_event_timeout(struct hub_probe* probe)
+{
+	int len;
+	char buf[512];
+	const char* redirect_addr = probe->hub->config->nmdc_redirect_addr;
+
+	/* Send NMDC redirect if configured.
+	 *
+	 * NMDC is weird, the server is actually the first one to speak, so in
+	 * order to detect NMDC connections we have to wait a second or 2 to see
+	 * if the client sends us anything. If they don't and it times out, we
+	 * have to blindly assume it's an NMDC connection attempt and send the
+	 * redirect.
+	 */
+	if (redirect_addr[0] == '\0')
+	{
+		LOG_TRACE("Probe timed out");
 		probe_destroy(probe);
 		return;
 	}
 
-	if (events & NET_EVENT_READ)
+	len = snprintf(buf, sizeof(buf), "<hub> Redirecting...|$ForceMove %s|", redirect_addr);
+	if (len <= 0)
 	{
-		int bytes = net_con_peek(con, probe_recvbuf, PROBE_RECV_SIZE);
-		if (bytes < 0)
-		{
-			probe_destroy(probe);
-			return;
-		}
-
-		if (bytes >= 4)
-		{
-			if (memcmp(probe_recvbuf, "HSUP", 4) == 0)
-			{
-				LOG_TRACE("Probed ADC");
-#ifdef SSL_SUPPORT
-				if (!net_con_is_ssl(con) && probe->hub->config->tls_enable && probe->hub->config->tls_require)
-				{
-					if (*probe->hub->config->tls_require_redirect_addr)
-					{
-						char buf[512];
-						ssize_t len = snprintf(buf, sizeof(buf), "ISUP " ADC_PROTO_SUPPORT "\nISID AAAB\nIINF NIRedirecting...\nIQUI AAAB RD%s\n", probe->hub->config->tls_require_redirect_addr);
-						net_con_send(con, buf, (size_t) len);
-						LOG_TRACE("Not TLS connection - Redirecting to %s.", probe->hub->config->tls_require_redirect_addr);
-					}
-					else
-					{
-						LOG_TRACE("Not TLS connection - closing connection.");
-					}
-				}
-				else
-#endif
-				if (user_create(probe->hub, probe->connection, &probe->addr))
-				{
-					probe->connection = 0;
-				}
-			}
-			else if (bytes >= 11 &&
-				probe_recvbuf[0] == 22 &&
-				probe_recvbuf[1] == 3 && /* protocol major version */
-				probe_recvbuf[5] == 1 && /* message type */
-				probe_recvbuf[9] == probe_recvbuf[1])
-			{
-#ifdef SSL_SUPPORT
-				if (probe->hub->config->tls_enable)
-				{
-					LOG_TRACE("Probed TLS %d.%d connection", (int) probe_recvbuf[9], (int) probe_recvbuf[10]);
-					if (net_con_ssl_handshake(con, net_con_ssl_mode_server, probe->hub->ctx) < 0)
-					{
-						LOG_TRACE("TLS handshake negotiation failed.");
-					}
-					else if (user_create(probe->hub, probe->connection, &probe->addr))
-					{
-						probe->connection = 0;
-					}
-				}
-				else
-				{
-					LOG_TRACE("Probed TLS %d.%d connection. TLS disabled in hub.", (int) probe_recvbuf[9], (int) probe_recvbuf[10]);
-				}
-#else
-				LOG_TRACE("Probed TLS %d.%d connection. TLS not supported by hub.", (int) probe_recvbuf[9], (int) probe_recvbuf[10]);
-#endif
-			}
-			else if ((memcmp(probe_recvbuf, "GET ", 4) == 0) ||
-				 (memcmp(probe_recvbuf, "POST", 4) == 0) ||
-				 (memcmp(probe_recvbuf, "HEAD", 4) == 0) ||
-				 (memcmp(probe_recvbuf, "OPTI", 4) == 0))
-			{
-				/* Looks like HTTP. */
-				LOG_TRACE("Probed HTTP connection. Not supported closing connection (%s)", ip_convert_to_string(&probe->addr));
-				probe_handle_http(con);
-			}
-			else if (memcmp(probe_recvbuf, "NICK", 4) == 0)
-			{
-				/* Looks like IRC - Not supported, but we log it. */
-				LOG_TRACE("Probed IRC connection. Not supported closing connection (%s)", ip_convert_to_string(&probe->addr));
-			}
-			else
-			{
-				LOG_TRACE("Probed unsupported protocol: %02x%02x %02x%02x.", (int) probe_recvbuf[0], (int) probe_recvbuf[1], (int) probe_recvbuf[2], (int) probe_recvbuf[3]);
-			}
-			probe_destroy(probe);
-			return;
-		}
+		LOG_WARN("Error %d (%d) while sending NMDC redirect", len, errno);
 	}
+	else if ((size_t) len >= sizeof(buf))
+	{
+		LOG_WARN("NMDC Redirect address is too long: %d/%" PRIsz, len + 1, sizeof(buf));
+	}
+	else
+	{
+		net_con_send(probe->connection, buf, (size_t) len);
+		LOG_TRACE("Probe timed out, redirecting to %s (via NMDC).", redirect_addr);
+	}
+
+	probe_destroy(probe);
+}
+
+static void probe_net_event_read(struct hub_probe* probe)
+{
+	ssize_t bytes;
+
+	char probe_recvbuf[PROBE_RECV_SIZE];
+	bytes = net_con_peek(probe->connection, probe_recvbuf, PROBE_RECV_SIZE);
+
+	if (bytes < 4)
+		LOG_TRACE("Dropping small probe (%" PRIssz ")", bytes);
+
+	else if (probe_is_adc(probe_recvbuf, bytes))
+		probe_handle_adc(probe, probe_recvbuf, bytes);
+
+	else if (probe_is_tls(probe_recvbuf, bytes))
+		probe_handle_tls(probe, probe_recvbuf, bytes);
+
+	else if (probe_is_http(probe_recvbuf, bytes))
+		probe_handle_http(probe, probe_recvbuf, bytes);
+
+	else if (probe_is_irc(probe_recvbuf, bytes))
+		probe_handle_irc(probe, probe_recvbuf, bytes);
+
+	else
+	{
+		LOG_TRACE("Probed unsupported protocol: %02x%02x %02x%02x.",
+			probe_recvbuf[0], probe_recvbuf[1],
+			probe_recvbuf[2], probe_recvbuf[3]);
+	}
+
+	probe_destroy(probe);
+}
+
+static void probe_net_event(struct net_connection* con, int events, void *arg)
+{
+	struct hub_probe* probe = (struct hub_probe*) net_con_get_ptr(con);
+	uhub_assert(con == probe->connection);
+
+	if (events == NET_EVENT_TIMEOUT)
+		probe_net_event_timeout(probe);
+
+	else if (events & NET_EVENT_READ)
+		probe_net_event_read(probe);
 }
 
 struct hub_probe* probe_create(struct hub_info* hub, int sd, struct ip_addr_encap* addr)
@@ -182,29 +200,124 @@ void probe_destroy(struct hub_probe* probe)
 	if (probe->connection)
 	{
 		net_con_close(probe->connection);
-		probe->connection = 0;
+		probe->connection = NULL;
 	}
 	hub_free(probe);
 }
 
-static void probe_handle_http(struct net_connection* con)
+static void probe_handle_adc(struct hub_probe* probe, char* recvbuf, ssize_t recvlen)
 {
-	struct hub_probe* probe = (struct hub_probe*) net_con_get_ptr(con);
+	LOG_TRACE("Probed ADC");
+
+#ifdef SSL_SUPPORT
+	/* TLS redirect check */
+	if (!net_con_is_ssl(probe->connection) && probe->hub->config->tls_enable && probe->hub->config->tls_require)
+	{
+		const char* redirect_addr = probe->hub->config->tls_require_redirect_addr;
+		if (redirect_addr[0] == '\0')
+		{
+			LOG_TRACE("TLS is required - closing non-TLS connection.");
+		}
+		else
+		{
+			int len;
+			char buf[512];
+
+			len = snprintf(buf, sizeof(buf),
+					"ISUP " ADC_PROTO_SUPPORT "\n"
+					"ISID AAAB\n"
+					"IINF NIRedirecting...\n"
+					"IQUI AAAB RD%s\n",
+					redirect_addr);
+
+			if (len <= 0)
+			{
+				LOG_WARN("Error %d (%d) while sending TLS redirect", len, errno);
+			}
+			else if ((size_t) len >= sizeof(buf))
+			{
+				LOG_WARN("TLS Redirect address is too long: %d/%" PRIsz, len + 1, sizeof(buf));
+			}
+			else
+			{
+				net_con_send(probe->connection, buf, (size_t) len);
+				LOG_TRACE("TLS is required - redirecting non-TLS connection to %s.", redirect_addr);
+			}
+		}
+	}
+	else
+#endif
+	{
+		/* If the user is created, it will handle freeing the connection when the user disconnects.
+		 * So for now set the probe connection to NULL so probe_destroy() doesn't destroy the
+		 * connection.
+		 */
+		if (user_create(probe->hub, probe->connection, &probe->addr))
+			probe->connection = NULL;
+	}
+}
+
+static void probe_handle_tls(struct hub_probe* probe, char* recvbuf, ssize_t recvlen)
+{
+	/* NOTE: to get here, recvlen must be >= 11 */
+#ifdef SSL_SUPPORT
+	if (probe->hub->config->tls_enable)
+	{
+		ssize_t err;
+
+		LOG_TRACE("Probed TLS %d.%d connection.",
+			(int) recvbuf[9], (int) recvbuf[10]);
+
+		err = net_con_ssl_handshake(probe->connection, net_con_ssl_mode_server, probe->hub->ctx);
+		if (err < 0)
+		{
+			LOG_TRACE("TLS handshake negotiation failed (%" PRIssz ").", err);
+			return;
+		}
+
+		/* If the user is created, it will handle freeing the connection when the user disconnects.
+		 * So for now set the probe connection to NULL so probe_destroy() doesn't destroy the
+		 * connection.
+		 */
+		if (user_create(probe->hub, probe->connection, &probe->addr))
+			probe->connection = NULL;
+		else
+			LOG_TRACE("Failed to create user for TLS connection");
+	}
+	else
+	{
+		LOG_TRACE("Probed TLS %d.%d connection - disabled in hub.",
+			(int) recvbuf[9], (int) recvbuf[10]);
+	}
+#else
+	LOG_TRACE("Probed TLS %d.%d connection - not supported by hub.",
+		(int) recvbuf[9], (int) recvbuf[10]);
+#endif
+}
+
+static void probe_handle_http(struct hub_probe* probe, char* recvbuf, ssize_t recvlen)
+{
 	struct hub_config* config = probe->hub->config;
-	size_t addr_len;
 	char* buf;
 
 	if (config->ignore_http)
+	{
+		LOG_TRACE("Probed HTTP connection - ignoring.");
 		return;
+	}
 
-	addr_len = strlen(config->http_redirect_addr);
-	if (addr_len != 0)
+	if (config->http_redirect_addr[0] != '\0')
 	{
 		char const* fmt;
+		size_t addr_len;
 		size_t allocated;
-		int len;
+		int msg_length;
 		unsigned long content_length;
 		unsigned long body_off;
+
+		LOG_TRACE("Probed HTTP connection - redirecting.");
+
+		addr_len = strlen(config->http_redirect_addr);
 
 		fmt = "HTTP/1.1 307 Temporary Redirect\r\n"
 			"Connection: close\r\n"
@@ -235,18 +348,20 @@ static void probe_handle_http(struct net_connection* con)
 			return;
 		}
 
-		len = snprintf(buf, allocated, fmt, config->http_redirect_addr, content_length, config->http_redirect_addr);
-		if (len <= 0)
-			LOG_ERROR("probe_handle_http(): snprintf failed, %d", len);
-		else if ((size_t) len >= allocated)
-			LOG_ERROR("probe_handle_http(): buffer too small, %d/%" PRIsz, len + 1, allocated);
+		msg_length = snprintf(buf, allocated, fmt, config->http_redirect_addr, content_length, config->http_redirect_addr);
+		if (msg_length <= 0)
+			LOG_ERROR("probe_handle_http(): snprintf failed, %d (%d)", msg_length, errno);
+		else if ((size_t) msg_length >= allocated)
+			LOG_ERROR("probe_handle_http(): buffer too small, %d/%" PRIsz, msg_length + 1, allocated);
 		else
-			net_con_send(con, buf, len);
+			net_con_send(probe->connection, buf, (size_t) msg_length);
 
 		hub_free(buf);
 	}
 	else
 	{
+		LOG_TRACE("Probed HTTP connection - not supported.");
+
 		// If you change this, ensure that Content-Length is still correct
 		buf = "HTTP/1.1 501 Not Implemented\r\n"
 			"Connection: close\r\n"
@@ -261,6 +376,11 @@ static void probe_handle_http(struct net_connection* con)
 			"</body>\r\n"
 			"</html>\r\n";
 
-		net_con_send(con, buf, strlen(buf));
+		net_con_send(probe->connection, buf, strlen(buf));
 	}
+}
+
+static void probe_handle_irc(struct hub_probe* probe, char* recvbuf, ssize_t recvlen)
+{
+	LOG_TRACE("Probed IRC connection - Not supported");
 }
